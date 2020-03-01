@@ -2,7 +2,7 @@
 
 - [Papers Interested](##Papers-Interested)
 
-- [Strategy](#Strategy-for-Soft-Budget-Constraint-and-pollution-in-China-👀)
+- [Strategy](https://github.com/thomaspernet/SBC_pollution_China/blob/master/Documentation/README.md#strategy-for-soft-budget-constraint-and-pollution-in-china-)
 
 Add any documentation useful for the project here
 
