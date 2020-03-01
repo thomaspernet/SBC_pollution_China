@@ -1,5 +1,8 @@
 # Documentation
 
+[Papers Interested](##Papers Interested)
+[Strategy](# Strategy for Soft Budget Constraint and pollution in China 👀)
+
 Add any documentation useful for the project here
 
 ## Papers Interested
