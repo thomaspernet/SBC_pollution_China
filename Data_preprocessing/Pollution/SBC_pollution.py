@@ -404,6 +404,7 @@ def metafunction(df_original,
     df_asif_preprocessing_ = df_asif_preprocessing.loc[lambda x:
                                                        ~x['cityen'].isin(
                                                            city_to_exclude)]
+    return df_asif_preprocessing_
     # Compute nb of SOE by industry-year and get mean share
     # Compute output of SOE by industry-year and get mean share
     if soe:
