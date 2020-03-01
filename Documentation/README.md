@@ -38,9 +38,9 @@ Strategy: DD
 * The political background shows us that the whole Chinese cities are divided into two groups:one is under the environmental regulations and the other no
 * due to the centralized political system in China, two environmental regulations mentioned above were both implemented around the country at the same time
 * This just makes our dataset a treatment group and a control group at two different time periods: one time period before ”treatment” and one time period after ”treatment”
-* This condition actually satisfies requirements of Difference-in-Difference(DID) model, where $$\overline{y_{11}}-\overline{y_{21}}$$ represents horizontal difference between treatment group and control group before regulations were launched;
-* $$\overline{y_{12}}-\overline{y_{22}}$$ represents horizontal difference be-tween treatment group and control group after regulations
-* $$(\overline{y_{11}}-\overline{y_{21}})-(\overline{y_{12}}-\overline{y_{22}})$$ then can be interpreted as the regulation effec
+* This condition actually satisfies requirements of Difference-in-Difference(DID) model, where $\overline{y_{11}}-\overline{y_{21}}$ represents horizontal difference between treatment group and control group before regulations were launched;
+* $\overline{y_{12}}-\overline{y_{22}}$ represents horizontal difference be-tween treatment group and control group after regulations
+* $(\overline{y_{11}}-\overline{y_{21}})-(\overline{y_{12}}-\overline{y_{22}})$ then can be interpreted as the regulation effec
 Flaws DD
 * Nevertheless, here comes a concern with DID model.
 * First, the more polluting firms maybe more heavily influenced by the regulations
