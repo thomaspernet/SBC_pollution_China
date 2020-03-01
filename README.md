@@ -26,15 +26,13 @@ Authors:
 The project's codes and documentions are available:
 
 - Data preprocessing main dataset
-  - [notebook]()
-  - [Source code]()
+  - [notebook](https://nbviewer.jupyter.org/github/thomaspernet/SBC_pollution_China/blob/master/Data_preprocessing/SBC_pollution_China_preprocessing.ipynb)
+  - [Source code](https://github.com/thomaspernet/SBC_pollution_China/tree/master/Data_preprocessing/Pollution)
 - Data preprocessing TFP dataset
-  - [notebook]()
-  - [Source code]()
+  - [notebook](https://nbviewer.jupyter.org/github/thomaspernet/SBC_pollution_China/blob/master/Data_preprocessing/TFP_ASIF_china_preprocessing.ipynb)
+  - [Source code](https://github.com/thomaspernet/SBC_pollution_China/tree/master/Data_preprocessing/Pollution)
 - Data Analysis
-  - [notebook]()
-  - [Source code]()
+  - [notebook](https://nbviewer.jupyter.org/github/thomaspernet/SBC_pollution_China/blob/master/Data_analysis/SBC_pollution_China_analysis_P.ipynb)
 
-
-Main dataset and TFP dataset are available upon reques, or will soon be available through Binder.
+Main dataset and TFP dataset are available upon request, or will soon be available through Binder.
 
