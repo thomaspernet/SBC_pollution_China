@@ -1,0 +1,61 @@
+
+% Table created by stargazer v.5.2.2 by Marek Hlavac, Harvard University. E-mail: hlavac at fas.harvard.edu
+% Date and time: Mon, Feb 24, 2020 - 19:16:55
+\begin{table}[!htbp] \centering 
+  \caption{Baseline results revision, full} 
+  \label{} 
+\begin{tabular}{@{\extracolsep{5pt}}lc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+ & \multicolumn{1}{c}{The Dependent variable:} \\ 
+\cline{2-2} 
+\hline \\[-1.8ex] 
+ TCZ\_cTCZ &  \\ 
+  & (0.000) \\ 
+  PeriodAfter &  \\ 
+  & (0.000) \\ 
+  polluted\_threAbove &  \\ 
+  & (0.000) \\ 
+  out\_share\_SOE &  \\ 
+  & (0.000) \\ 
+  output\_fcit & 0.136 \\ 
+  & (0.131) \\ 
+  capital\_fcit & 1.511$^{***}$ \\ 
+  & (0.485) \\ 
+  labour\_fcit & 3.038$^{***}$ \\ 
+  & (0.602) \\ 
+  TCZ\_cTCZ:PeriodAfter & 0.024 \\ 
+  & (0.087) \\ 
+  TCZ\_cTCZ:polluted\_threAbove & 0.251$^{**}$ \\ 
+  & (0.118) \\ 
+  PeriodAfter:polluted\_threAbove & 0.073 \\ 
+  & (0.092) \\ 
+  TCZ\_cTCZ:out\_share\_SOE & $-$0.434 \\ 
+  & (0.469) \\ 
+  PeriodAfter:out\_share\_SOE & $-$0.092 \\ 
+  & (0.368) \\ 
+  polluted\_threAbove:out\_share\_SOE &  \\ 
+  & (0.000) \\ 
+  TCZ\_cTCZ:PeriodAfter:polluted\_threAbove & $-$0.304$^{***}$ \\ 
+  & (0.105) \\ 
+  TCZ\_cTCZ:PeriodAfter:out\_share\_SOE & $-$0.187 \\ 
+  & (0.449) \\ 
+  TCZ\_cTCZ:polluted\_threAbove:out\_share\_SOE & $-$0.626 \\ 
+  & (0.549) \\ 
+  PeriodAfter:polluted\_threAbove:out\_share\_SOE & $-$0.487 \\ 
+  & (0.478) \\ 
+  TCZ\_cTCZ:PeriodAfter:polluted\_threAbove:out\_share\_SOE & 1.127$^{**}$ \\ 
+  & (0.567) \\ 
+ \hline \\[-1.8ex] 
+City fixed effects & Yes \\ 
+Industry fixed effects & Yes \\ 
+Yes fixed effects & Yes \\ 
+Observations & 30,676 \\ 
+R$^{2}$ & 0.346 \\ 
+\hline 
+\hline \\[-1.8ex] 
+\textit{Note:}  & \multicolumn{1}{l}{$^{*}$p$<$0.1; $^{**}$p$<$0.05; $^{***}$p$<$0.01} \\ 
+ & \multicolumn{1}{l}{Heteroskedasticity-robust standard errors in parentheses} \\ 
+ & \multicolumn{1}{l}{are clustered by city} \\ 
+\end{tabular} 
+\end{table} 

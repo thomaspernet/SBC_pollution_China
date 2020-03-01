@@ -1,0 +1,94 @@
+
+% Table created by stargazer v.5.2.2 by Marek Hlavac, Harvard University. E-mail: hlavac at fas.harvard.edu
+% Date and time: Mon, Feb 24, 2020 - 19:32:57
+\begin{table}[!htbp] \centering 
+  \caption{Baseline results revision, full} 
+  \label{} 
+\begin{tabular}{@{\extracolsep{5pt}}lccc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+ & \multicolumn{3}{c}{The Dependent variable:} \\ 
+\cline{2-4} 
+\\[-1.8ex] & (1) & (2) & (3)\\ 
+\hline \\[-1.8ex] 
+ TCZ\_cTCZ &  &  &  \\ 
+  & (0.000) & (0.000) & (0.000) \\ 
+  PeriodAfter &  &  &  \\ 
+  & (0.000) & (0.000) & (0.000) \\ 
+  polluted\_threAbove &  &  &  \\ 
+  & (0.000) & (0.000) & (0.000) \\ 
+  out\_share\_SOE &  &  &  \\ 
+  & (0.000) &  &  \\ 
+  cap\_share\_SOE &  &  &  \\ 
+  &  & (0.000) &  \\ 
+  lab\_share\_SOE &  &  &  \\ 
+  &  &  & (0.000) \\ 
+  output\_fcit & 0.136 & 0.136 & 0.137 \\ 
+  & (0.131) & (0.131) & (0.132) \\ 
+  capital\_fcit & 1.511$^{***}$ & 1.513$^{***}$ & 1.511$^{***}$ \\ 
+  & (0.485) & (0.486) & (0.485) \\ 
+  labour\_fcit & 3.038$^{***}$ & 3.041$^{***}$ & 3.035$^{***}$ \\ 
+  & (0.602) & (0.604) & (0.604) \\ 
+  TCZ\_cTCZ:PeriodAfter & 0.024 & 0.020 & 0.021 \\ 
+  & (0.087) & (0.090) & (0.091) \\ 
+  TCZ\_cTCZ:polluted\_threAbove & 0.251$^{**}$ & 0.244$^{**}$ & 0.272$^{**}$ \\ 
+  & (0.118) & (0.121) & (0.125) \\ 
+  PeriodAfter:polluted\_threAbove & 0.073 & 0.063 & 0.099 \\ 
+  & (0.092) & (0.102) & (0.100) \\ 
+  TCZ\_cTCZ:out\_share\_SOE & $-$0.434 &  &  \\ 
+  & (0.469) &  &  \\ 
+  PeriodAfter:out\_share\_SOE & $-$0.092 &  &  \\ 
+  & (0.368) &  &  \\ 
+  polluted\_threAbove:out\_share\_SOE &  &  &  \\ 
+  & (0.000) &  &  \\ 
+  TCZ\_cTCZ:cap\_share\_SOE &  & $-$0.325 &  \\ 
+  &  & (0.376) &  \\ 
+  PeriodAfter:cap\_share\_SOE &  & $-$0.083 &  \\ 
+  &  & (0.277) &  \\ 
+  polluted\_threAbove:cap\_share\_SOE &  &  &  \\ 
+  &  & (0.000) &  \\ 
+  TCZ\_cTCZ:lab\_share\_SOE &  &  & $-$0.401 \\ 
+  &  &  & (0.478) \\ 
+  PeriodAfter:lab\_share\_SOE &  &  & $-$0.066 \\ 
+  &  &  & (0.357) \\ 
+  polluted\_threAbove:lab\_share\_SOE &  &  &  \\ 
+  &  &  & (0.000) \\ 
+  TCZ\_cTCZ:PeriodAfter:polluted\_threAbove & $-$0.304$^{***}$ & $-$0.305$^{***}$ & $-$0.324$^{***}$ \\ 
+  & (0.105) & (0.115) & (0.114) \\ 
+  TCZ\_cTCZ:PeriodAfter:out\_share\_SOE & $-$0.187 &  &  \\ 
+  & (0.449) &  &  \\ 
+  TCZ\_cTCZ:polluted\_threAbove:out\_share\_SOE & $-$0.626 &  &  \\ 
+  & (0.549) &  &  \\ 
+  PeriodAfter:polluted\_threAbove:out\_share\_SOE & $-$0.487 &  &  \\ 
+  & (0.478) &  &  \\ 
+  TCZ\_cTCZ:PeriodAfter:polluted\_threAbove:out\_share\_SOE & 1.127$^{**}$ &  &  \\ 
+  & (0.567) &  &  \\ 
+  TCZ\_cTCZ:PeriodAfter:cap\_share\_SOE &  & $-$0.082 &  \\ 
+  &  & (0.336) &  \\ 
+  TCZ\_cTCZ:polluted\_threAbove:cap\_share\_SOE &  & $-$0.406 &  \\ 
+  &  & (0.441) &  \\ 
+  PeriodAfter:polluted\_threAbove:cap\_share\_SOE &  & $-$0.291 &  \\ 
+  &  & (0.392) &  \\ 
+  TCZ\_cTCZ:PeriodAfter:polluted\_threAbove:cap\_share\_SOE &  & 0.744 &  \\ 
+  &  & (0.456) &  \\ 
+  TCZ\_cTCZ:PeriodAfter:lab\_share\_SOE &  &  & $-$0.112 \\ 
+  &  &  & (0.433) \\ 
+  TCZ\_cTCZ:polluted\_threAbove:lab\_share\_SOE &  &  & $-$0.575 \\ 
+  &  &  & (0.527) \\ 
+  PeriodAfter:polluted\_threAbove:lab\_share\_SOE &  &  & $-$0.510 \\ 
+  &  &  & (0.474) \\ 
+  TCZ\_cTCZ:PeriodAfter:polluted\_threAbove:lab\_share\_SOE &  &  & 0.958$^{*}$ \\ 
+  &  &  & (0.559) \\ 
+ \hline \\[-1.8ex] 
+City fixed effects & Yes & Yes & Yes \\ 
+Industry fixed effects & Yes & Yes & Yes \\ 
+Yes fixed effects & Yes & Yes & Yes \\ 
+Observations & 30,676 & 30,676 & 30,676 \\ 
+R$^{2}$ & 0.346 & 0.346 & 0.346 \\ 
+\hline 
+\hline \\[-1.8ex] 
+\textit{Note:}  & \multicolumn{3}{l}{$^{*}$p$<$0.1; $^{**}$p$<$0.05; $^{***}$p$<$0.01} \\ 
+ & \multicolumn{3}{l}{Heteroskedasticity-robust standard errors in parentheses} \\ 
+ & \multicolumn{3}{l}{are clustered by city} \\ 
+\end{tabular} 
+\end{table} 
