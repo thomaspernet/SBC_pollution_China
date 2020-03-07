@@ -10,6 +10,8 @@ __pycache__/
 data
 *.csv
 *.gz
+token.pickle
+token_coda.json
 
 # Distribution / packaging
 .Python

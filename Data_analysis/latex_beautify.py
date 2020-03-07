@@ -172,6 +172,31 @@ def beautify(table_number):
         lines = lines.replace('lab\_share\_SOE',
                               ' \\text{labour share SOE}_{i} ')
 
+        ### foreing
+        lines = lines.replace('out\_share\_for',
+        ' \\text{output share Foreign}_{i}')
+
+        lines = lines.replace('cap\_share\_for',
+                              ' \\text{capital share Foreign}_{i} ')
+
+        lines = lines.replace('lab\_share\_for',
+                              ' \\text{labour share Foreign}_{i} ')
+
+        lines = lines.replace('concentratedCONCENTRATED',
+        ' \\text{Concencentrated}_{i}')
+
+        lines = lines.replace('concentrated\_25CONCENTRATED',
+        ' \\text{Concencentrated 25}_{i}')
+
+        lines = lines.replace('concentrated\_50CONCENTRATED',
+        ' \\text{Concencentrated 50}_{i}')
+
+        lines = lines.replace('concentrated\_75CONCENTRATED',
+        ' \\text{Concencentrated 75}_{i}')
+
+        lines = lines.replace('concentrated\_85CONCENTRATED',
+        ' \\text{Concencentrated 85}_{i}')
+
         # Additional controls
         lines = lines.replace('Coastal', ' Coastal_c ')
         lines = lines.replace('SPZ', ' SPZ_c ')
@@ -184,10 +209,13 @@ def beautify(table_number):
         lines = lines.replace('target\_c', ' target_c ')
 
 
+
         # TFP
         lines = lines.replace('SOESOE', ' SOE ')
         lines = lines.replace('Coastal_c TRUE', ' Coastal_c ')
         lines = lines.replace(' : ', ' \\times ')
+
+
 
     # Write the file out again
     with open(table_out, 'w') as file:

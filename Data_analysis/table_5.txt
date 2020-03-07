@@ -1,61 +1,94 @@
 
 % Table created by stargazer v.5.2.2 by Marek Hlavac, Harvard University. E-mail: hlavac at fas.harvard.edu
-% Date and time: Mon, Feb 24, 2020 - 19:27:40
+% Date and time: Fri, Mar 06, 2020 - 15:38:48
 \begin{table}[!htbp] \centering 
-  \caption{Baseline results revision, full} 
+  \caption{Baseline results revision} 
   \label{} 
-\begin{tabular}{@{\extracolsep{5pt}}lc} 
+\begin{tabular}{@{\extracolsep{5pt}}lccc} 
 \\[-1.8ex]\hline 
 \hline \\[-1.8ex] 
- & \multicolumn{1}{c}{The Dependent variable:} \\ 
-\cline{2-2} 
+ & \multicolumn{3}{c}{The Dependent variable:} \\ 
+\cline{2-4} 
+\\[-1.8ex] & (1) & (2) & (3)\\ 
 \hline \\[-1.8ex] 
- TCZ\_cTCZ &  \\ 
-  & (0.000) \\ 
-  PeriodAfter &  \\ 
-  & (0.000) \\ 
-  polluted\_threAbove &  \\ 
-  & (0.000) \\ 
-  lab\_share\_SOE &  \\ 
-  & (0.000) \\ 
-  output\_fcit & 0.137 \\ 
-  & (0.132) \\ 
-  capital\_fcit & 1.511$^{***}$ \\ 
-  & (0.485) \\ 
-  labour\_fcit & 3.035$^{***}$ \\ 
-  & (0.604) \\ 
-  TCZ\_cTCZ:PeriodAfter & 0.021 \\ 
-  & (0.091) \\ 
-  TCZ\_cTCZ:polluted\_threAbove & 0.272$^{**}$ \\ 
-  & (0.125) \\ 
-  PeriodAfter:polluted\_threAbove & 0.099 \\ 
-  & (0.100) \\ 
-  TCZ\_cTCZ:lab\_share\_SOE & $-$0.401 \\ 
-  & (0.478) \\ 
-  PeriodAfter:lab\_share\_SOE & $-$0.066 \\ 
-  & (0.357) \\ 
-  polluted\_threAbove:lab\_share\_SOE &  \\ 
-  & (0.000) \\ 
-  TCZ\_cTCZ:PeriodAfter:polluted\_threAbove & $-$0.324$^{***}$ \\ 
-  & (0.114) \\ 
-  TCZ\_cTCZ:PeriodAfter:lab\_share\_SOE & $-$0.112 \\ 
-  & (0.433) \\ 
-  TCZ\_cTCZ:polluted\_threAbove:lab\_share\_SOE & $-$0.575 \\ 
-  & (0.527) \\ 
-  PeriodAfter:polluted\_threAbove:lab\_share\_SOE & $-$0.510 \\ 
-  & (0.474) \\ 
-  TCZ\_cTCZ:PeriodAfter:polluted\_threAbove:lab\_share\_SOE & 0.958$^{*}$ \\ 
-  & (0.559) \\ 
+ TCZ\_cTCZ &  &  &  \\ 
+  & (0.000) & (0.000) & (0.000) \\ 
+  PeriodAfter &  &  &  \\ 
+  & (0.000) & (0.000) & (0.000) \\ 
+  polluted\_threAbove &  &  &  \\ 
+  & (0.000) & (0.000) & (0.000) \\ 
+  concentrated\_25CONCENTRATED &  &  &  \\ 
+  & (0.000) &  &  \\ 
+  concentrated\_50CONCENTRATED &  &  &  \\ 
+  &  & (0.000) &  \\ 
+  concentrated\_75CONCENTRATED &  &  &  \\ 
+  &  &  & (0.000) \\ 
+  output\_fcit & $-$0.062 & $-$0.060 & $-$0.060 \\ 
+  & (0.084) & (0.085) & (0.083) \\ 
+  capital\_fcit & 0.948$^{***}$ & 0.944$^{***}$ & 0.951$^{***}$ \\ 
+  & (0.357) & (0.353) & (0.358) \\ 
+  labour\_fcit & 1.494$^{**}$ & 1.539$^{**}$ & 1.539$^{**}$ \\ 
+  & (0.723) & (0.719) & (0.723) \\ 
+  TCZ\_cTCZ:PeriodAfter &  &  &  \\ 
+  & (0.000) & (0.000) & (0.000) \\ 
+  TCZ\_cTCZ:polluted\_threAbove &  &  &  \\ 
+  & (0.000) & (0.000) & (0.000) \\ 
+  PeriodAfter:polluted\_threAbove &  &  &  \\ 
+  & (0.000) & (0.000) & (0.000) \\ 
+  TCZ\_cTCZ:concentrated\_25CONCENTRATED &  &  &  \\ 
+  & (0.000) &  &  \\ 
+  PeriodAfter:concentrated\_25CONCENTRATED & $-$0.251 &  &  \\ 
+  & (0.192) &  &  \\ 
+  polluted\_threAbove:concentrated\_25CONCENTRATED &  &  &  \\ 
+  & (0.000) &  &  \\ 
+  TCZ\_cTCZ:concentrated\_50CONCENTRATED &  &  &  \\ 
+  &  & (0.000) &  \\ 
+  PeriodAfter:concentrated\_50CONCENTRATED &  & $-$0.107 &  \\ 
+  &  & (0.136) &  \\ 
+  polluted\_threAbove:concentrated\_50CONCENTRATED &  &  &  \\ 
+  &  & (0.000) &  \\ 
+  TCZ\_cTCZ:concentrated\_75CONCENTRATED &  &  &  \\ 
+  &  &  & (0.000) \\ 
+  PeriodAfter:concentrated\_75CONCENTRATED &  &  & 0.106 \\ 
+  &  &  & (0.148) \\ 
+  polluted\_threAbove:concentrated\_75CONCENTRATED &  &  &  \\ 
+  &  &  & (0.000) \\ 
+  TCZ\_cTCZ:PeriodAfter:polluted\_threAbove & $-$0.214 & $-$0.165 & $-$0.227$^{*}$ \\ 
+  & (0.274) & (0.162) & (0.124) \\ 
+  TCZ\_cTCZ:PeriodAfter:concentrated\_25CONCENTRATED & 0.088 &  &  \\ 
+  & (0.203) &  &  \\ 
+  TCZ\_cTCZ:polluted\_threAbove:concentrated\_25CONCENTRATED &  &  &  \\ 
+  & (0.000) &  &  \\ 
+  PeriodAfter:polluted\_threAbove:concentrated\_25CONCENTRATED & 0.140 &  &  \\ 
+  & (0.277) &  &  \\ 
+  TCZ\_cTCZ:PeriodAfter:polluted\_threAbove:concentrated\_25CONCENTRATED & 0.134 &  &  \\ 
+  & (0.300) &  &  \\ 
+  TCZ\_cTCZ:PeriodAfter:concentrated\_50CONCENTRATED &  & 0.031 &  \\ 
+  &  & (0.166) &  \\ 
+  TCZ\_cTCZ:polluted\_threAbove:concentrated\_50CONCENTRATED &  &  &  \\ 
+  &  & (0.000) &  \\ 
+  PeriodAfter:polluted\_threAbove:concentrated\_50CONCENTRATED &  & 0.041 &  \\ 
+  &  & (0.146) &  \\ 
+  TCZ\_cTCZ:PeriodAfter:polluted\_threAbove:concentrated\_50CONCENTRATED &  & 0.087 &  \\ 
+  &  & (0.189) &  \\ 
+  TCZ\_cTCZ:PeriodAfter:concentrated\_75CONCENTRATED &  &  & $-$0.301 \\ 
+  &  &  & (0.185) \\ 
+  TCZ\_cTCZ:polluted\_threAbove:concentrated\_75CONCENTRATED &  &  &  \\ 
+  &  &  & (0.000) \\ 
+  PeriodAfter:polluted\_threAbove:concentrated\_75CONCENTRATED &  &  & $-$0.180 \\ 
+  &  &  & (0.165) \\ 
+  TCZ\_cTCZ:PeriodAfter:polluted\_threAbove:concentrated\_75CONCENTRATED &  &  & 0.459$^{**}$ \\ 
+  &  &  & (0.207) \\ 
  \hline \\[-1.8ex] 
-City fixed effects & Yes \\ 
-Industry fixed effects & Yes \\ 
-Yes fixed effects & Yes \\ 
-Observations & 30,676 \\ 
-R$^{2}$ & 0.346 \\ 
+City-year fixed effects & Yes & Yes & Yes \\ 
+Industry-year fixed effects & Yes & Yes & Yes \\ 
+City-industry fixed effects & Yes & Yes & Yes \\ 
+Observations & 30,676 & 30,676 & 30,676 \\ 
+R$^{2}$ & 0.852 & 0.851 & 0.851 \\ 
 \hline 
 \hline \\[-1.8ex] 
-\textit{Note:}  & \multicolumn{1}{l}{$^{*}$p$<$0.1; $^{**}$p$<$0.05; $^{***}$p$<$0.01} \\ 
- & \multicolumn{1}{l}{Heteroskedasticity-robust standard errors in parentheses} \\ 
- & \multicolumn{1}{l}{are clustered by city} \\ 
+\textit{Note:}  & \multicolumn{3}{l}{$^{*}$p$<$0.1; $^{**}$p$<$0.05; $^{***}$p$<$0.01} \\ 
+ & \multicolumn{3}{l}{Heteroskedasticity-robust standard errors in parentheses} \\ 
+ & \multicolumn{3}{l}{are clustered by city} \\ 
 \end{tabular} 
 \end{table} 

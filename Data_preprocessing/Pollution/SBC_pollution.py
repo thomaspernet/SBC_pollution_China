@@ -404,7 +404,6 @@ def metafunction(df_original,
     df_asif_preprocessing_ = df_asif_preprocessing.loc[lambda x:
                                                        ~x['cityen'].isin(
                                                            city_to_exclude)]
-    return df_asif_preprocessing_
     # Compute nb of SOE by industry-year and get mean share
     # Compute output of SOE by industry-year and get mean share
     if soe:
@@ -415,28 +414,28 @@ def metafunction(df_original,
                            'SOE'
                            ]
                           )
-                 .agg(newID=('newID', 'count'),
+                 .agg(#newID=('newID', 'count'),
                       output_fcit=('output_fcit', 'sum'),
                       capital_fcit=('capital_fcit', 'sum'),
                       labour_fcit=('labour_fcit', 'sum')
                       )
                  .unstack(fill_value=0)
-                 .assign(count_=lambda x: x.iloc[:, 0] + x.iloc[:, 1],
-                         total_o=lambda x: x.iloc[:, 2] + x.iloc[:, 3],
-                         total_k=lambda x: x.iloc[:, 4] + x.iloc[:, 5],
-                         total_l=lambda x: x.iloc[:, 6] + x.iloc[:, 7],
-                         count_SOE=lambda x: x.iloc[:, 1] / x.iloc[:, -4],
-                         out_share_SOE=lambda x: x.iloc[:, 3] / x.iloc[:, -4],
-                         cap_share_SOE=lambda x: x.iloc[:, 5] / x.iloc[:, -4],
-                         lab_share_SOE=lambda x: x.iloc[:, 7] / x.iloc[:, -4],
-                         count_private=lambda x: 1 - x.iloc[:, -4],
-                         )
+                 .assign(#count_=lambda x: x.iloc[:, 0] + x.iloc[:, 1],
+                         total_o=lambda x: x.iloc[:, 0] + x.iloc[:, 1],
+                         total_k=lambda x: x.iloc[:, 2] + x.iloc[:, 3],
+                         total_l=lambda x: x.iloc[:, 4] + x.iloc[:, 5],
+                         #count_SOE=lambda x: x.iloc[:, 1] / x.iloc[:, -4],
+                         out_share_SOE=lambda x: x.iloc[:, 1] /  x['total_o'],
+                         cap_share_SOE=lambda x: x.iloc[:, 3] /  x['total_k'],
+                         lab_share_SOE=lambda x: x.iloc[:, 5] /  x['total_l'],
+                         #count_private=lambda x: 1 - x.iloc[:, -4],
+                        )
                  .groupby(level=1)
-                 .agg(count_SOE=('count_SOE', 'mean'),
+                 .agg(#count_SOE=('count_SOE', 'mean'),
                       out_share_SOE=('out_share_SOE', 'mean'),
                       cap_share_SOE=('cap_share_SOE', 'mean'),
                       lab_share_SOE=('lab_share_SOE', 'mean'),
-                      count_private=('count_private', 'mean')
+                 #     #count_private=('count_private', 'mean')
                       )
                  .reset_index()
                  )
@@ -599,7 +598,7 @@ def metafunction(df_original,
             "TCZ": "TCZ_c",
             "tso2_mandate_c": "target_c",
         })
-        .reindex(columns=order_columns)
+
     )
 
     if soe:
@@ -634,7 +633,7 @@ def metafunction(df_original,
     df_temp = df_temp.loc[lambda x:(x['tso2_cit'] > 500)
                           &
                           (x['tso2_cit'] < 2276992)
-                          ]
+                          ].reindex(columns=order_columns)
 
     # Compute fixed effect
 
