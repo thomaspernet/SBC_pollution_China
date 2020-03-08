@@ -15,7 +15,7 @@ token.pickle
 token_coda.json
 
 ### test -> install jupytex easier for versioning
-*.ipynb
+#*.ipynb
 
 # Distribution / packaging
 .Python
