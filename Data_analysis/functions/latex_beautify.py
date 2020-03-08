@@ -1,7 +1,7 @@
 import re
 
 
-def beautify(table_number):
+def beautify(table_number, constraint = True):
     """
     """
     table_in = "table_{}.txt".format(table_number)
@@ -16,6 +16,45 @@ def beautify(table_number):
 
     r_tfp = r"^\s\spolluted\\_threAbove\:PeriodAfter\:SOESOE\s"
 
+    r_foreign = \
+    r"\sTCZ\\_cTCZ\s" \
+    r"\s\sPeriodAfter\s|" \
+    r"\s\sout\\_share\\_SOE\s|" \
+    r"\s\sout\\_share\\_for\s|" \
+    r"\s\scap\\_share\\_SOE\s|" \
+    r"\s\scap\\_share\\_for\s|" \
+    r"\s\slab\\_share\\_SOE\s|" \
+    r"\s\slab\\_share\\_for\s|" \
+    r"\s\sTCZ\\_cTCZ\:polluted\\_threAbove\s|" \
+    r"\s\sTCZ\\_cTCZ\:PeriodAfter\s|" \
+    r"\s\sTCZ\\_cTCZ\:out\\_share\\_for|" \
+    r"\s\sTCZ\\_cTCZ\:out\\_share\\_SOE|" \
+    r"\s\sTCZ\\_cTCZ\:cap\\_share\\_for|" \
+    r"\s\sTCZ\\_cTCZ\:cap\\_share\\_SOE|" \
+    r"\s\sTCZ\\_cTCZ\:lab\\_share\\_for|" \
+    r"\s\sTCZ\\_cTCZ\:lab\\_share\\_SOE|" \
+    r"\s\sPeriodAfter\:polluted\\_threAbove\s|" \
+    r"\s\sPeriodAfter\:out\\_share\\_for|" \
+    r"\s\sPeriodAfter\:out\\_share\\_SOE|" \
+    r"\s\sPeriodAfter\:cap\\_share\\_for|" \
+    r"\s\sPeriodAfter\:cap\\_share\\_SOE|" \
+    r"\s\sPeriodAfter\:lab\\_share\\_for|" \
+    r"\s\sPeriodAfter\:lab\\_share\\_SOE|" \
+    r"\s\sTCZ\\_cTCZ\:polluted\\_threAbove\:out\\_share\\_for|" \
+    r"\s\sTCZ\\_cTCZ\:polluted\\_threAbove\:out\\_share\\_SOE|" \
+    r"\s\sTCZ\\_cTCZ\:polluted\\_threAbove\:cap\\_share\\_for|" \
+    r"\s\sTCZ\\_cTCZ\:polluted\\_threAbove\:cap\\_share\\_SOE|" \
+    r"\s\sTCZ\\_cTCZ\:polluted\\_threAbove\:lab\\_share\\_for|" \
+    r"\s\sTCZ\\_cTCZ\:polluted\\_threAbove\:lab\\_share\\_SOE|" \
+    r"\s\sPeriodAfter\:polluted\\_threAbove\:out\\_share\\_for|" \
+    r"\s\sPeriodAfter\:polluted\\_threAbove\:out\\_share\\_SOE|" \
+    r"\s\sPeriodAfter\:polluted\\_threAbove\:cap\\_share\\_for|" \
+    r"\s\sPeriodAfter\:polluted\\_threAbove\:cap\\_share\\_SOE|" \
+    r"\s\sPeriodAfter\:polluted\\_threAbove\:lab\\_share\\_for|" \
+    r"\s\sPeriodAfter\:polluted\\_threAbove\:lab\\_share\\_SOE"
+
+
+
     with open(table_in, "r") as f:
         lines = f.readlines()
 
@@ -23,10 +62,13 @@ def beautify(table_number):
 
         # Remove empty rows
         # First 13 and last 13 rows are headers and footers
-    if table_number == 8: ### we have one more line of fixed effect
-        max_ = 14
+    if constraint:
+        if table_number == 8: ### we have one more line of fixed effect
+            max_ = 14
+        else:
+            max_ = 13
     else:
-        max_ = 13
+        max_ =  15
     for x, line in enumerate(lines[13:-max_]):
         test = bool(re.search(r'\d', line))
         test_parallel = bool(re.search(regex, line))
@@ -45,6 +87,12 @@ def beautify(table_number):
             if rm_c == True:
                     line_to_remove.append(x + 13)
                     line_to_remove.append((x + 13) + 1)
+
+        if constraint == False:
+            test_foreign = bool(re.search(r_foreign, line))
+            if test_foreign == True:
+                line_to_remove.append(x + 13)
+                line_to_remove.append((x + 13) + 1)
 
         #### Remove useless rows additional controls
         if table_number == 3 or table_number == 8:
@@ -69,10 +117,30 @@ def beautify(table_number):
                     line_to_remove.append((x + 13) + 1)
 
 
+
     with open(table_out, "w") as f:
         for x, line in enumerate(lines):
             if x not in line_to_remove:
                 f.write(line)
+
+    ### add ajdust box
+    with open(table_out, 'r') as f:
+        lines = f.readlines()
+
+    for x, line in enumerate(lines):
+        label = bool(re.search(r"label",
+                              line))
+        tabluar = bool(re.search(r"end{tabular}",
+                              line))
+        if label:
+            lines[x] = lines[x].strip() + '\n\\begin{adjustbox}{width=\\textwidth, totalheight=\\textheight-2\\baselineskip,keepaspectratio}\n'
+
+        if tabluar:
+            lines[x] = lines[x].strip() + '\n\\end{adjustbox}\n'
+
+    with open(table_out, "w") as f:
+        for line in lines:
+            f.write(line)
 
                 # Read in the file
     with open(table_out, 'r') as file:
@@ -221,4 +289,4 @@ def beautify(table_number):
     with open(table_out, 'w') as file:
         file.write(lines)
 
-    # return lines
+    ### Add Adjust box
