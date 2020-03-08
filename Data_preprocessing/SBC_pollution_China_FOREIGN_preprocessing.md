@@ -178,7 +178,9 @@ df_China_city_pollution_98_2007.head()
 
 Feel free to add description about the dataset or any usefull information.
 
-Profiling will be available soon for this dataset
+Profiling will be available soon for this dataset.
+
+Note, we use the sheet paper because we made some change in the list of geocode -> more consistent. To replicate our first dataset, we added back the original list of geocode. A matter of consistency
 <!-- #endregion -->
 
 ```sos Collapsed="false" kernel="python3"
@@ -385,18 +387,6 @@ import Pollution.SBC_pollution as sbc
 %load_ext autoreload
 %autoreload 2
 ```
-
-<!-- #region Collapsed="false" kernel="python3" -->
-Note we manually added the foreign share because we changed the TCZ list file, so the number of obs didn't match. Instead, we load the previous data for the paper, construct the share using the metafunction (move the return after the bounce, and then merge back to the original dataset used in the paper
-
-```
-df_final_ = df_final_.merge(
-    share_for
-    .assign(industry = lambda x: 
-            x['industry'].astype('int')),
-    on = 'industry')
-```
-<!-- #endregion -->
 
 ```sos Collapsed="false" kernel="python3"
 %%time
