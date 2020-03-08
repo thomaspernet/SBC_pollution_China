@@ -1,7 +1,7 @@
 import re
 
 
-def beautify(table_number, constraint = True):
+def beautify(table_number, constraint = True, city_industry = False):
     """
     """
     table_in = "table_{}.txt".format(table_number)
@@ -16,7 +16,32 @@ def beautify(table_number, constraint = True):
 
     r_tfp = r"^\s\spolluted\\_threAbove\:PeriodAfter\:SOESOE\s"
 
-    r_concentrated = \
+
+    if city_industry:
+        r_concentrated = \
+    r"\s\sconcentrated\\_25CONCENTRATED|" \
+    r"\s\sconcentrated\\_50CONCENTRATED|" \
+    r"\s\sconcentrated\\_75CONCENTRATED|" \
+    r"\s\sconcentrated\\_85CONCENTRATED|" \
+    r"\s\sTCZ\\_cTCZ\:concentrated\\_25CONCENTRATED|" \
+    r"\s\sTCZ\\_cTCZ\:concentrated\\_50CONCENTRATED|" \
+    r"\s\sTCZ\\_cTCZ\:concentrated\\_75CONCENTRATED|" \
+    r"\s\sTCZ\\_cTCZ\:concentrated\\_85CONCENTRATED|" \
+    r"\s\spolluted\\_threAbove\:concentrated\\_25CONCENTRATED|" \
+    r"\s\spolluted\\_threAbove\:concentrated\\_50CONCENTRATED|" \
+    r"\s\spolluted\\_threAbove\:concentrated\\_75CONCENTRATED|" \
+    r"\s\spolluted\\_threAbove\:concentrated\\_85CONCENTRATED|" \
+    r"\s\sPeriodAfter\:concentrated\\_25CONCENTRATED|" \
+    r"\s\sPeriodAfter\:concentrated\\_50CONCENTRATED|" \
+    r"\s\sPeriodAfter\:concentrated\\_75CONCENTRATED|" \
+    r"\s\sPeriodAfter\:concentrated\\_85CONCENTRATED|" \
+    r"\s\sTCZ\\_cTCZ\:polluted\\_threAbove\:concentrated\\_25CONCENTRATED|" \
+    r"\s\sTCZ\\_cTCZ\:polluted\\_threAbove\:concentrated\\_50CONCENTRATED|" \
+    r"\s\sTCZ\\_cTCZ\:polluted\\_threAbove\:concentrated\\_75CONCENTRATED|" \
+    r"\s\sTCZ\\_cTCZ\:polluted\\_threAbove\:concentrated\\_85CONCENTRATED"
+
+    else:
+        r_concentrated = \
     r"\s\sconcentrated\\_25CONCENTRATED|" \
     r"\s\sconcentrated\\_50CONCENTRATED|" \
     r"\s\sconcentrated\\_75CONCENTRATED|" \
@@ -42,8 +67,15 @@ def beautify(table_number, constraint = True):
     r"\s\sTCZ\\_cTCZ\:polluted\\_threAbove\:concentrated\\_75CONCENTRATED|" \
     r"\s\sTCZ\\_cTCZ\:polluted\\_threAbove\:concentrated\\_85CONCENTRATED"
 
-
-    r_concentrated_con = \
+    if city_industry:
+        r_concentrated_con = \
+    r"\s\sHerfindahl|" \
+    r"\s\sTCZ\\_cTCZ\:Herfindahl|" \
+    r"\s\sPeriodAfter\:Herfindahl|" \
+    r"\s\spolluted\\_threAbove\:Herfindahl|" \
+    r"\s\sTCZ\\_cTCZ\:polluted\\_threAbove\:Herfindahl"
+    else:
+        r_concentrated_con = \
     r"\s\sTCZ\\_cTCZ\:Herfindahl|" \
     r"\s\sPeriodAfter\:Herfindahl|" \
     r"\s\sPeriodAfter\:polluted\\_threAbove\:Herfindahl|" \
