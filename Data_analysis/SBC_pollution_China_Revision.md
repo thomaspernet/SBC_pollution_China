@@ -20,6 +20,9 @@ Here is the link with all the revisions:
 
 - https://coda.io/d/SoftBudgetConstraint_dD-uOwatzMS/Revision_suYyi#_luGfQ
 
+- Notebook also available here in html format:
+    - https://htmlpreview.github.io/?https://github.com/thomaspernet/SBC_pollution_China/blob/master/Data_analysis/SBC_pollution_China_Revision.html
+
 ## Revision table 
 
 | Comments_by | URL      | People          | Comments                                                                                                                                                                                                                                                 |
@@ -249,7 +252,7 @@ except:
 lb.beautify(table_number = 1, constraint = False)
 ```
 
-<!-- #region Collapsed="false" kernel="python3" -->
+<!-- #region Collapsed="true" kernel="python3" -->
 ## Foreign firms
 
  In particular, my main concern is that the author could explore the heterogeneity of response within the private sector and not only between the private and the state-owned sectors. Indeed, foreign firms may react differently to environmental constraints. They may be less sensitive to environmental regulations because they have cleaner technologies (see for instance: Dean et al., 2009, "Are Foreign Investors Attracted to Weak Environmental Regulations? Evidence from China", Journal of Development Economics). Another possibility is that foreign firms could negotiate with local authorities to obtain preferential treatment concerning the enforcement of environmental regulation (Wang et al., 2003, quoted in the paper)
@@ -303,7 +306,7 @@ df_final <- df_final %>%
 head(df_final)
 ```
 
-<!-- #region kernel="R" Collapsed="false" -->
+<!-- #region kernel="R" Collapsed="true" -->
 ## 02 Foreign-SOE
 
 In this table, foreign and SOE share
@@ -404,7 +407,7 @@ except:
 lb.beautify(table_number = 2, constraint = False)
 ```
 
-<!-- #region kernel="python3" Collapsed="false" -->
+<!-- #region kernel="python3" Collapsed="true" -->
 ## 03: Foreign
 
 In this table, only foreign share
@@ -497,7 +500,7 @@ except:
 lb.beautify(table_number = 3, constraint = False)
 ```
 
-<!-- #region Collapsed="false" kernel="python3" -->
+<!-- #region Collapsed="true" kernel="python3" -->
 ## Herfindalh
 
 It might be the case that large firms can influence local authorities concerning the effective enforcement of environmental regulation. If possible, I suggest to identify in each city 
@@ -514,7 +517,7 @@ In the first part, we compute the Herfindhal at the industry level -> average by
 
 <!-- #endregion -->
 
-<!-- #region kernel="python3" Collapsed="false" -->
+<!-- #region kernel="python3" Collapsed="true" -->
 ## Concentration at the industry level
 <!-- #endregion -->
 
@@ -920,7 +923,7 @@ except:
 lb.beautify(table_number = 6, constraint = False)
 ```
 
-<!-- #region kernel="python3" Collapsed="false" -->
+<!-- #region kernel="python3" Collapsed="true" -->
 ## Herfindhal city-industry
 
 We replicate the above three tables but instead of using the herfindahl at the industry level, we use the industry-city. Since we now have a variation city-industry, we estimate a new coefficient -> `Period * polluted * concentration`
