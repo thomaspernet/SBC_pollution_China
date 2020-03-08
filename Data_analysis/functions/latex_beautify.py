@@ -16,6 +16,44 @@ def beautify(table_number, constraint = True):
 
     r_tfp = r"^\s\spolluted\\_threAbove\:PeriodAfter\:SOESOE\s"
 
+    r_concentrated = \
+    r"\s\sconcentrated\\_25CONCENTRATED|" \
+    r"\s\sconcentrated\\_50CONCENTRATED|" \
+    r"\s\sconcentrated\\_75CONCENTRATED|" \
+    r"\s\sconcentrated\\_85CONCENTRATED|" \
+    r"\s\sTCZ\\_cTCZ\:concentrated\\_25CONCENTRATED|" \
+    r"\s\sTCZ\\_cTCZ\:concentrated\\_50CONCENTRATED|" \
+    r"\s\sTCZ\\_cTCZ\:concentrated\\_75CONCENTRATED|" \
+    r"\s\sTCZ\\_cTCZ\:concentrated\\_85CONCENTRATED|" \
+    r"\s\spolluted\\_threAbove\:concentrated\\_25CONCENTRATED|" \
+    r"\s\spolluted\\_threAbove\:concentrated\\_50CONCENTRATED|" \
+    r"\s\spolluted\\_threAbove\:concentrated\\_75CONCENTRATED|" \
+    r"\s\spolluted\\_threAbove\:concentrated\\_85CONCENTRATED|" \
+    r"\s\sPeriodAfter\:concentrated\\_25CONCENTRATED|" \
+    r"\s\sPeriodAfter\:concentrated\\_50CONCENTRATED|" \
+    r"\s\sPeriodAfter\:concentrated\\_75CONCENTRATED|" \
+    r"\s\sPeriodAfter\:concentrated\\_85CONCENTRATED|" \
+    r"\s\sPeriodAfter\:polluted\\_threAbove\:concentrated\\_25CONCENTRATED|" \
+    r"\s\sPeriodAfter\:polluted\\_threAbove\:concentrated\\_50CONCENTRATED|" \
+    r"\s\sPeriodAfter\:polluted\\_threAbove\:concentrated\\_75CONCENTRATED|" \
+    r"\s\sPeriodAfter\:polluted\\_threAbove\:concentrated\\_85CONCENTRATED|" \
+    r"\s\sTCZ\\_cTCZ\:polluted\\_threAbove\:concentrated\\_25CONCENTRATED|" \
+    r"\s\sTCZ\\_cTCZ\:polluted\\_threAbove\:concentrated\\_50CONCENTRATED|" \
+    r"\s\sTCZ\\_cTCZ\:polluted\\_threAbove\:concentrated\\_75CONCENTRATED|" \
+    r"\s\sTCZ\\_cTCZ\:polluted\\_threAbove\:concentrated\\_85CONCENTRATED"
+
+
+    r_concentrated_con = \
+    r"\s\sTCZ\\_cTCZ\:Herfindahl|" \
+    r"\s\sPeriodAfter\:Herfindahl|" \
+    r"\s\sPeriodAfter\:polluted\\_threAbove\:Herfindahl|" \
+    r"\s\sTCZ\\_cTCZ\:polluted\\_threAbove\:Herfindahl"
+
+    #r"\s\sTCZ\\_cTCZ\:PeriodAfter\:concentrated\\_25CONCENTRATED|" \
+    #r"\s\sTCZ\\_cTCZ\:PeriodAfter\:concentrated\\_50CONCENTRATED|" \
+    #r"\s\sTCZ\\_cTCZ\:PeriodAfter\:concentrated\\_75CONCENTRATED|" \
+    #r"\s\sTCZ\\_cTCZ\:PeriodAfter\:concentrated\\_85CONCENTRATED"
+
     r_foreign = \
     r"\sTCZ\\_cTCZ\s" \
     r"\s\sPeriodAfter\s|" \
@@ -91,6 +129,16 @@ def beautify(table_number, constraint = True):
         if constraint == False:
             test_foreign = bool(re.search(r_foreign, line))
             if test_foreign == True:
+                line_to_remove.append(x + 13)
+                line_to_remove.append((x + 13) + 1)
+
+            test_concentrated_con = bool(re.search(r_concentrated_con, line))
+            if test_concentrated_con == True:
+                line_to_remove.append(x + 13)
+                line_to_remove.append((x + 13) + 1)
+
+            test_concentrated = bool(re.search(r_concentrated, line))
+            if test_concentrated == True:
                 line_to_remove.append(x + 13)
                 line_to_remove.append((x + 13) + 1)
 
@@ -264,6 +312,9 @@ def beautify(table_number, constraint = True):
 
         lines = lines.replace('concentrated\_85CONCENTRATED',
         ' \\text{Concencentrated 85}_{i}')
+
+        lines = lines.replace('Herfindahl',
+        ' \\text{Herfindahl}_{i}')
 
         # Additional controls
         lines = lines.replace('Coastal', ' Coastal_c ')
