@@ -68,6 +68,12 @@ gs = connector.open_connection(online_connection = False,
 service = gs.connect_remote('GCP')
 ```
 
+<!-- #region kernel="SoS" Collapsed="false" -->
+## Load SBC_pollution_China from Google Big Query
+
+Feel free to add description about the dataset or any usefull information.
+<!-- #endregion -->
+
 ```sos Collapsed="false" kernel="SoS"
 %put df_final --to R
 
@@ -84,10 +90,16 @@ query = (
 df_final = gcp.upload_data_from_bigquery(query = query, location = 'US')
 ```
 
+<!-- #region kernel="SoS" Collapsed="false" -->
+## Load Herfindahl_China_cic_city from Google Big Query
+
+Feel free to add description about the dataset or any usefull information.
+<!-- #endregion -->
+
 ```sos Collapsed="false" kernel="SoS"
 query_herfindhal = (
           "SELECT * "
-            "FROM China.calcul_herfhindal_2 "
+            "FROM China.Herfindahl_China_cic_city "
 
         )
 df_herfhindal = gcp.upload_data_from_bigquery(query = query_herfindhal,
