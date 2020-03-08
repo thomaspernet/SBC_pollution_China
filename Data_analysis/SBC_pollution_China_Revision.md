@@ -68,7 +68,7 @@ gs = connector.open_connection(online_connection = False,
 service = gs.connect_remote('GCP')
 ```
 
-<!-- #region kernel="SoS" Collapsed="false" -->
+<!-- #region kernel="SoS" Collapsed="true" -->
 ## Load SBC_pollution_China from Google Big Query
 
 Feel free to add description about the dataset or any usefull information.
@@ -90,7 +90,7 @@ query = (
 df_final = gcp.upload_data_from_bigquery(query = query, location = 'US')
 ```
 
-<!-- #region kernel="SoS" Collapsed="false" -->
+<!-- #region kernel="SoS" Collapsed="true" -->
 ## Load Herfindahl_China_cic_city from Google Big Query
 
 Feel free to add description about the dataset or any usefull information.
@@ -138,7 +138,7 @@ head(df_final)
 <!-- #region Collapsed="false" kernel="SoS" -->
 # Comment Empirical analysis:
 
-First of all, notice again that there is no convincing evidence that SOEs shifts the burden of the environmental adaptation to private firms. In most of the cases, there are interaction terms with three or even form variables in the regression equation. My major concern is if the authors have also included all the sublevel interaction terms in the regression. For instance, in equation (1), there is an interaction term of four variables, TCZi, Polluting sectorsk, Period, Share SOEk. However, it seems in table 3 not all the corresponding triple interaction terms (such as TCZi *Polluting sectorsk *Share SOEk) are controlled. 
+First of all, notice again that there is no convincing evidence that SOEs shifts the burden of the environmental adaptation to private firms. In most of the cases, there are interaction terms with three or even form variables in the regression equation. My major concern is if the authors have also included all the sublevel interaction terms in the regression. For instance, in equation (1), there is an interaction term of four variables, TCZi, Polluting sectorsk, Period, Share SOEk. However, it seems in table 3 not all the corresponding triple interaction terms (such as $TCZi *Polluting sectorsk *Share SOEk$) are controlled. 
 
 ## Answers:
 
@@ -158,19 +158,19 @@ import functions.latex_beautify as lb
 ```
 
 <!-- #region Collapsed="true" kernel="python3" -->
-## Redo table 1: All variables: Our new baseline
+## 01: All variables: Our new baseline
 
 Output latex table available here
 
 - https://www.overleaf.com/project/5deca0097e9f3a0001506527
-    - table_1_baseline_revision
+    - 01_baseline_revision
 
 In Google Drive:
 
 ![](https://drive.google.com/uc?export=view&id=14x1fwM2cYZBSwyt2XQmb5t3VzCExUtRH)
 <!-- #endregion -->
 
-<!-- #region kernel="python3" Collapsed="false" -->
+<!-- #region kernel="python3" Collapsed="true" -->
 ### Codes
 <!-- #endregion -->
 
@@ -225,14 +225,6 @@ fe1 <- list(c("City fixed effects", "Yes", "Yes", "Yes", "No", "No", "No"),
              c("City-industry fixed effects", "No", "No", "No", "Yes", "Yes","Yes")
              )
 
-
-```
-
-```sos kernel="R" Collapsed="false"
-summary(t5)
-```
-
-```sos kernel="R" Collapsed="false"
 table_1 <- go_latex(list(
     t0,
     t1,
@@ -257,7 +249,7 @@ except:
 lb.beautify(table_number = 1, constraint = False)
 ```
 
-<!-- #region Collapsed="true" kernel="python3" -->
+<!-- #region Collapsed="false" kernel="python3" -->
 ## Foreign firms
 
  In particular, my main concern is that the author could explore the heterogeneity of response within the private sector and not only between the private and the state-owned sectors. Indeed, foreign firms may react differently to environmental constraints. They may be less sensitive to environmental regulations because they have cleaner technologies (see for instance: Dean et al., 2009, "Are Foreign Investors Attracted to Weak Environmental Regulations? Evidence from China", Journal of Development Economics). Another possibility is that foreign firms could negotiate with local authorities to obtain preferential treatment concerning the enforcement of environmental regulation (Wang et al., 2003, quoted in the paper)
@@ -312,19 +304,21 @@ head(df_final)
 ```
 
 <!-- #region kernel="R" Collapsed="false" -->
-## Table X: Foreign-SOE
+## 02 Foreign-SOE
+
+In this table, foreign and SOE share
 
 Output latex table available here
 
 - https://www.overleaf.com/project/5deca0097e9f3a0001506527
-    - table_X_foreign_SOE
+    - 02_foreign_SOE
 
 In Google Drive:
 
 ![](https://drive.google.com/uc?export=view&id=1KttrgK0dzsnh4-9bInpyvtKgTOyXewPo)
 <!-- #endregion -->
 
-<!-- #region kernel="R" Collapsed="true" -->
+<!-- #region kernel="R" Collapsed="false" -->
 ### Code
 <!-- #endregion -->
 
@@ -411,19 +405,21 @@ lb.beautify(table_number = 2, constraint = False)
 ```
 
 <!-- #region kernel="python3" Collapsed="false" -->
-## Table X: Foreign
+## 03: Foreign
+
+In this table, only foreign share
 
 Output latex table available here
 
 - https://www.overleaf.com/project/5deca0097e9f3a0001506527
-    - table_X_foreign
+    - 03_foreign
 
 In Google Drive:
 
 ![](https://drive.google.com/uc?export=view&id=1LMR9Os_Koz9FtdXMZLTb6lLC_Loj9c5z)
 <!-- #endregion -->
 
-<!-- #region kernel="python3" Collapsed="true" -->
+<!-- #region kernel="python3" Collapsed="false" -->
 ### Code
 <!-- #endregion -->
 
@@ -501,7 +497,7 @@ except:
 lb.beautify(table_number = 3, constraint = False)
 ```
 
-<!-- #region Collapsed="true" kernel="python3" -->
+<!-- #region Collapsed="false" kernel="python3" -->
 ## Herfindalh
 
 It might be the case that large firms can influence local authorities concerning the effective enforcement of environmental regulation. If possible, I suggest to identify in each city 
@@ -512,10 +508,19 @@ It might be the case that large firms can influence local authorities concerning
 
 * https://en.wikipedia.org/wiki/Herfindahl%E2%80%93Hirschman_Index
 
-Below, we can use the database with the foreign share
+We can use the herfindhal index at the industry level, so that we are consistent with our strategy -> the interaction term is at the industry level and not city-industry level. 
 
-The Herfindhal index should be at the industry level, not city industry
+In the first part, we compute the Herfindhal at the industry level -> average by industry. In the second part, we use the city industry, therefore, we estimate one more coefficient with the pair fixed effect
+
 <!-- #endregion -->
+
+<!-- #region kernel="python3" Collapsed="false" -->
+## Concentration at the industry level
+<!-- #endregion -->
+
+```sos kernel="SoS" Collapsed="false"
+import numpy as np
+```
 
 ```sos kernel="SoS" Collapsed="false"
 df_herfhindal_ind = (df_herfhindal
@@ -533,11 +538,6 @@ df_herfhindal_final = df_final.merge(df_herfhindal_ind,
                                      )
 df_herfhindal_final['df_herfhindal_final'] = df_herfhindal_final['Herfindahl'].fillna(
     0)
-df_herfhindal_final['Herfindahl'].describe()
-```
-
-```sos kernel="SoS" Collapsed="false"
-df_herfhindal_final.groupby('_merge')['_merge'].count()
 ```
 
 ```sos kernel="SoS" Collapsed="false"
@@ -603,20 +603,22 @@ head(df_final)
 ```
 
 <!-- #region kernel="R" Collapsed="false" -->
-## Table X: Sector Concentration
+### 04: Sector Concentration
+
+Interaction with a concentration dummy
 
 Output latex table available here
 
 - https://www.overleaf.com/project/5deca0097e9f3a0001506527
-    - table_X_concentrated_indu
+    - 04_concentrated_indu
 
 In Google Drive:
 
 ![](https://drive.google.com/uc?export=view&id=11gh-qQ9lqaltNdXyhfQgYmdtpay677Ap)
 <!-- #endregion -->
 
-<!-- #region kernel="R" Collapsed="true" -->
-### Code
+<!-- #region kernel="R" Collapsed="false" -->
+#### Code
 <!-- #endregion -->
 
 ```sos kernel="R" Collapsed="false"
@@ -700,24 +702,31 @@ import functions.latex_beautify as lb
 ```
 
 ```sos kernel="python3" Collapsed="false"
+import os
+try:
+    os.remove("table_4.tex")
+except:
+    pass
 lb.beautify(table_number = 4, constraint = False)
 ```
 
 <!-- #region kernel="python3" Collapsed="false" -->
-## Table X: Sector Concentration and output share SOE
+### 05: Sector Concentration and output share SOE
+
+Interaction with a concentration dummy and include SOE output share
 
 Output latex table available here
 
 - https://www.overleaf.com/project/5deca0097e9f3a0001506527
-    - table_X_concentrated_ind_SOE
+    - 05_concentrated_ind_SOE
 
 In Google Drive:
 
 ![](https://drive.google.com/uc?export=view&id=1I4jFvbnP8CvXbt020gpFWPH6si9pkpS3)
 <!-- #endregion -->
 
-<!-- #region kernel="python3" Collapsed="true" -->
-### Code
+<!-- #region kernel="python3" Collapsed="false" -->
+#### Code
 <!-- #endregion -->
 
 ```sos kernel="R" Collapsed="false"
@@ -803,24 +812,31 @@ table_1 <- go_latex(list(
 ```
 
 ```sos kernel="python3" Collapsed="false"
+import os
+try:
+    os.remove("table_5.tex")
+except:
+    pass
 lb.beautify(table_number = 5, constraint = False)
 ```
 
 <!-- #region kernel="python3" Collapsed="false" -->
-## Table X: Sector Concentration,continuous var and share SOE
+### 06: Sector Concentration,continuous var and share SOE
+
+Use Herfindhal value and interact it with different SOE share
 
 Output latex table available here
 
 - https://www.overleaf.com/project/5deca0097e9f3a0001506527
-    - table_X_conc_ind_soe
+    - 06_conc_ind_soe
 
 In Google Drive:
 
 ![](https://drive.google.com/uc?export=view&id=1I3cyQya2ctpWqxDrXkDUtpznZSaRaH7J)
 <!-- #endregion -->
 
-<!-- #region kernel="python3" Collapsed="true" -->
-### Code
+<!-- #region kernel="python3" Collapsed="false" -->
+#### Code
 <!-- #endregion -->
 
 ```sos kernel="R" Collapsed="false"
@@ -896,19 +912,22 @@ table_1 <- go_latex(list(
 ```
 
 ```sos kernel="python3" Collapsed="false"
+import os
+try:
+    os.remove("table_6.tex")
+except:
+    pass
 lb.beautify(table_number = 6, constraint = False)
 ```
 
-<!-- #region kernel="python3" Collapsed="true" -->
+<!-- #region kernel="python3" Collapsed="false" -->
 ## Herfindhal city-industry
+
+We replicate the above three tables but instead of using the herfindahl at the industry level, we use the industry-city. Since we now have a variation city-industry, we estimate a new coefficient -> `Period * polluted * concentration`
 <!-- #endregion -->
 
 ```sos kernel="SoS" Collapsed="false"
 import numpy as np
-```
-
-```sos kernel="SoS" Collapsed="false"
-
 ```
 
 ```sos Collapsed="false" kernel="SoS"
@@ -921,10 +940,6 @@ df_herfhindal_final = df_final.merge(df_herfhindal,
 df_herfhindal_final['df_herfhindal_final'] = df_herfhindal_final['Herfindahl'].fillna(
     0)
 df_herfhindal_final['Herfindahl'].describe()
-```
-
-```sos kernel="SoS" Collapsed="false"
-df_herfhindal_final.groupby('_merge')['_merge'].count()
 ```
 
 ```sos Collapsed="false" kernel="SoS"
@@ -957,14 +972,6 @@ concentrated_85 = lambda x: np.where(x['Herfindahl'] > 0.916762,
 )
 ```
 
-```sos Collapsed="false" kernel="SoS"
-df_herfhindal_final.groupby('concentrated_75')['concentrated_75'].count()
-```
-
-```sos Collapsed="false" kernel="SoS"
-df_herfhindal_final.groupby('concentrated_85')['concentrated_85'].count()
-```
-
 ```sos Collapsed="false" kernel="R"
 path = "functions/SBC_pollution_R.R"
 source(path)
@@ -989,29 +996,76 @@ df_final <- df_herfhindal_final %>%
 head(df_final)
 ```
 
+<!-- #region kernel="R" Collapsed="false" -->
+### 07: Sector Concentration: city-industry
+
+Interaction with a concentration dummy
+
+Output latex table available here
+
+- https://www.overleaf.com/project/5deca0097e9f3a0001506527
+    - 07_concentration_city_ind
+
+In Google Drive:
+
+![](https://drive.google.com/uc?export=view&id=1FkB09EXfUmsxOsHd8FfWN4rDoX8Gtq97)
+<!-- #endregion -->
+
+<!-- #region kernel="R" Collapsed="false" -->
+#### Code
+<!-- #endregion -->
+
 ```sos Collapsed="false" kernel="R"
 t1 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre * concentrated_25
                   + output_fcit + capital_fcit + labour_fcit
                   |
-             FE_t_c + FE_t_i + FE_c_i | 0 |
+             cityen +  year + industry | 0 |
              industry, data= df_final,
              exactDOF=TRUE)
 
 t2 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period *polluted_thre * concentrated_50
                   + output_fcit + capital_fcit + labour_fcit
                   |
-             FE_t_c + FE_t_i + FE_c_i | 0 |
+             cityen +  year + industry | 0 |
              industry, data= df_final,
              exactDOF=TRUE)
 
 t3 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period *polluted_thre * concentrated_75
                   + output_fcit + capital_fcit + labour_fcit
                   |
-               FE_t_c + FE_t_i + FE_c_i | 0 |
+               cityen +  year + industry | 0 |
              industry, data= df_final,
              exactDOF=TRUE)
 
 t4 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period *polluted_thre * concentrated_85
+                  + output_fcit + capital_fcit + labour_fcit
+                  |
+               cityen +  year + industry | 0 |
+             industry, data= df_final,
+             exactDOF=TRUE)
+
+t5 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre * concentrated_25
+                  + output_fcit + capital_fcit + labour_fcit
+                  |
+             FE_t_c + FE_t_i + FE_c_i | 0 |
+             industry, data= df_final,
+             exactDOF=TRUE)
+
+t6 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period *polluted_thre * concentrated_50
+                  + output_fcit + capital_fcit + labour_fcit
+                  |
+             FE_t_c + FE_t_i + FE_c_i | 0 |
+             industry, data= df_final,
+             exactDOF=TRUE)
+
+t7 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period *polluted_thre * concentrated_75
+                  + output_fcit + capital_fcit + labour_fcit
+                  |
+               FE_t_c + FE_t_i + FE_c_i | 0 |
+             industry, data= df_final,
+             exactDOF=TRUE)
+
+t8 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period *polluted_thre * concentrated_85
                   + output_fcit + capital_fcit + labour_fcit
                   |
                FE_t_c + FE_t_i + FE_c_i | 0 |
@@ -1019,18 +1073,18 @@ t4 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period *polluted_thre * concentrated_
              exactDOF=TRUE)
 
 fe1 <- list(
-             c("City-year fixed effects", "Yes", "Yes", "Yes", "Yes"),
-             c("Industry-year fixed effects", "Yes", "Yes", "Yes", "Yes"),
-             c("City-industry fixed effects", "Yes", "Yes", "Yes", "Yes")
+             c("City-year fixed effects", "No", "No", "No", "No", "Yes", "Yes", "Yes", "Yes"),
+             c("Industry-year fixed effects", "No", "No", "No", "No", "Yes", "Yes", "Yes", "Yes"),
+             c("City-industry fixed effects", "No", "No", "No", "No", "Yes", "Yes", "Yes", "Yes")
              )
 
 table_1 <- go_latex(list(
-    t1, t2, t3,t4
+    t1, t2, t3,t4, t5, t6, t7, t8
 ),
-    title='Baseline results revision',
+    title='Baseline results revision: concentration city-industry',
     addFE=fe1,
     save=TRUE,
-    name="table_4.txt"
+    name="table_2.txt"
 )
 ```
 
@@ -1042,39 +1096,107 @@ import functions.latex_beautify as lb
 ```
 
 ```sos Collapsed="false" kernel="python3"
-lb.beautify(table_number = 4, constraint = False)
+import os
+try:
+    os.remove("table_2.tex")
+except:
+    pass
+lb.beautify(table_number = 2, constraint = False, city_industry = True)
 ```
 
-```sos Collapsed="false" kernel="R"
-t1 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period *polluted_thre * concentrated_25
+<!-- #region kernel="python3" Collapsed="false" -->
+### 08: Sector Concentration and output share: city-industry
+
+Interaction with a concentration dummy and include SOE output share
+
+Output latex table available here
+
+- https://www.overleaf.com/project/5deca0097e9f3a0001506527
+    - 08_concentrated_ind_SOE_city_ind
+
+In Google Drive:
+
+![](https://drive.google.com/uc?export=view&id=1_WqkGLG26pLXNNRPRRDRmQII4p7n0mIp)
+<!-- #endregion -->
+
+<!-- #region kernel="python3" Collapsed="false" -->
+#### Code
+<!-- #endregion -->
+
+```sos kernel="R" Collapsed="false"
+t1 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre * concentrated_25
+           +TCZ_c * Period *polluted_thre * out_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
-             FE_t_c + FE_t_i + FE_c_i | 0 |
-             cityen, data= df_final,
+             cityen +  year + industry | 0 |
+             industry, data= df_final,
              exactDOF=TRUE)
 
 t2 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period *polluted_thre * concentrated_50
+           +TCZ_c * Period *polluted_thre * out_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
-             FE_t_c + FE_t_i + FE_c_i | 0 |
-             cityen, data= df_final,
+             cityen +  year + industry | 0 |
+             industry, data= df_final,
              exactDOF=TRUE)
 
 t3 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period *polluted_thre * concentrated_75
+           +TCZ_c * Period *polluted_thre * out_share_SOE
+                  + output_fcit + capital_fcit + labour_fcit
+                  |
+               cityen +  year + industry | 0 |
+             industry, data= df_final,
+             exactDOF=TRUE)
+
+t4 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period *polluted_thre * concentrated_85
+           +TCZ_c * Period *polluted_thre * out_share_SOE
+           +TCZ_c * Period *polluted_thre * out_share_SOE
+                  + output_fcit + capital_fcit + labour_fcit
+                  |
+               cityen +  year + industry | 0 |
+             industry, data= df_final,
+             exactDOF=TRUE)
+
+t5 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre * concentrated_25
+           +TCZ_c * Period *polluted_thre * out_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i | 0 |
-             cityen, data= df_final,
+             industry, data= df_final,
+             exactDOF=TRUE)
+
+t6 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period *polluted_thre * concentrated_50
+           +TCZ_c * Period *polluted_thre * out_share_SOE
+                  + output_fcit + capital_fcit + labour_fcit
+                  |
+             FE_t_c + FE_t_i + FE_c_i | 0 |
+             industry, data= df_final,
+             exactDOF=TRUE)
+
+t7 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period *polluted_thre * concentrated_75
+           +TCZ_c * Period *polluted_thre * out_share_SOE
+                  + output_fcit + capital_fcit + labour_fcit
+                  |
+               FE_t_c + FE_t_i + FE_c_i | 0 |
+             industry, data= df_final,
+             exactDOF=TRUE)
+
+t8 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period *polluted_thre * concentrated_85
+           +TCZ_c * Period *polluted_thre * out_share_SOE
+                  + output_fcit + capital_fcit + labour_fcit
+                  |
+               FE_t_c + FE_t_i + FE_c_i | 0 |
+             industry, data= df_final,
              exactDOF=TRUE)
 
 fe1 <- list(
-             c("City-year fixed effects", "Yes", "Yes", "Yes"),
-             c("Industry-year fixed effects", "Yes", "Yes", "Yes"),
-             c("City-industry fixed effects", "Yes", "Yes", "Yes")
+             c("City-year fixed effects", "No", "No", "No", "No", "Yes", "Yes", "Yes", "Yes"),
+             c("Industry-year fixed effects", "No", "No", "No", "No", "Yes", "Yes", "Yes", "Yes"),
+             c("City-industry fixed effects", "No", "No", "No", "No", "Yes", "Yes", "Yes", "Yes")
              )
 
 table_1 <- go_latex(list(
-    t1, t2, t3
+    t1, t2, t3,t4, t5, t6, t7, t8
 ),
     title='Baseline results revision',
     addFE=fe1,
@@ -1083,16 +1205,111 @@ table_1 <- go_latex(list(
 )
 ```
 
-```sos Collapsed="false" kernel="python3"
-lb.beautify(table_number = 3)
+```sos kernel="python3" Collapsed="false"
+import os
+try:
+    os.remove("table_3.tex")
+except:
+    pass
+lb.beautify(table_number = 3, constraint = False, city_industry = True)
 ```
 
-```sos Collapsed="false" kernel="R"
-t1 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period *polluted_thre * out_share_SOE
+<!-- #region kernel="python3" Collapsed="false" -->
+### 09: Sector Concentration, continuous var and share SOE: city-industry
+
+Use Herfindhal value and interact it with different SOE share
+
+Output latex table available here
+
+- https://www.overleaf.com/project/5deca0097e9f3a0001506527
+    - 09_conc_ind_soe_city_ind
+
+In Google Drive:
+
+![](https://drive.google.com/uc?export=view&id=18qgSIo_0ZTeuXXDsf6MTnEDZjYJoD0ab)
+<!-- #endregion -->
+
+<!-- #region kernel="python3" Collapsed="false" -->
+#### Code
+<!-- #endregion -->
+
+```sos kernel="R" Collapsed="false"
+t1 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre * Herfindahl
+           +TCZ_c * Period *polluted_thre * out_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
-             FE_t_c + FE_t_i + FE_c_i| 0 |
-             cityen, data= df_final %>% filter(concentrated == 'CONCENTRATED'),
+             cityen +  year + industry | 0 |
+             industry, data= df_final,
              exactDOF=TRUE)
-summary(t1)
+
+t2 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre * Herfindahl
+           +TCZ_c * Period *polluted_thre * cap_share_SOE
+                  + output_fcit + capital_fcit + labour_fcit
+                  |
+             cityen +  year + industry | 0 |
+             industry, data= df_final,
+             exactDOF=TRUE)
+
+t3 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre * Herfindahl
+           +TCZ_c * Period *polluted_thre * lab_share_SOE
+                  + output_fcit + capital_fcit + labour_fcit
+                  |
+             cityen +  year + industry | 0 |
+             industry, data= df_final,
+             exactDOF=TRUE)
+
+t4 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre * Herfindahl
+           +TCZ_c * Period *polluted_thre * out_share_SOE
+                  + output_fcit + capital_fcit + labour_fcit
+                  |
+              FE_t_c + FE_t_i + FE_c_i | 0 |
+             industry, data= df_final,
+             exactDOF=TRUE)
+
+t5 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre * Herfindahl
+           +TCZ_c * Period *polluted_thre * cap_share_SOE
+                  + output_fcit + capital_fcit + labour_fcit
+                  |
+              FE_t_c + FE_t_i + FE_c_i | 0 |
+             industry, data= df_final,
+             exactDOF=TRUE)
+
+t6 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre * Herfindahl
+           +TCZ_c * Period *polluted_thre * lab_share_SOE
+                  + output_fcit + capital_fcit + labour_fcit
+                  |
+              FE_t_c + FE_t_i + FE_c_i | 0 |
+             industry, data= df_final,
+             exactDOF=TRUE)
+
+fe1 <- list(c("City fixed effects", "Yes", "Yes", "Yes", "No", "No", "No"),
+             c("Industry fixed effects", "Yes", "Yes", "Yes", "No", "No", "No"),
+             c("Yes fixed effects","Yes", "Yes", "Yes", "No", "No", "No"),
+             c("City-year fixed effects", "No", "No", "No","Yes", "Yes","Yes"),
+             c("Industry-year fixed effects", "No", "No", "No", "Yes", "Yes","Yes"),
+             c("City-industry fixed effects", "No", "No", "No", "Yes", "Yes","Yes")
+             )
+
+table_1 <- go_latex(list(
+    t1,
+    t2,
+    t3,
+    t4,
+    t5,
+    t6
+),
+    title='Baseline results revision: concentration',
+    addFE=fe1,
+    save=TRUE,
+    name="table_4.txt"
+)
+```
+
+```sos kernel="python3" Collapsed="false"
+import os
+try:
+    os.remove("table_4.tex")
+except:
+    pass
+lb.beautify(table_number = 4, constraint = False, city_industry = True)
 ```
