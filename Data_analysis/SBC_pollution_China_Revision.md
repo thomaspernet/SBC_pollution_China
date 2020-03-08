@@ -44,7 +44,7 @@ The proposal is available [here](https://drive.google.com/open?id=1tmSFvdUMXcL3v
 ### Equation to estimate
 
 $$
-\begin{aligned} \text { SO2 emission }_{i k t}=& \alpha T C Z_{i} \times \text { Polluted sectors }_{k} \times \text { post } \\ &+\beta T C Z_{i} \times \text { Polluted sectors }_{k} \times \text { post } \times \text { Share SOE }_{k} \\ & +\theta {X}_{i k t}+\nu_{c i}+\lambda_{t i} +\phi_{t c} +\epsilon_{ikt} \end{aligned}
+\begin{aligned} \text { SO2 emission }_{i k t}=& \alpha T C Z_{i} \times \text { Polluted sectors }_{k} \times \text { post } \\ &+\beta T C Z_{i} \times \text { Polluted sectors }_{k} \times \text { post } \times \text { Share Foreign }_{k} \\ & +\theta {X}_{i k t}+\nu_{c i}+\lambda_{t i} +\phi_{t c} +\epsilon_{ikt} \end{aligned}
 $$
 
 city-industry; time-industry and time-city
@@ -54,6 +54,8 @@ city-industry; time-industry and time-city
 # Revision
 
 ## Load the data
+
+
 <!-- #endregion -->
 
 ```sos Collapsed="false" kernel="SoS"
