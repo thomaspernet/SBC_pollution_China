@@ -13,6 +13,8 @@ data
 token.pickle
 *.pickle
 token_coda.json
+*.txt
+*.tex
 
 ### test -> install jupytex easier for versioning
 #*.ipynb
