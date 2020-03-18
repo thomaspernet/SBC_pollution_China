@@ -8,11 +8,26 @@ def beautify(table_number, constraint = True, city_industry = False):
     table_out = "table_{}.tex".format(table_number)
     regex = r"^\s\sas\.factor\(year\)200|^\s\sTCZ\\_cTCZ\:as\.factor\(year\)200"
 
-    r_tcz = r"\s\sTCZ\\_cTCZ\:PeriodAfter\:count\\_SOE|\s\sTCZ\\_cTCZ\:PeriodAfter\:out\\_share\\_SOE|\s\sTCZ\\_cTCZ\:PeriodAfter\:cap\\_share\\_SOE|\s\sTCZ\\_cTCZ\:PeriodAfter\:lab\\_share\\_SOE|\s\sTCZ\\_cTCZ\:PeriodAfter\:SOESOE"
+    r_tcz = \
+    r"\s\sTCZ\\_cTCZ\:PeriodAfter\:count\\_SOE|"
+    r"\s\sTCZ\\_cTCZ\:PeriodAfter\:out\\_share\\_SOE|"
+    r"\s\sTCZ\\_cTCZ\:PeriodAfter\:cap\\_share\\_SOE|"
+    r"\s\sTCZ\\_cTCZ\:PeriodAfter\:lab\\_share\\_SOE|"
+    r"\s\sTCZ\\_cTCZ\:PeriodAfter\:SOESOE"
 
-    r_spz = r"\s\sPeriodAfter\:count\\_SOE\:SPZ|\s\sPeriodAfter\:out\\_share\\_SOE\:SPZ|\s\sPeriodAfter\:cap\\_share\\_SOE\:SPZ|\s\sPeriodAfter\:lab\\_share\\_SOE\:SPZ|\s\sPeriodAfter\:SOESOE\:SPZ"
+    r_spz = \
+    r"\s\sPeriodAfter\:count\\_SOE\:SPZ|"
+    r"\s\sPeriodAfter\:out\\_share\\_SOE\:SPZ|"
+    r"\s\sPeriodAfter\:cap\\_share\\_SOE\:SPZ|"
+    r"\s\sPeriodAfter\:lab\\_share\\_SOE\:SPZ|"
+    r"\s\sPeriodAfter\:SOESOE\:SPZ"
 
-    r_coa = r"\s\sPeriodAfter\:count\\_SOE\:Coastal|\s\sPeriodAfter\:out\\_share\\_SOE\:Coastal|\s\sPeriodAfter\:cap\\_share\\_SOE\:Coastal|\s\sPeriodAfter\:lab\\_share\\_SOE\:Coastal|\s\sPeriodAfter\:SOESOE\:Coastal"
+    r_coa = \
+    r"\s\sPeriodAfter\:count\\_SOE\:Coastal|"
+    r"\s\sPeriodAfter\:out\\_share\\_SOE\:Coastal|"
+    r"\s\sPeriodAfter\:cap\\_share\\_SOE\:Coastal|"
+    r"\s\sPeriodAfter\:lab\\_share\\_SOE\:Coastal|"
+    r"\s\sPeriodAfter\:SOESOE\:Coastal"
 
     r_tfp = r"^\s\spolluted\\_threAbove\:PeriodAfter\:SOESOE\s"
 
