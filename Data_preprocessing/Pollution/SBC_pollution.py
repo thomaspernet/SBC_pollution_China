@@ -65,6 +65,7 @@ def prepare_ASIF(df_original, industry_agg):
                                  columns={"cityen_correct": "cityen",
                                           "citycn_correct": "citycn",
                                           "output": "output_fcit",
+                                          "input": "input_fcit",
                                           "fa_net": "capital_fcit",
                                           "employment": "labour_fcit"}
                              )
@@ -321,7 +322,7 @@ def metafunction(df_original,
                  industry_agg='indu_2',
                  symetric=True,
                  bounce=False,
-                 soe = False):
+                 soe=False):
     """Prepare data for paper on SBC and pollution in China
 
     The program works as follow:
@@ -408,77 +409,79 @@ def metafunction(df_original,
     # Compute output of SOE by industry-year and get mean share
     if soe:
         share_SOE = (df_asif_preprocessing_
-                 .loc[lambda x:x['year'].isin(['2002', '2003', '2004', '2005'])]
-                 .groupby(['year',
-                           'industry',
-                           'SOE'
-                           ]
-                          )
-                 .agg(#newID=('newID', 'count'),
-                      output_fcit=('output_fcit', 'sum'),
-                      capital_fcit=('capital_fcit', 'sum'),
-                      labour_fcit=('labour_fcit', 'sum')
-                      )
-                 .unstack(fill_value=0)
-                 .assign(#count_=lambda x: x.iloc[:, 0] + x.iloc[:, 1],
+                     .loc[lambda x:x['year'].isin(['2002', '2003', '2004',
+                      '2005'])]
+                     .groupby(['year',
+                               'industry',
+                               'SOE'
+                               ]
+                              )
+                     .agg(  # newID=('newID', 'count'),
+                         output_fcit=('output_fcit', 'sum'),
+                         capital_fcit=('capital_fcit', 'sum'),
+                         labour_fcit=('labour_fcit', 'sum')
+                     )
+                     .unstack(fill_value=0)
+                     .assign(  # count_=lambda x: x.iloc[:, 0] + x.iloc[:, 1],
                          total_o=lambda x: x.iloc[:, 0] + x.iloc[:, 1],
                          total_k=lambda x: x.iloc[:, 2] + x.iloc[:, 3],
                          total_l=lambda x: x.iloc[:, 4] + x.iloc[:, 5],
                          #count_SOE=lambda x: x.iloc[:, 1] / x.iloc[:, -4],
-                         out_share_SOE=lambda x: x.iloc[:, 1] /  x['total_o'],
-                         cap_share_SOE=lambda x: x.iloc[:, 3] /  x['total_k'],
-                         lab_share_SOE=lambda x: x.iloc[:, 5] /  x['total_l'],
+                         out_share_SOE=lambda x: x.iloc[:, 1] / x['total_o'],
+                         cap_share_SOE=lambda x: x.iloc[:, 3] / x['total_k'],
+                         lab_share_SOE=lambda x: x.iloc[:, 5] / x['total_l'],
                          #count_private=lambda x: 1 - x.iloc[:, -4],
-                        )
-                 .groupby(level=1)
-                 .agg(#count_SOE=('count_SOE', 'mean'),
-                      out_share_SOE=('out_share_SOE', 'mean'),
-                      cap_share_SOE=('cap_share_SOE', 'mean'),
-                      lab_share_SOE=('lab_share_SOE', 'mean'),
-                 #     #count_private=('count_private', 'mean')
-                      )
-                 .reset_index()
-                 )
+                     )
+                     .groupby(level=1)
+                     .agg(  # count_SOE=('count_SOE', 'mean'),
+                         out_share_SOE=('out_share_SOE', 'mean'),
+                         cap_share_SOE=('cap_share_SOE', 'mean'),
+                         lab_share_SOE=('lab_share_SOE', 'mean'),
+                         #     #count_private=('count_private', 'mean')
+                     )
+                     .reset_index()
+                     )
     # Share foreign/SOE
     else:
         share_for = (df_asif_preprocessing_
-                 .loc[lambda x:x['year'].isin(['2002', '2003', '2004', '2005'])]
-                 .groupby(['year',
-                           'industry',
-                           'FOREIGN'
-                           ]
-                          )
-                 .agg(
-                     output_fcit=('output_fcit', 'sum'),
-                     capital_fcit=('capital_fcit', 'sum'),
-                     labour_fcit=('labour_fcit', 'sum')
-                 )
-                 .unstack(fill_value=0)
-                 .assign(
-                     total_o=lambda x: x.iloc[:, 0] +
-                     x.iloc[:, 1] + x.iloc[:, 2],
-                     total_k=lambda x: x.iloc[:, 3] +
-                     x.iloc[:, 4] + x.iloc[:, 5],
-                     total_l=lambda x: x.iloc[:, 6] +
-                     x.iloc[:, 7] + x.iloc[:, 8],
-                     out_share_for=lambda x: x.iloc[:, 1] / x['total_o'],
-                     out_share_soe1=lambda x: x.iloc[:, 2] / x['total_o'],
-                     cap_share_for=lambda x: x.iloc[:, 4] / x['total_k'],
-                     cap_share_soe1=lambda x: x.iloc[:, 5] / x['total_k'],
-                     lab_share_for=lambda x: x.iloc[:, 7] / x['total_l'],
-                     lab_share_soe1=lambda x: x.iloc[:, 8] / x['total_l']
-                 )
-                 .groupby(level=1)
-                 .agg(
-                     out_share_for=('out_share_for', 'mean'),
-                     out_share_soe1=('out_share_soe1', 'mean'),
-                     cap_share_for=('cap_share_for', 'mean'),
-                     cap_share_soe1=('cap_share_soe1', 'mean'),
-                     lab_share_for=('lab_share_for', 'mean'),
-                     lab_share_soe1=('lab_share_soe1', 'mean')
-                 )
-                 .reset_index()
-                 )
+                     .loc[lambda x:x['year'].isin(['2002', '2003', '2004',
+                      '2005'])]
+                     .groupby(['year',
+                               'industry',
+                               'FOREIGN'
+                               ]
+                              )
+                     .agg(
+                         output_fcit=('output_fcit', 'sum'),
+                         capital_fcit=('capital_fcit', 'sum'),
+                         labour_fcit=('labour_fcit', 'sum')
+                     )
+                     .unstack(fill_value=0)
+                     .assign(
+                         total_o=lambda x: x.iloc[:, 0] +
+                         x.iloc[:, 1] + x.iloc[:, 2],
+                         total_k=lambda x: x.iloc[:, 3] +
+                         x.iloc[:, 4] + x.iloc[:, 5],
+                         total_l=lambda x: x.iloc[:, 6] +
+                         x.iloc[:, 7] + x.iloc[:, 8],
+                         out_share_for=lambda x: x.iloc[:, 1] / x['total_o'],
+                         out_share_soe1=lambda x: x.iloc[:, 2] / x['total_o'],
+                         cap_share_for=lambda x: x.iloc[:, 4] / x['total_k'],
+                         cap_share_soe1=lambda x: x.iloc[:, 5] / x['total_k'],
+                         lab_share_for=lambda x: x.iloc[:, 7] / x['total_l'],
+                         lab_share_soe1=lambda x: x.iloc[:, 8] / x['total_l']
+                     )
+                     .groupby(level=1)
+                     .agg(
+                         out_share_for=('out_share_for', 'mean'),
+                         out_share_soe1=('out_share_soe1', 'mean'),
+                         cap_share_for=('cap_share_for', 'mean'),
+                         cap_share_soe1=('cap_share_soe1', 'mean'),
+                         lab_share_for=('lab_share_for', 'mean'),
+                         lab_share_soe1=('lab_share_soe1', 'mean')
+                     )
+                     .reset_index()
+                     )
     # Compute pollution
 
     if industry_agg == 'cic':
@@ -491,7 +494,7 @@ def metafunction(df_original,
                      .loc[lambda x: ~x['tso2'].isin([0])]
                      .loc[lambda x: x['year'].isin(['2002'])]
                      .rename(columns={col_rename: industry_agg})
-                     .groupby(industry_agg)['tso2']
+                     .groupby(industry_agg)[['tso2', 'toutput']]
                      .mean()
                      .reset_index()
                      .assign(
@@ -511,13 +514,28 @@ def metafunction(df_original,
                              x["tso2"] > 68070.78,
                              "Above",
                              "Below",
-                         )
+                         ),
+                         pollution_intensity_i=lambda x: x['tso2'] / \
+                         x['toutput']
                      )
                      .assign(industry=lambda x: x[industry_agg].astype('str'))
                      .rename(columns={
                          'tso2': 'tso2_i'
                      })
                      )
+
+    # Input/output indutry -> try sector
+
+    va_sector = (df_asif_preprocessing_
+                 .loc[lambda x: x['year'].isin(['2002'])]
+                 # .rename(columns={col_rename: industry_agg})
+                 .groupby('industry')[['output_fcit', 'input_fcit']]
+                 .sum()
+                 .assign(va_i=lambda x: x['output_fcit'] - x['input_fcit'])
+                 .rename(columns={'output_fcit': 'output_i',
+                                  'input_fcit': 'input_i'})
+                 .reset_index()
+                 )
 
     pollution = (df_China_city_pollution_98_2007
                  .loc[lambda x: ~x['tso2'].isin([0])]
@@ -527,6 +545,7 @@ def metafunction(df_original,
                      'tso2': 'tso2_cit',
                      'tCOD': 'tCOD_cit',
                      'twaste_water': 'twaste_water_cit',
+                     # 'toutput' : 'toutput_cit'
                  }
                  )
                  .assign(industry=lambda x: x['industry'].astype('str')
@@ -564,11 +583,6 @@ def metafunction(df_original,
             on="geocode4_corr",
             how="inner",
         )
-        #.merge(
-        #    share_SOE,
-        #    on="industry",
-        #    how="inner",
-        #)
         .merge(pollution, on=[
             'year',
             'cityen',
@@ -584,6 +598,11 @@ def metafunction(df_original,
             on="cityen",
             how="inner",
         )
+        #.merge(
+        #    va_sector,
+        #    on='industry',
+        #    how='left'
+        #)
         .assign(Period=lambda x: np.where(x["year"] > 2005,
                                           "After", "Before"),
                 TCZ=lambda x: np.where(x["TCZ"] == '1',
@@ -647,4 +666,4 @@ def metafunction(df_original,
 
     df_final["FE_t_c"] = pd.factorize(df_final["year"] + df_final["cityen"])[0]
 
-    return df_final
+    return df_final, va_sector
