@@ -1,7 +1,7 @@
 import re
 
 
-def beautify(table_number, constraint = True, city_industry = False):
+def beautify(table_number, constraint = True, city_industry = False, new_row= False):
     """
     """
     table_in = "table_{}.txt".format(table_number)
@@ -207,6 +207,14 @@ def beautify(table_number, constraint = True, city_industry = False):
     with open(table_out, 'r') as f:
         lines = f.readlines()
 
+    if new_row != False:
+        temp  = [' & '.join(new_row)]
+        temp.append('\n \\\\[-1.8ex]')
+        temp.append('\\\\\n ')
+        #temp.append('\n \\\\[-1.8ex]\n')
+        new_row_ = [temp[1] + temp[0] + temp[2] #+ temp[3]
+        ]
+
     for x, line in enumerate(lines):
         label = bool(re.search(r"label",
                               line))
@@ -217,6 +225,25 @@ def beautify(table_number, constraint = True, city_industry = False):
 
         if tabluar:
             lines[x] = lines[x].strip() + '\n\\end{adjustbox}\n'
+
+    for x, line in enumerate(lines):
+        if x == 11:
+            lines[x] = lines[x].strip() + new_row_[0]
+
+    ### Add header
+    len_line = len(lines)
+    for x, line in enumerate(lines):
+        if x ==1:
+            header= "\documentclass[12pt]{article} \n\\usepackage[utf8]{inputenc}\n" \
+            "\\usepackage{booktabs,caption,threeparttable, siunitx, adjustbox}\n\n" \
+            "\\begin{document}"
+            lines[x] =  header
+
+        if x == len_line- 1:
+            footer = "\n\n\\end{document}"
+            lines[x]  =  lines[x].strip() + footer
+
+
 
     with open(table_out, "w") as f:
         for line in lines:
@@ -365,6 +392,7 @@ def beautify(table_number, constraint = True, city_industry = False):
         lines = lines.replace('SOESOE', ' SOE ')
         lines = lines.replace('Coastal_c TRUE', ' Coastal_c ')
         lines = lines.replace(' : ', ' \\times ')
+
 
 
 
