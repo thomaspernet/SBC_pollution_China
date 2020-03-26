@@ -11,6 +11,8 @@ data
 *.csv
 *.gz
 token.pickle
+Data_analysis/*.pickle
+Data_preprocessing/*.pickle
 *.pickle
 token_coda.json
 *.txt
