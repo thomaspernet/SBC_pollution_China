@@ -228,7 +228,7 @@ lb.beautify(table_number = 2, constraint = False, city_industry = False)
 ```
 
 <!-- #region kernel="R" -->
-## City-industry
+## Level City-industry
 
 We proceed as follow:
 - Step 1: Compute the share [output, capital, employment] by city, industry, ownership
@@ -864,6 +864,224 @@ for i in range(1,3):
 ```
 
 <!-- #region kernel="python3" -->
+## Level industry
+
+We proceed as follow:
+- Step 1: Compute the share [output, capital, employment] by city, industry, ownership
+- Step 2: Compute the average of step 1 by city, industry
+- Step 3: if Step 1 > step 2, then Above
+
+Three threshold:
+
+- mean
+- median
+- decile .3
+- decile .7
+<!-- #endregion -->
+
+<!-- #region kernel="python3" -->
+### Code load data
+<!-- #endregion -->
+
+```sos kernel="python3"
+query_share = """ WITH sum_cio AS (
+  SELECT 
+    case WHEN ownership = 'Foreign' THEN 'FOREIGN' WHEN ownership = 'SOE' THEN 'SOE' ELSE 'DOMESTIC' END AS OWNERSHIP, 
+    SUM(output / 10000000) as output_cio, 
+    SUM(fa_net / 10000000) as fa_net_cio, 
+    SUM(employment / 100000) as employment_cio,
+    cic 
+  FROM 
+    China.asif_firm_china 
+  WHERE 
+    year >= 2002 
+    AND year < 2006 
+    AND output > 0 
+    AND fa_net > 0 
+    AND employment > 0 
+  GROUP BY 
+    OWNERSHIP, 
+    cic
+) 
+SELECT 
+  * 
+FROM 
+  (
+    WITH sum_ci AS(
+      SELECT 
+        SUM(output_cio) as output_ci, 
+        SUM(fa_net_cio) as fa_net_ci, 
+        SUM(employment_cio) as employment_ci, 
+        cic AS cic_b 
+      FROM 
+        sum_cio 
+      GROUP BY 
+        cic
+    ) 
+    SELECT 
+      * 
+    FROM 
+      (
+        WITH share_cio AS(
+          SELECT 
+            OWNERSHIP, 
+            output_cio / output_ci AS share_output_cio, 
+            fa_net_cio / fa_net_ci AS share_fa_net_cio, 
+            employment_cio / employment_ci AS share_employement_cio, 
+            geocode4_corr, 
+            cic 
+          FROM 
+            sum_cio 
+            LEFT JOIN sum_ci ON sum_cio.cic = sum_ci.cic_b
+        ) 
+        SELECT 
+          * 
+        FROM 
+          (
+            WITH share_io AS (
+              SELECT 
+                AVG(share_output_cio) AS share_output_ci_mean, 
+                AVG(share_fa_net_cio) AS share_fa_net_ci_mean, 
+                AVG(share_employement_cio) AS share_employement_ci_mean, 
+                cic AS cic_b, 
+                OWNERSHIP AS OWNERSHIP_b 
+              FROM 
+                share_cio 
+              GROUP BY 
+                cic, 
+                OWNERSHIP
+            ) 
+            SELECT 
+              * 
+            FROM 
+              (
+                WITH percentile AS (
+                  SELECT 
+                    cic, 
+                    OWNERSHIP, 
+                    
+                    ANY_VALUE(share_output_ci_03) AS share_output_ci_03,
+                    ANY_VALUE(share_output_ci_median) AS share_output_ci_median, 
+                    ANY_VALUE(share_output_ci_07) AS share_output_ci_07, 
+                    
+                    ANY_VALUE(share_fa_net_ci_03) AS share_fa_net_ci_03,
+                    ANY_VALUE(share_fa_net_ci_median) AS share_fa_net_ci_median, 
+                    ANY_VALUE(share_fa_net_ci_07) AS share_fa_net_ci_07, 
+                    
+                    ANY_VALUE(share_employement_ci_03) AS share_employement_ci_03,
+                    ANY_VALUE(share_employement_ci_median) AS share_employement_ci_median, 
+                    ANY_VALUE(share_employement_ci_07) AS share_employement_ci_07 
+                  FROM 
+                    (
+                      SELECT 
+                        cic, 
+                        OWNERSHIP, 
+                        
+                        PERCENTILE_CONT(share_output_cio, 0.3) 
+                        OVER(PARTITION BY cic, OWNERSHIP) AS share_output_ci_03,
+                        PERCENTILE_CONT(share_output_cio, 0.5) 
+                        OVER(PARTITION BY cic, OWNERSHIP) AS share_output_ci_median, 
+                        PERCENTILE_CONT(share_output_cio, 0.7) 
+                        OVER(PARTITION BY cic, OWNERSHIP) AS share_output_ci_07, 
+                        
+                        PERCENTILE_CONT(share_fa_net_cio, 0.3) 
+                        OVER(PARTITION BY cic, OWNERSHIP) AS share_fa_net_ci_03,
+                        PERCENTILE_CONT(share_fa_net_cio, 0.5) 
+                        OVER(PARTITION BY cic, OWNERSHIP) AS share_fa_net_ci_median, 
+                        PERCENTILE_CONT(share_fa_net_cio, 0.7) 
+                        OVER(PARTITION BY cic, OWNERSHIP) AS share_fa_net_ci_07, 
+                        
+                        PERCENTILE_CONT(share_employement_cio, 0.3) 
+                        OVER(PARTITION BY cic, OWNERSHIP) AS share_employement_ci_03,
+                        PERCENTILE_CONT(share_employement_cio, 0.5) 
+                        OVER(PARTITION BY cic, OWNERSHIP) AS share_employement_ci_median, 
+                        PERCENTILE_CONT(share_employement_cio, 0.7) 
+                        OVER(PARTITION BY cic, OWNERSHIP) AS share_employement_ci_07 
+                      FROM 
+                        share_cio
+                    ) 
+                  GROUP BY 
+                    cic, 
+                    OWNERSHIP
+                ) 
+                SELECT 
+                  * 
+                FROM 
+                  (
+                    WITH avg_pct AS(
+                      SELECT 
+                        cic_b, 
+                        OWNERSHIP_b, 
+                        share_output_ci_mean, 
+                        share_fa_net_ci_mean, 
+                        share_employement_ci_mean, 
+                        share_output_ci_median, 
+                        share_output_ci_03, 
+                        share_output_ci_07, 
+                        share_fa_net_ci_median, 
+                        share_fa_net_ci_03, 
+                        share_fa_net_ci_07, 
+                        share_employement_ci_median, 
+                        share_employement_ci_03, 
+                        share_employement_ci_07 
+                      FROM 
+                        percentile 
+                        LEFT JOIN share_io ON percentile.cic = share_io.cic_b 
+                        AND percentile.OWNERSHIP = share_io.OWNERSHIP_b
+                    ) 
+                    SELECT 
+                      geocode4_corr, 
+                      cic AS industry, 
+                      OWNERSHIP, 
+                      share_output_ci_mean,
+                      CASE WHEN share_output_cio > share_output_ci_mean THEN 
+                      'ABOVE' ELSE 'BELOW' END AS output_dominated_mean, 
+                      CASE WHEN share_output_cio > share_output_ci_median THEN 
+                      'ABOVE' ELSE 'BELOW' END AS output_dominated_median, 
+                      CASE WHEN share_output_cio > share_output_ci_03 THEN 
+                      'ABOVE' ELSE 'BELOW' END AS output_dominated_03,
+                      CASE WHEN share_output_cio > share_output_ci_07 THEN 
+                      'ABOVE' ELSE 'BELOW' END AS output_dominated_07, 
+                      
+                      
+                      share_fa_net_ci_mean, 
+                      CASE WHEN share_fa_net_cio > share_fa_net_ci_mean THEN 
+                      'ABOVE' ELSE 'BELOW' END AS capital_dominated_mean, 
+                      CASE WHEN share_fa_net_cio > share_fa_net_ci_median THEN 
+                      'ABOVE' ELSE 'BELOW' END AS capital_dominated_median, 
+                      CASE WHEN share_fa_net_cio > share_fa_net_ci_03 THEN 
+                      'ABOVE' ELSE 'BELOW' END AS capital_dominated_03,
+                      CASE WHEN share_fa_net_cio > share_fa_net_ci_07 THEN 
+                      'ABOVE' ELSE 'BELOW' END AS capital_dominated_07, 
+                      
+                      share_employement_ci_mean, 
+                      CASE WHEN share_employement_cio > share_employement_ci_mean THEN 
+                      'ABOVE' ELSE 'BELOW' END AS employement_dominated_mean, 
+                      CASE WHEN share_employement_cio > share_employement_ci_median THEN
+                      'ABOVE' ELSE 'BELOW' END AS employement_dominated_median, 
+                      CASE WHEN share_employement_cio > share_employement_ci_03 THEN 
+                      'ABOVE' ELSE 'BELOW' END AS employement_dominated_03,
+                      CASE WHEN share_employement_cio > share_employement_ci_07 THEN 
+                      'ABOVE' ELSE 'BELOW' END AS employement_dominated_07, 
+                    FROM 
+                      share_cio 
+                      LEFT JOIN avg_pct ON share_cio.cic = avg_pct.cic_b 
+                      AND share_cio.OWNERSHIP = avg_pct.OWNERSHIP_b 
+                    ORDER BY 
+                      OWNERSHIP, 
+                      cic
+                  )
+              )
+          )
+      )
+  )
+
+"""
+df_share = gcp.upload_data_from_bigquery(query = query_share,
+                                         location = 'US')
+```
+
+<!-- #region kernel="python3" -->
 ### Industry
 
 Output latex table available here
@@ -883,6 +1101,22 @@ In Google Drive:
 In Google Drive:
 
 ![](https://drive.google.com/uc?export=view&id=)
+<!-- #endregion -->
+
+<!-- #region kernel="python3" -->
+## Level City-industry
+
+We proceed as follow:
+- Step 1: Compute the share [output, capital, employment] by city, industry, ownership
+- Step 2: Compute the average of step 1 by city, industry
+- Step 3: if Step 1 > step 2, then Above
+
+Three threshold:
+
+- mean
+- median
+- decile .3
+- decile .7
 <!-- #endregion -->
 
 <!-- #region kernel="python3" -->
