@@ -53,7 +53,7 @@ $$
 city-industry; time-industry and time-city
 <!-- #endregion -->
 
-<!-- #region kernel="SoS" -->
+<!-- #region kernel="SoS" toc-hr-collapsed=true toc-nb-collapsed=true -->
 # Table 7: improvement
 
 Instead of reconstructed all the data, we compute the:
@@ -86,7 +86,7 @@ Our hypothesis:
         - .3/mean/median/.7
 <!-- #endregion -->
 
-<!-- #region kernel="SoS" -->
+<!-- #region kernel="SoS" toc-hr-collapsed=true toc-nb-collapsed=true -->
 ## Load the data
 <!-- #endregion -->
 
@@ -135,7 +135,7 @@ path = "functions/SBC_pollutiuon_golatex.R"
 source(path)
 ```
 
-<!-- #region kernel="R" -->
+<!-- #region kernel="R" toc-hr-collapsed=true toc-nb-collapsed=true -->
 # Foreign vs Public
 
 1.  Pour montrer que le secteur privé doit compenser l'absence de réaction du secteur public, nous allons procéder de la manière suivante: 
@@ -238,7 +238,7 @@ except:
 lb.beautify(table_number = 2, constraint = False, city_industry = False)
 ```
 
-<!-- #region kernel="R" -->
+<!-- #region kernel="R" toc-hr-collapsed=true toc-nb-collapsed=true -->
 ## Level City-industry
 
 We proceed as follow:
@@ -582,7 +582,7 @@ df_final <- df_final_ci %>%
 head(df_final)
 ```
 
-<!-- #region kernel="R" -->
+<!-- #region kernel="R" toc-hr-collapsed=true toc-nb-collapsed=true -->
 ### City-industry
 
 Output latex table available here
@@ -883,7 +883,7 @@ lb.beautify(table_number = 2,
     new_row = decile)
 ```
 
-<!-- #region kernel="python3" -->
+<!-- #region kernel="python3" toc-hr-collapsed=true toc-nb-collapsed=true -->
 ## Level industry
 
 We proceed as follow:
@@ -1213,7 +1213,7 @@ df_final <- df_final_i %>%
 head(df_final)
 ```
 
-<!-- #region kernel="python3" -->
+<!-- #region kernel="python3" toc-hr-collapsed=true -->
 ### Industry
 
 Output latex table available here
@@ -1511,7 +1511,7 @@ lb.beautify(table_number = 2,
     new_row = decile)
 ```
 
-<!-- #region kernel="python3" -->
+<!-- #region kernel="python3" toc-hr-collapsed=true toc-nb-collapsed=true -->
 ## Level City
 
 We proceed as follow:
@@ -1527,7 +1527,7 @@ Three threshold:
 - decile .7
 <!-- #endregion -->
 
-<!-- #region kernel="python3" -->
+<!-- #region kernel="python3" toc-hr-collapsed=true -->
 ### Code load data
 <!-- #endregion -->
 
@@ -1841,7 +1841,7 @@ df_final <- df_final_c %>%
 head(df_final)
 ```
 
-<!-- #region kernel="python3" -->
+<!-- #region kernel="python3" toc-hr-collapsed=true -->
 ### City
 
 Output latex table available here
@@ -1863,7 +1863,7 @@ In Google Drive:
 ![](https://drive.google.com/uc?export=view&id=1HLh7AsYZ2nbFWSYu9AVImATbyjiejxnq)
 <!-- #endregion -->
 
-<!-- #region kernel="R" -->
+<!-- #region kernel="R" toc-hr-collapsed=true -->
 ### Code
 <!-- #endregion -->
 
