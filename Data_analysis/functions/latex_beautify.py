@@ -1,7 +1,8 @@
 import re
 
 
-def beautify(table_number, constraint = True, city_industry = False, new_row= False):
+def beautify(table_number, constraint = True, city_industry = False,
+ new_row= False, table_nte = None):
     """
     """
     table_in = "table_{}.txt".format(table_number)
@@ -102,7 +103,7 @@ def beautify(table_number, constraint = True, city_industry = False, new_row= Fa
     #r"\s\sTCZ\\_cTCZ\:PeriodAfter\:concentrated\\_85CONCENTRATED"
 
     r_foreign = \
-    r"\sTCZ\\_cTCZ\s" \
+    r"\sTCZ\\_cTCZ\s|" \
     r"\s\sPeriodAfter\s|" \
     r"\s\sout\\_share\\_SOE\s|" \
     r"\s\sout\\_share\\_for\s|" \
@@ -118,7 +119,7 @@ def beautify(table_number, constraint = True, city_industry = False, new_row= Fa
     r"\s\sTCZ\\_cTCZ\:cap\\_share\\_SOE|" \
     r"\s\sTCZ\\_cTCZ\:lab\\_share\\_for|" \
     r"\s\sTCZ\\_cTCZ\:lab\\_share\\_SOE|" \
-    r"\s\sPeriodAfter\:polluted\\_threAbove\s|" \
+    r"\s\sPeriodAfter\:polluted\\_threAbove\|" \
     r"\s\sPeriodAfter\:out\\_share\\_for|" \
     r"\s\sPeriodAfter\:out\\_share\\_SOE|" \
     r"\s\sPeriodAfter\:cap\\_share\\_for|" \
@@ -149,12 +150,12 @@ def beautify(table_number, constraint = True, city_industry = False, new_row= Fa
         # First 13 and last 13 rows are headers and footers
     if constraint:
         if table_number == 8: ### we have one more line of fixed effect
-            max_ = 14
+            max_ = 14 ### need to recalculate
         else:
-            max_ = 13
+            max_ = 13### need to recalculate
     else:
-        max_ =  15
-    for x, line in enumerate(lines[13:-max_]):
+        max_ =  len(lines) - 9#15
+    for x, line in enumerate(lines[13:max_]):
         test = bool(re.search(r'\d', line))
         test_parallel = bool(re.search(regex, line))
         if test == False:
@@ -175,6 +176,7 @@ def beautify(table_number, constraint = True, city_industry = False, new_row= Fa
 
         if constraint == False:
             test_foreign = bool(re.search(r_foreign, line))
+
             if test_foreign == True:
                 line_to_remove.append(x + 13)
                 line_to_remove.append((x + 13) + 1)
@@ -241,9 +243,10 @@ def beautify(table_number, constraint = True, city_industry = False, new_row= Fa
         if tabluar:
             lines[x] = lines[x].strip() + '\n\\end{adjustbox}\n'
 
-    for x, line in enumerate(lines):
-        if x == 11:
-            lines[x] = lines[x].strip() + new_row_[0]
+    if new_row != False:
+        for x, line in enumerate(lines):
+            if x == 11:
+                lines[x] = lines[x].strip() + new_row_[0]
 
     ### Add header
     len_line = len(lines)
@@ -416,3 +419,23 @@ def beautify(table_number, constraint = True, city_industry = False, new_row= Fa
         file.write(lines)
 
     ### Add Adjust box
+
+    ### add table #
+    if table_nte != None:
+        with open(table_out, 'r') as f:
+            lines = f.readlines()
+
+
+        for x, line in enumerate(lines):
+            adjusted = bool(re.search(r"end{adjustbox}",
+                              line))
+
+            if adjusted:
+                lines[x] = lines[x].strip() + "\n\\begin{0} \n \\small \n \\item \\\\ \n{1} \n\\end{2}\n".format(
+                "{tablenotes}",
+                table_nte,
+                "{tablenotes}")
+
+        with open(table_out, "w") as f:
+            for line in lines:
+                f.write(line)

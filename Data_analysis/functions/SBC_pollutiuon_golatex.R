@@ -1,10 +1,17 @@
 library(stargazer)
 
-go_latex <- function(results, title,addFE, save, name){
+go_latex <- function(
+results,
+title,
+dep_var,
+addFE,
+save, name, note = FALSE){
     ### name should includes .txt extension
 
+  if (note != FALSE){
+
   latex <- capture.output(stargazer(results, title=title,
-          dep.var.caption  = "The Dependent variable:",
+          dep.var.caption  = dep_var,
           dep.var.labels.include = FALSE,
           #column.labels = columns_label,
           #column.separate = column_sep,
@@ -14,12 +21,33 @@ go_latex <- function(results, title,addFE, save, name){
           align=FALSE,
           no.space=TRUE,
           keep.stat = c('n', "rsq"),
-          notes = c('Heteroskedasticity-robust standard errors in parentheses',
-                    'are clustered by city'),
+          notes = c(note),
           notes.align = 'l',
           add.lines = addFE
     )
                           )
+
+
+  }else{
+    latex <- capture.output(stargazer(results, title=title,
+          dep.var.caption  = dep_var,
+          dep.var.labels.include = FALSE,
+          #column.labels = columns_label,
+          #column.separate = column_sep,
+          #omit = omit,
+          #order = order,
+          #covariate.labels=covariates,
+          align=FALSE,
+          no.space=TRUE,
+          keep.stat = c('n', "rsq"),
+          omit.table.layout = "n",
+          #notes.align = 'l',
+          add.lines = addFE
+    )
+                          )
+
+  }
+
 
   if (save == TRUE){
 
