@@ -23,7 +23,7 @@ Here is the link with all the revisions:
 - Notebook also available here in html format:
     - https://htmlpreview.github.io/?https://github.com/thomaspernet/SBC_pollution_China/blob/master/Data_analysis/SBC_pollution_China_Revision.html
 
-## Revision table 
+## Revision table 7
 
 | Comments_by | URL      | People          | Comments                                                                                                                                                                                                                                                 |
 |-------------|----------|-----------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -53,7 +53,7 @@ $$
 city-industry; time-industry and time-city
 <!-- #endregion -->
 
-<!-- #region kernel="SoS" toc-hr-collapsed=true toc-nb-collapsed=true -->
+<!-- #region kernel="SoS" toc-hr-collapsed=true toc-nb-collapsed=true kernel="SoS" -->
 # Table 7: improvement
 
 Instead of reconstructed all the data, we compute the:
@@ -84,9 +84,13 @@ Our hypothesis:
     - how to read table: Less observations -> larger coefficients in absolute values
     - The threshold: 
         - .3/mean/median/.7
+        
+## Note
+
+The query below is somehow not accurage. We computed the decile .3 and .7 and use it as threshold. To get the rank, we need to include the upper bound but we did not in table below. To remedy the issue, we use `NTILE` in the notebook `SBC_pollution_China_Revision_table_7_decile`  
 <!-- #endregion -->
 
-<!-- #region kernel="SoS" toc-hr-collapsed=true toc-nb-collapsed=true -->
+<!-- #region kernel="SoS" toc-hr-collapsed=true toc-nb-collapsed=true kernel="SoS" -->
 ## Load the data
 <!-- #endregion -->
 
@@ -135,7 +139,7 @@ path = "functions/SBC_pollutiuon_golatex.R"
 source(path)
 ```
 
-<!-- #region kernel="R" toc-hr-collapsed=true toc-nb-collapsed=true -->
+<!-- #region kernel="R" toc-hr-collapsed=true toc-nb-collapsed=true kernel="SoS" -->
 # Foreign vs Public
 
 1.  Pour montrer que le secteur privé doit compenser l'absence de réaction du secteur public, nous allons procéder de la manière suivante: 
@@ -148,7 +152,7 @@ Nous avons Identifié les secteurs où la part des entreprises publiques est inf
     - on change le seuil de dominance privé/public. Moins il y a de privé, plus la réaction de ce dernier doit être forte.
 <!-- #endregion -->
 
-<!-- #region kernel="R" toc-hr-collapsed=true toc-nb-collapsed=true -->
+<!-- #region kernel="R" toc-hr-collapsed=true toc-nb-collapsed=true kernel="SoS" -->
 ## Replicate table 7
 <!-- #endregion -->
 
@@ -182,17 +186,17 @@ table_1 <- go_latex(list(
     title='SOE dominating sectors',
     addFE=fe1,
     save=TRUE,
-    name="table_1.txt"
+    name="table_2.txt"
 )
 ```
 
 ```sos kernel="python3"
 import os
 try:
-    os.remove("table_1.tex")
+    os.remove("table_2.tex")
 except:
     pass
-lb.beautify(table_number = 1, constraint = False, city_industry = False)
+lb.beautify(table_number = 2, constraint = False, city_industry = False)
 ```
 
 <!-- #region kernel="R" -->
@@ -238,7 +242,7 @@ except:
 lb.beautify(table_number = 2, constraint = False, city_industry = False)
 ```
 
-<!-- #region kernel="R" toc-hr-collapsed=true toc-nb-collapsed=true -->
+<!-- #region kernel="R" toc-hr-collapsed=true toc-nb-collapsed=true kernel="SoS" -->
 ## Level City-industry
 
 We proceed as follow:
@@ -254,14 +258,15 @@ Three threshold:
 - decile .7
 <!-- #endregion -->
 
-<!-- #region kernel="R" toc-hr-collapsed=true toc-nb-collapsed=true -->
+<!-- #region kernel="R" toc-hr-collapsed=true toc-nb-collapsed=true kernel="SoS" -->
 ### code Load data
 <!-- #endregion -->
 
 ```sos kernel="SoS"
 query_share = """ WITH sum_cio AS (
   SELECT 
-    case WHEN ownership = 'Foreign' THEN 'FOREIGN' WHEN ownership = 'SOE' THEN 'SOE' ELSE 'DOMESTIC' END AS OWNERSHIP, 
+    case WHEN ownership = 'Foreign' THEN 'FOREIGN' WHEN ownership = 'SOE' THEN 
+    'SOE' ELSE 'DOMESTIC' END AS OWNERSHIP, 
     SUM(output / 10000000) as output_cio, 
     SUM(fa_net / 10000000) as fa_net_cio, 
     SUM(employment / 100000) as employment_cio, 
@@ -582,7 +587,7 @@ df_final <- df_final_ci %>%
 head(df_final)
 ```
 
-<!-- #region kernel="R" toc-hr-collapsed=true toc-nb-collapsed=true -->
+<!-- #region kernel="R" toc-hr-collapsed=true toc-nb-collapsed=true kernel="SoS" -->
 ### City-industry
 
 Output latex table available here
@@ -604,11 +609,11 @@ In Google Drive:
 ![](https://drive.google.com/uc?export=view&id=1blswKPs4n4wmtaQDWkhs2fnJhVrXrBhx)
 <!-- #endregion -->
 
-<!-- #region kernel="R" toc-hr-collapsed=true toc-nb-collapsed=true -->
+<!-- #region kernel="R" toc-hr-collapsed=true toc-nb-collapsed=true kernel="SoS" -->
 ### Code
 <!-- #endregion -->
 
-<!-- #region kernel="R" toc-hr-collapsed=true toc-nb-collapsed=true -->
+<!-- #region kernel="R" toc-hr-collapsed=true toc-nb-collapsed=true kernel="SoS" -->
 #### SOE
 <!-- #endregion -->
 
@@ -745,7 +750,7 @@ lb.beautify(table_number = 2,
     new_row = decile)
 ```
 
-<!-- #region kernel="R" toc-hr-collapsed=true toc-nb-collapsed=true -->
+<!-- #region kernel="R" toc-hr-collapsed=true toc-nb-collapsed=true kernel="SoS" -->
 #### Private
 <!-- #endregion -->
 
@@ -883,7 +888,7 @@ lb.beautify(table_number = 2,
     new_row = decile)
 ```
 
-<!-- #region kernel="python3" toc-hr-collapsed=true toc-nb-collapsed=true -->
+<!-- #region kernel="python3" toc-hr-collapsed=true toc-nb-collapsed=true kernel="SoS" -->
 ## Level industry
 
 We proceed as follow:
@@ -899,7 +904,7 @@ Three threshold:
 - decile .7
 <!-- #endregion -->
 
-<!-- #region kernel="python3" toc-hr-collapsed=true toc-nb-collapsed=true -->
+<!-- #region kernel="python3" toc-hr-collapsed=true toc-nb-collapsed=true kernel="SoS" -->
 ### Code load data
 <!-- #endregion -->
 
@@ -1189,6 +1194,11 @@ df_final_i.shape
 
 ```sos kernel="SoS"
 df_final_i.groupby([
+                  'output_dominated_03'])['output_dominated_03'].count()
+```
+
+```sos kernel="SoS"
+df_final_i.groupby([
                   'output_dominated_mean'])['output_dominated_mean'].count()
 df_final_i.groupby([
                   'output_dominated_median'])['output_dominated_median'].count()
@@ -1213,7 +1223,7 @@ df_final <- df_final_i %>%
 head(df_final)
 ```
 
-<!-- #region kernel="python3" toc-hr-collapsed=true -->
+<!-- #region kernel="python3" toc-hr-collapsed=true kernel="SoS" -->
 ### Industry
 
 Output latex table available here
@@ -1235,11 +1245,11 @@ In Google Drive:
 ![](https://drive.google.com/uc?export=view&id=1i9S4bJOCBoiTiclbPSG0YImyQzU3sqz5)
 <!-- #endregion -->
 
-<!-- #region kernel="R" toc-hr-collapsed=true toc-nb-collapsed=true -->
+<!-- #region kernel="R" toc-hr-collapsed=true toc-nb-collapsed=true kernel="SoS" -->
 ### Code
 <!-- #endregion -->
 
-<!-- #region kernel="R" toc-hr-collapsed=true toc-nb-collapsed=true -->
+<!-- #region kernel="R" toc-hr-collapsed=true toc-nb-collapsed=true kernel="SoS" -->
 #### SOE
 <!-- #endregion -->
 
@@ -1373,7 +1383,7 @@ lb.beautify(table_number = 2,
     new_row = decile)
 ```
 
-<!-- #region kernel="R" toc-hr-collapsed=true toc-nb-collapsed=true -->
+<!-- #region kernel="R" toc-hr-collapsed=true toc-nb-collapsed=true kernel="SoS" -->
 #### Private
 <!-- #endregion -->
 
@@ -1511,7 +1521,7 @@ lb.beautify(table_number = 2,
     new_row = decile)
 ```
 
-<!-- #region kernel="python3" toc-hr-collapsed=true toc-nb-collapsed=true -->
+<!-- #region kernel="python3" toc-hr-collapsed=true toc-nb-collapsed=true kernel="SoS" -->
 ## Level City
 
 We proceed as follow:
@@ -1527,7 +1537,7 @@ Three threshold:
 - decile .7
 <!-- #endregion -->
 
-<!-- #region kernel="python3" toc-hr-collapsed=true -->
+<!-- #region kernel="python3" toc-hr-collapsed=true kernel="SoS" -->
 ### Code load data
 <!-- #endregion -->
 
@@ -1841,7 +1851,7 @@ df_final <- df_final_c %>%
 head(df_final)
 ```
 
-<!-- #region kernel="python3" toc-hr-collapsed=true -->
+<!-- #region kernel="python3" toc-hr-collapsed=true kernel="SoS" -->
 ### City
 
 Output latex table available here
@@ -1863,11 +1873,11 @@ In Google Drive:
 ![](https://drive.google.com/uc?export=view&id=1HLh7AsYZ2nbFWSYu9AVImATbyjiejxnq)
 <!-- #endregion -->
 
-<!-- #region kernel="R" toc-hr-collapsed=true -->
+<!-- #region kernel="R" toc-hr-collapsed=true kernel="SoS" -->
 ### Code
 <!-- #endregion -->
 
-<!-- #region kernel="R" toc-hr-collapsed=true toc-nb-collapsed=true -->
+<!-- #region kernel="R" toc-hr-collapsed=true toc-nb-collapsed=true kernel="SoS" -->
 #### SOE
 <!-- #endregion -->
 
@@ -2000,7 +2010,7 @@ lb.beautify(table_number = 2,
     new_row = decile)
 ```
 
-<!-- #region kernel="R" toc-hr-collapsed=true toc-nb-collapsed=true -->
+<!-- #region kernel="R" toc-hr-collapsed=true toc-nb-collapsed=true kernel="SoS" -->
 #### Private
 <!-- #endregion -->
 
