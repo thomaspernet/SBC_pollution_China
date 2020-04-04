@@ -1,36 +1,63 @@
 import re
 
+# The idea here is to define regex to remove_control
+# Different option indicating what to keep -> based on the paper objective
 
-def beautify(table_number, constraint = True, city_industry = False,
+def beautify(table_number,
+remove_control = True,
+ constraint = True,
+  city_industry = False,
  new_row= False, table_nte = None):
     """
+    Contrainst -> when all FE: pair and not pair
+    remove_control -> remove output, capital, labour (first three row)
     """
     table_in = "table_{}.txt".format(table_number)
     table_out = "table_{}.tex".format(table_number)
     regex = r"^\s\sas\.factor\(year\)200|^\s\sTCZ\\_cTCZ\:as\.factor\(year\)200"
 
     r_tcz = \
-    r"\s\sTCZ\\_cTCZ\:PeriodAfter\:count\\_SOE|"
-    r"\s\sTCZ\\_cTCZ\:PeriodAfter\:out\\_share\\_SOE|"
-    r"\s\sTCZ\\_cTCZ\:PeriodAfter\:cap\\_share\\_SOE|"
-    r"\s\sTCZ\\_cTCZ\:PeriodAfter\:lab\\_share\\_SOE|"
-    r"\s\sTCZ\\_cTCZ\:PeriodAfter\:SOESOE"
+    r"\s\sTCZ\\_cTCZ\:PeriodAfter\:count\\_SOE\s|" \
+    r"\s\sTCZ\\_cTCZ\:PeriodAfter\:out\\_share\\_SOE\s|" \
+    r"\s\sTCZ\\_cTCZ\:PeriodAfter\:cap\\_share\\_SOE\s|" \
+    r"\s\sTCZ\\_cTCZ\:PeriodAfter\:lab\\_share\\_SOE\s|" \
+    r"\s\sTCZ\\_cTCZ\:PeriodAfter\:SOESOE\s"
 
     r_spz = \
-    r"\s\sPeriodAfter\:count\\_SOE\:SPZ|"
-    r"\s\sPeriodAfter\:out\\_share\\_SOE\:SPZ|"
-    r"\s\sPeriodAfter\:cap\\_share\\_SOE\:SPZ|"
-    r"\s\sPeriodAfter\:lab\\_share\\_SOE\:SPZ|"
-    r"\s\sPeriodAfter\:SOESOE\:SPZ"
+    r"\s\sPeriodAfter\:count\\_SOE\:SPZ\s|" \
+    r"\s\sPeriodAfter\:out\\_share\\_SOE\:SPZ\s|" \
+    r"\s\sPeriodAfter\:cap\\_share\\_SOE\:SPZ\s|" \
+    r"\s\sPeriodAfter\:lab\\_share\\_SOE\:SPZ\s|" \
+    r"\s\spolluted\\_threAbove:out\\_share\\_SOE\:SPZ\s|" \
+    r"\s\spolluted\\_threAbove:cap\\_share\\_SOE\:SPZ\s|" \
+    r"\s\spolluted\\_threAbove:lab\\_share\\_SOE\:SPZ\s|" \
+    r"\s\sPeriodAfter\:SOESOE\:SPZ\s|" \
+    r"\s\sPeriodAfter\:SPZ\s|" \
+    r"\s\spolluted\\_threAbove\:SPZ\s|" \
+    r"\s\sout\\_share\\_SOE\:SPZ\s|" \
+    r"\s\scap\\_share\\_SOE\:SPZ\s|" \
+    r"\s\slab\\_share\\_SOE\:SPZ\s"
 
     r_coa = \
-    r"\s\sPeriodAfter\:count\\_SOE\:Coastal|"
-    r"\s\sPeriodAfter\:out\\_share\\_SOE\:Coastal|"
-    r"\s\sPeriodAfter\:cap\\_share\\_SOE\:Coastal|"
-    r"\s\sPeriodAfter\:lab\\_share\\_SOE\:Coastal|"
-    r"\s\sPeriodAfter\:SOESOE\:Coastal"
+    r"\s\sPeriodAfter\:count\\_SOE\:Coastal\s|" \
+    r"\s\sPeriodAfter\:out\\_share\\_SOE\:Coastal\s|" \
+    r"\s\sPeriodAfter\:cap\\_share\\_SOE\:Coastal\s|" \
+    r"\s\sPeriodAfter\:lab\\_share\\_SOE\:Coastal\s|" \
+    r"\s\spolluted\\_threAbove:out\\_share\\_SOE\:Coastal\s|" \
+    r"\s\spolluted\\_threAbove:cap\\_share\\_SOE\:Coastal\s|" \
+    r"\s\spolluted\\_threAbove:lab\\_share\\_SOE\:Coastal\s|" \
+    r"\s\sPeriodAfter\:SOESOE\:Coastal\s|" \
+    r"\s\sPeriodAfter\:Coastal\s|" \
+    r"\s\spolluted\\_threAbove\:Coastal\s|" \
+    r"\s\sout\\_share\\_SOE\:Coastal\s|" \
+    r"\s\scap\\_share\\_SOE\:Coastal\s|" \
+    r"\s\slab\\_share\\_SOE\:Coastal\s"
 
     r_tfp = r"^\s\spolluted\\_threAbove\:PeriodAfter\:SOESOE\s"
+
+    r_pop_gdp = \
+    r"\s\slog\(gdp\\_cap\)\s|" \
+    r"\s\slog\(population\)\s"
 
 
     if city_industry:
@@ -92,10 +119,10 @@ def beautify(table_number, constraint = True, city_industry = False,
     r"\s\sTCZ\\_cTCZ\:polluted\\_threAbove\:Herfindahl"
     else:
         r_concentrated_con = \
-    r"\s\sTCZ\\_cTCZ\:Herfindahl|" \
-    r"\s\sPeriodAfter\:Herfindahl|" \
-    r"\s\sPeriodAfter\:polluted\\_threAbove\:Herfindahl|" \
-    r"\s\sTCZ\\_cTCZ\:polluted\\_threAbove\:Herfindahl"
+    r"\s\sTCZ\\_cTCZ\:Herfindahl\s|" \
+    r"\s\sPeriodAfter\:Herfindahl\s|" \
+    r"\s\sPeriodAfter\:polluted\\_threAbove\:Herfindahl\s|" \
+    r"\s\sTCZ\\_cTCZ\:polluted\\_threAbove\:Herfindahl\s"
 
     #r"\s\sTCZ\\_cTCZ\:PeriodAfter\:concentrated\\_25CONCENTRATED|" \
     #r"\s\sTCZ\\_cTCZ\:PeriodAfter\:concentrated\\_50CONCENTRATED|" \
@@ -115,29 +142,104 @@ def beautify(table_number, constraint = True, city_industry = False,
     r"\s\sTCZ\\_cTCZ\:PeriodAfter\s|" \
     r"\s\sTCZ\\_cTCZ\:out\\_share\\_for|" \
     r"\s\sTCZ\\_cTCZ\:out\\_share\\_SOE|" \
+    r"\s\sTCZ\\_cTCZ\:out\\_share\\_SOE\\_|" \
     r"\s\sTCZ\\_cTCZ\:cap\\_share\\_for|" \
     r"\s\sTCZ\\_cTCZ\:cap\\_share\\_SOE|" \
+    r"\s\sTCZ\\_cTCZ\:cap\\_share\\_SOE\\_|" \
     r"\s\sTCZ\\_cTCZ\:lab\\_share\\_for|" \
     r"\s\sTCZ\\_cTCZ\:lab\\_share\\_SOE|" \
-    r"\s\sPeriodAfter\:polluted\\_threAbove\|" \
-    r"\s\sPeriodAfter\:out\\_share\\_for|" \
-    r"\s\sPeriodAfter\:out\\_share\\_SOE|" \
-    r"\s\sPeriodAfter\:cap\\_share\\_for|" \
-    r"\s\sPeriodAfter\:cap\\_share\\_SOE|" \
-    r"\s\sPeriodAfter\:lab\\_share\\_for|" \
-    r"\s\sPeriodAfter\:lab\\_share\\_SOE|" \
+    r"\s\sTCZ\\_cTCZ\:lab\\_share\\_SOE\\_|" \
+    r"\s\sPeriodAfter\:polluted\\_threAbove\s|" \
+    r"\s\sPeriodAfter\:out\\_share\\_for\s|" \
+    r"\s\sPeriodAfter\:out\\_share\\_SOE\s|" \
+    r"\s\sPeriodAfter\:out\\_share\\_SOE\\_\s|" \
+    r"\s\sPeriodAfter\:cap\\_share\\_for\s|" \
+    r"\s\sPeriodAfter\:cap\\_share\\_SOE\s|" \
+    r"\s\sPeriodAfter\:cap\\_share\\_SOE\\_\s|" \
+    r"\s\sPeriodAfter\:lab\\_share\\_for\s|" \
+    r"\s\sPeriodAfter\:lab\\_share\\_SOE\s|" \
+    r"\s\sPeriodAfter\:lab\\_share\\_SOE\\_\s|" \
     r"\s\sTCZ\\_cTCZ\:polluted\\_threAbove\:out\\_share\\_for|" \
     r"\s\sTCZ\\_cTCZ\:polluted\\_threAbove\:out\\_share\\_SOE|" \
     r"\s\sTCZ\\_cTCZ\:polluted\\_threAbove\:cap\\_share\\_for|" \
     r"\s\sTCZ\\_cTCZ\:polluted\\_threAbove\:cap\\_share\\_SOE|" \
     r"\s\sTCZ\\_cTCZ\:polluted\\_threAbove\:lab\\_share\\_for|" \
     r"\s\sTCZ\\_cTCZ\:polluted\\_threAbove\:lab\\_share\\_SOE|" \
-    r"\s\sPeriodAfter\:polluted\\_threAbove\:out\\_share\\_for|" \
-    r"\s\sPeriodAfter\:polluted\\_threAbove\:out\\_share\\_SOE|" \
-    r"\s\sPeriodAfter\:polluted\\_threAbove\:cap\\_share\\_for|" \
-    r"\s\sPeriodAfter\:polluted\\_threAbove\:cap\\_share\\_SOE|" \
-    r"\s\sPeriodAfter\:polluted\\_threAbove\:lab\\_share\\_for|" \
-    r"\s\sPeriodAfter\:polluted\\_threAbove\:lab\\_share\\_SOE"
+    r"\s\sPeriodAfter\:polluted\\_threAbove\:out\\_share\\_for\s|" \
+    r"\s\sPeriodAfter\:polluted\\_threAbove\:out\\_share\\_SOE\s|" \
+    r"\s\sPeriodAfter\:polluted\\_threAbove\:out\\_share\\_SOE\\_\s|" \
+    r"\s\sPeriodAfter\:polluted\\_threAbove\:cap\\_share\\_for\s|" \
+    r"\s\sPeriodAfter\:polluted\\_threAbove\:cap\\_share\\_SOE\s|" \
+    r"\s\sPeriodAfter\:polluted\\_threAbove\:cap\\_share\\_SOE\\_\s|" \
+    r"\s\sPeriodAfter\:polluted\\_threAbove\:lab\\_share\\_for\s|" \
+    r"\s\sPeriodAfter\:polluted\\_threAbove\:lab\\_share\\_SOE\s|" \
+    r"\s\sPeriodAfter\:polluted\\_threAbove\:lab\\_share\\_SOE\\_\s"
+
+    r_decile = \
+    r"\s\sdecile\\_so2\\_5Above\s|" \
+    r"\s\sdecile\\_so2\\_6Above\s|" \
+    r"\s\sdecile\\_so2\\_7Above\s|" \
+    r"\s\sdecile\\_so2\\_8Above\s|" \
+    r"\s\sdecile\\_so2\\_9Above\s|" \
+    r"\s\sTCZ\\_cTCZ:decile\\_so2\\_5Above\s|" \
+    r"\s\sPeriodAfter\:decile\\_so2\\_5Above\s|" \
+    r"\s\sdecile\\_so2\\_5Above\:out\\_share\\_SOE\s|" \
+    r"\s\sdecile\\_so2\\_5Above\:cap\\_share\\_SOE\s|" \
+    r"\s\sdecile\\_so2\\_5Above\:lab\\_share\\_SOE\s|" \
+    r"\s\sTCZ\\_cTCZ\:decile\\_so2\\_5Above\:out\\_share\\_SOE\s|" \
+    r"\s\sTCZ\\_cTCZ\:decile\\_so2\\_5Above\:cap\\_share\\_SOE\s|" \
+    r"\s\sTCZ\\_cTCZ\:decile\\_so2\\_5Above\:lab\\_share\\_SOE\s|" \
+    r"\s\sPeriodAfter\:decile\\_so2\\_5Above\:out\\_share\\_SOE\s|" \
+    r"\s\sPeriodAfter\:decile\\_so2\\_5Above\:cap\\_share\\_SOE\s|" \
+    r"\s\sPeriodAfter\:decile\\_so2\\_5Above\:lab\\_share\\_SOE\s|" \
+    r"\s\sdecile\\_so2\\_6Above\s|" \
+    r"\s\sTCZ\\_cTCZ:decile\\_so2\\_6Above\s|" \
+    r"\s\sPeriodAfter\:decile\\_so2\\_6Above\s|" \
+    r"\s\sdecile\\_so2\\_6Above\:out\\_share\\_SOE\s|" \
+    r"\s\sdecile\\_so2\\_6Above\:cap\\_share\\_SOE\s|" \
+    r"\s\sdecile\\_so2\\_6Above\:lab\\_share\\_SOE\s|" \
+    r"\s\sTCZ\\_cTCZ\:decile\\_so2\\_6Above\:out\\_share\\_SOE\s|" \
+    r"\s\sTCZ\\_cTCZ\:decile\\_so2\\_6Above\:cap\\_share\\_SOE\s|" \
+    r"\s\sTCZ\\_cTCZ\:decile\\_so2\\_6Above\:lab\\_share\\_SOE\s|" \
+    r"\s\sPeriodAfter\:decile\\_so2\\_6Above\:out\\_share\\_SOE\s|" \
+    r"\s\sPeriodAfter\:decile\\_so2\\_6Above\:cap\\_share\\_SOE\s|" \
+    r"\s\sPeriodAfter\:decile\\_so2\\_6Above\:lab\\_share\\_SOE\s|" \
+    r"\s\sdecile\\_so2\\_7Above\s|" \
+    r"\s\sTCZ\\_cTCZ:decile\\_so2\\_7Above\s|" \
+    r"\s\sPeriodAfter\:decile\\_so2\\_7Above\s|" \
+    r"\s\sdecile\\_so2\\_7Above\:out\\_share\\_SOE\s|" \
+    r"\s\sdecile\\_so2\\_7Above\:cap\\_share\\_SOE\s|" \
+    r"\s\sdecile\\_so2\\_7Above\:lab\\_share\\_SOE\s|" \
+    r"\s\sTCZ\\_cTCZ\:decile\\_so2\\_7Above\:out\\_share\\_SOE\s|" \
+    r"\s\sTCZ\\_cTCZ\:decile\\_so2\\_7Above\:cap\\_share\\_SOE\s|" \
+    r"\s\sTCZ\\_cTCZ\:decile\\_so2\\_7Above\:lab\\_share\\_SOE\s|" \
+    r"\s\sPeriodAfter\:decile\\_so2\\_7Above\:out\\_share\\_SOE\s|" \
+    r"\s\sPeriodAfter\:decile\\_so2\\_7Above\:cap\\_share\\_SOE\s|" \
+    r"\s\sPeriodAfter\:decile\\_so2\\_7Above\:lab\\_share\\_SOE\s|" \
+    r"\s\sdecile\\_so2\\_8Above\s|" \
+    r"\s\sTCZ\\_cTCZ:decile\\_so2\\_8Above\s|" \
+    r"\s\sPeriodAfter\:decile\\_so2\\_8Above\s|" \
+    r"\s\sdecile\\_so2\\_8Above\:out\\_share\\_SOE\s|" \
+    r"\s\sdecile\\_so2\\_8Above\:cap\\_share\\_SOE\s|" \
+    r"\s\sdecile\\_so2\\_8Above\:lab\\_share\\_SOE\s|" \
+    r"\s\sTCZ\\_cTCZ\:decile\\_so2\\_8Above\:out\\_share\\_SOE\s|" \
+    r"\s\sTCZ\\_cTCZ\:decile\\_so2\\_8Above\:cap\\_share\\_SOE\s|" \
+    r"\s\sTCZ\\_cTCZ\:decile\\_so2\\_8Above\:lab\\_share\\_SOE\s|" \
+    r"\s\sPeriodAfter\:decile\\_so2\\_8Above\:out\\_share\\_SOE\s|" \
+    r"\s\sPeriodAfter\:decile\\_so2\\_8Above\:cap\\_share\\_SOE\s|" \
+    r"\s\sPeriodAfter\:decile\\_so2\\_8Above\:lab\\_share\\_SOE\s|" \
+    r"\s\sTCZ\\_cTCZ:decile\\_so2\\_9Above\s|" \
+    r"\s\sPeriodAfter\:decile\\_so2\\_9Above\s|" \
+    r"\s\sdecile\\_so2\\_9Above\:out\\_share\\_SOE\s|" \
+    r"\s\sdecile\\_so2\\_9Above\:cap\\_share\\_SOE\s|" \
+    r"\s\sdecile\\_so2\\_9Above\:lab\\_share\\_SOE\s|" \
+    r"\s\sTCZ\\_cTCZ\:decile\\_so2\\_9Above\:out\\_share\\_SOE\s|" \
+    r"\s\sTCZ\\_cTCZ\:decile\\_so2\\_9Above\:cap\\_share\\_SOE\s|" \
+    r"\s\sTCZ\\_cTCZ\:decile\\_so2\\_9Above\:lab\\_share\\_SOE\s|" \
+    r"\s\sPeriodAfter\:decile\\_so2\\_9Above\:out\\_share\\_SOE\s|" \
+    r"\s\sPeriodAfter\:decile\\_so2\\_9Above\:cap\\_share\\_SOE\s|" \
+    r"\s\sPeriodAfter\:decile\\_so2\\_9Above\:lab\\_share\\_SOE\s"
+
 
 
 
@@ -149,10 +251,11 @@ def beautify(table_number, constraint = True, city_industry = False,
         # Remove empty rows
         # First 13 and last 13 rows are headers and footers
     if constraint:
-        if table_number == 8: ### we have one more line of fixed effect
-            max_ = 14 ### need to recalculate
-        else:
-            max_ = 13### need to recalculate
+        #if table_number == 8: ### we have one more line of fixed effect
+        #    max_ = 14 ### need to recalculate
+        #else:
+        #    max_ = 13### need to recalculate
+        max_ =  len(lines) - 12
     else:
         max_ =  len(lines) - 9#15
     for x, line in enumerate(lines[13:max_]):
@@ -166,52 +269,61 @@ def beautify(table_number, constraint = True, city_industry = False,
             line_to_remove.append(x + 13)
             line_to_remove.append((x + 13) + 1)
         # Remove control in Parallel trend
-        if table_number == 2 or table_number == 3 or table_number == 4 \
-        or table_number == 5 or table_number == 6 or table_number == 7:
+        if remove_control:
             rm_c = bool(re.search(r"output\\_fcit|capital\\_fcit|labour\\_fcit",
                                   line))
             if rm_c == True:
                     line_to_remove.append(x + 13)
                     line_to_remove.append((x + 13) + 1)
 
-        if constraint == False:
-            test_foreign = bool(re.search(r_foreign, line))
+        #if constraint == False:
+        test_foreign = bool(re.search(r_foreign, line))
+        if test_foreign == True:
+            line_to_remove.append(x + 13)
+            line_to_remove.append((x + 13) + 1)
 
-            if test_foreign == True:
-                line_to_remove.append(x + 13)
-                line_to_remove.append((x + 13) + 1)
+        test_concentrated_con = bool(re.search(r_concentrated_con, line))
+        if test_concentrated_con == True:
+            line_to_remove.append(x + 13)
+            line_to_remove.append((x + 13) + 1)
 
-            test_concentrated_con = bool(re.search(r_concentrated_con, line))
-            if test_concentrated_con == True:
-                line_to_remove.append(x + 13)
-                line_to_remove.append((x + 13) + 1)
+        test_concentrated = bool(re.search(r_concentrated, line))
+        if test_concentrated == True:
+            line_to_remove.append(x + 13)
+            line_to_remove.append((x + 13) + 1)
 
-            test_concentrated = bool(re.search(r_concentrated, line))
-            if test_concentrated == True:
-                line_to_remove.append(x + 13)
-                line_to_remove.append((x + 13) + 1)
+        test_decile = bool(re.search(r_decile, line))
+        if test_decile == True:
+            line_to_remove.append(x + 13)
+            line_to_remove.append((x + 13) + 1)
 
         #### Remove useless rows additional controls
-        if table_number == 3 or table_number == 8:
+        #if table_number == 3 or table_number == 8:
+        if constraint:
             test_tcz = bool(re.search(r_tcz, line))
             if test_tcz == True:
-                    line_to_remove.append(x + 13)
-                    line_to_remove.append((x + 13) + 1)
+                line_to_remove.append(x + 13)
+                line_to_remove.append((x + 13) + 1)
 
             test_spz = bool(re.search(r_spz, line))
             if test_spz == True:
-                    line_to_remove.append(x + 13)
-                    line_to_remove.append((x + 13) + 1)
+                line_to_remove.append(x + 13)
+                line_to_remove.append((x + 13) + 1)
 
             test_coa = bool(re.search(r_coa, line))
             if test_coa == True:
-                    line_to_remove.append(x + 13)
-                    line_to_remove.append((x + 13) + 1)
+                line_to_remove.append(x + 13)
+                line_to_remove.append((x + 13) + 1)
 
             test_tfp = bool(re.search(r_tfp, line))
             if test_tfp == True:
-                    line_to_remove.append(x + 13)
-                    line_to_remove.append((x + 13) + 1)
+                line_to_remove.append(x + 13)
+                line_to_remove.append((x + 13) + 1)
+
+            test_pop_gdp = bool(re.search(r_pop_gdp, line))
+            if test_pop_gdp == True:
+                line_to_remove.append(x + 13)
+                line_to_remove.append((x + 13) + 1)
 
 
 
@@ -393,6 +505,18 @@ def beautify(table_number, constraint = True, city_industry = False,
         lines = lines.replace('Herfindahl',
         ' \\text{Herfindahl}_{i}')
 
+        lines = lines.replace('decile\_so2\_5Above',
+        ' \\text{Polluted decile 5}_{i}')
+
+        lines = lines.replace('decile\_so2\_6Above',
+        ' \\text{Polluted decile 6}_{i}')
+
+        lines = lines.replace('decile\_so2\_7Above',
+        ' \\text{Polluted decile 7}_{i}')
+
+        lines = lines.replace('decile\_so2\_8Above',
+        ' \\text{Polluted decile 8}_{i}')
+
         # Additional controls
         lines = lines.replace('Coastal', ' Coastal_c ')
         lines = lines.replace('SPZ', ' SPZ_c ')
@@ -404,12 +528,11 @@ def beautify(table_number, constraint = True, city_industry = False,
         # Policy
         lines = lines.replace('target\_c', ' target_c ')
 
-
-
         # TFP
         lines = lines.replace('SOESOE', ' SOE ')
         lines = lines.replace('Coastal_c TRUE', ' Coastal_c ')
         lines = lines.replace(' : ', ' \\times ')
+        lines = lines.replace(': ', ' \\times ')
 
 
 
