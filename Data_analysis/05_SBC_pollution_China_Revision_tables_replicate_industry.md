@@ -1747,7 +1747,9 @@ So the strategy here is to estimate the model on cumulative subsample by city-se
 Output latex table available here
 
 - https://www.overleaf.com/project/5deca0097e9f3a0001506527
-    - Temp_tables_revision/02_Paper_version_Revised/06_table_9_size_output
+    - Temp_tables_revision/04_city_industry/06_table_9_size_output
+    - Temp_tables_revision/04_city_industry/07_table_9_size_capital
+    - Temp_tables_revision/04_city_industry/08_table_9_size_employement
 
 In Google Drive:
 
