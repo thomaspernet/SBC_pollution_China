@@ -7,10 +7,12 @@ def beautify(table_number,
 remove_control = True,
  constraint = True,
   city_industry = False,
- new_row= False, table_nte = None):
+ new_row= False, table_nte = None,
+ test_city_industry = False):
     """
     Contrainst -> when all FE: pair and not pair
     remove_control -> remove output, capital, labour (first three row)
+    test_city_industry -> test with share SOE computed city indsutry
     """
     table_in = "table_{}.txt".format(table_number)
     table_out = "table_{}.tex".format(table_number)
@@ -21,7 +23,10 @@ remove_control = True,
     r"\s\sTCZ\\_cTCZ\:PeriodAfter\:out\\_share\\_SOE\s|" \
     r"\s\sTCZ\\_cTCZ\:PeriodAfter\:cap\\_share\\_SOE\s|" \
     r"\s\sTCZ\\_cTCZ\:PeriodAfter\:lab\\_share\\_SOE\s|" \
-    r"\s\sTCZ\\_cTCZ\:PeriodAfter\:SOESOE\s"
+    r"\s\sTCZ\\_cTCZ\:PeriodAfter\:SOESOE\s|" \
+    r"\s\spolluted\\_threAbove\:out\\_share\\_SOE|" \
+    r"\s\spolluted\\_threAbove\:cap\\_share\\_SOE|" \
+    r"\s\spolluted\\_threAbove\:lab\\_share\\_SOE"
 
     r_spz = \
     r"\s\sPeriodAfter\:count\\_SOE\:SPZ\s|" \
@@ -469,12 +474,19 @@ remove_control = True,
         lines = lines.replace('PeriodAfter', ' \\text{Period} ')
 
         # Share SOE
-        lines = lines.replace('count\_SOE', ' \\text{count share SOE}_{i} ')
-        lines = lines.replace('out\_share\_SOE',
+        if test_city_industry:
+            lines = lines.replace('out\_share\_SOE',
+                                  ' \\text{output share SOE}_{ci} ')
+            lines = lines.replace('cap\_share\_SOE',
+                                  ' \\text{capital share SOE}_{ci} ')
+            lines = lines.replace('lab\_share\_SOE',
+                                  ' \\text{labour share SOE}_{ci} ')
+        else:
+            lines = lines.replace('out\_share\_SOE',
                               ' \\text{output share SOE}_{i} ')
-        lines = lines.replace('cap\_share\_SOE',
+            lines = lines.replace('cap\_share\_SOE',
                               ' \\text{capital share SOE}_{i} ')
-        lines = lines.replace('lab\_share\_SOE',
+            lines = lines.replace('lab\_share\_SOE',
                               ' \\text{labour share SOE}_{i} ')
 
         ### foreing
@@ -516,6 +528,9 @@ remove_control = True,
 
         lines = lines.replace('decile\_so2\_8Above',
         ' \\text{Polluted decile 8}_{i}')
+
+        lines = lines.replace('decile\_so2\_9Above',
+        ' \\text{Polluted decile 9}_{i}')
 
         # Additional controls
         lines = lines.replace('Coastal', ' Coastal_c ')
