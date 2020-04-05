@@ -16,7 +16,7 @@ jupyter:
 <!-- #region kernel="SoS" -->
 # Tables city Industry level
 
-All images are in this [folder](https://drive.google.com/open?id=1QtjM3Ds6lIHlQ0OVsw8rPRdZQP32YvSt)
+All images are in this [folder](https://drive.google.com/open?id=1QDxWkftCPejrqJ7pH7j7vUhA3bHp4NqH)
 
 ## tables objective
 
@@ -163,62 +163,20 @@ df_share = gcp.upload_data_from_bigquery(query = query,
 ```
 
 ```sos kernel="SoS"
-#query_so2 ="""WITH sum_ci AS (
-#SELECT year,cityen, indus_code as industry,
-#SUM(tso2) as tso2,
-#SUM(ttoutput) as toutput,
-#SUM(tso2)/SUM(ttoutput) as intensity,
-#FROM China.China_city_pollution_98_2007 
-#WHERE year = 2002
-#GROUP BY year, cityen,indus_code
-#)
-#SELECT *,
-#NTILE(10)  OVER (PARTITION BY cityen ORDER BY tso2) 
-#          as rank_share_so2_ci,
-#NTILE(10)  OVER (PARTITION BY cityen ORDER BY intensity) 
-#          as rank_share_intensity_ci          
-#FROM sum_ci
-#"""
-#df_so2 = gcp.upload_data_from_bigquery(query = query_so2,
-#                                         location = 'US')
-```
-
-```sos kernel="SoS"
 %put df_final_ci --to R
-df_final_ci = (df_final
+df_final_ci = (df_final.drop(columns = ['out_share_SOE','cap_share_SOE',
+                                        'lab_share_SOE'])
               .merge(
     df_share,
     how = 'left',
     on = ['geocode4_corr', 'industry']
 )
-              #.merge(df_so2,
-              #  how = 'left',
-              #  on= ['cityen', 'industry'])
               .assign(
                   out_share_SOE = lambda x: x['out_share_SOE'].fillna(0),
     cap_share_SOE = lambda x: x['cap_share_SOE'].fillna(0),
-    lab_share_SOE = lambda x: x['lab_share_SOE'].fillna(0),
-    #              rank_share_so2_ci = lambda x: x['rank_share_so2_ci'].fillna(0),
-    #rank_share_intensity_ci = lambda x: x['rank_share_intensity_ci'].fillna(0),
-    #decile_so2_6 = lambda x: np.where(x['rank_share_so2_ci'] < 6,
-    #                                 'Below', 'Above'),
-    #decile_so2_7 = lambda x: np.where(x['rank_share_so2_ci'] < 7,
-    #                                 'Below', 'Above'),
-    #decile_so2_8 = lambda x: np.where(x['rank_share_so2_ci'] < 8,
-    #                                 'Below', 'Above'),
-    #decile_so2_9 = lambda x: np.where(x['rank_share_so2_ci'] < 9,
-    #                                 'Below', 'Above'),
-    #decile_intensity_6 = lambda x: np.where(x['rank_share_intensity_ci'] < 6,
-    #                                 'Below', 'Above'),
-    #decile_intensity_7 = lambda x: np.where(x['rank_share_intensity_ci'] < 7,
-    #                                 'Below', 'Above'),
-    #decile_intensity_8 = lambda x: np.where(x['rank_share_intensity_ci'] < 8,
-    #                                 'Below', 'Above'),
-    #decile_intensity_9 = lambda x: np.where(x['rank_share_intensity_ci'] < 9,
-    #                                 'Below', 'Above')
+    lab_share_SOE = lambda x: x['lab_share_SOE'].fillna(0)
 )
              )
-df_final_ci.head()
 ```
 
 ```sos kernel="R"
@@ -242,16 +200,7 @@ df_final <- df_final_ci %>%
          effort_c = relevel(effort_c, ref='Below'),
          polluted_di = relevel(polluted_di, ref='Below'),
          polluted_mi = relevel(polluted_mi, ref='Below'),
-         polluted_thre = relevel(polluted_thre, ref='Below')#,
-        #decile_so2_6 = relevel(decile_so2_6, ref='Below'),
-        #decile_so2_7 = relevel(decile_so2_7, ref='Below'),
-        #decile_so2_8 = relevel(decile_so2_8, ref='Below'),
-        #decile_so2_9 = relevel(decile_so2_9, ref='Below'),
-        #decile_intensity_6 = relevel(decile_intensity_6, ref='Below'),
-        #decile_intensity_7 = relevel(decile_intensity_7, ref='Below'),
-        #decile_intensity_8 = relevel(decile_intensity_8, ref='Below'),
-        #decile_intensity_9 = relevel(decile_intensity_9, ref='Below'),
-        
+         polluted_thre = relevel(polluted_thre, ref='Below')
   )
 head(df_final)
 ```
@@ -262,11 +211,11 @@ head(df_final)
 Output latex table available here
 
 - https://www.overleaf.com/project/5deca0097e9f3a0001506527
-    - Temp_tables_revision/02_Paper_version_Revised/01_baseline_revision
+    - Temp_tables_revision/04_city_industry/01_baseline_revision
 
 In Google Drive:
 
-![](https://drive.google.com/uc?export=view&id=1NMrIKjrpb8vwRXpBztd8Rgj8XFErzTuP)
+![](https://drive.google.com/uc?export=view&id=1i31VAW3PQE_s4EsRHWK21cos2lDPeFAY)
 <!-- #endregion -->
 
 <!-- #region kernel="R" -->
@@ -315,15 +264,6 @@ t5 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period *polluted_thre * lab_share_SOE
              FE_t_c + FE_t_i + FE_c_i | 0 |
              industry, data= df_final,
              exactDOF=TRUE)
-```
-
-```sos kernel="R"
-summary(felm(formula=log(tso2_cit) ~ TCZ_c * Period *polluted_thre * share_output_cio
-                  #+ output_fcit + capital_fcit + labour_fcit
-                  |
-             FE_t_c + FE_t_i + FE_c_i | 0 |
-             industry, data= df_final,
-             exactDOF=TRUE))
 ```
 
 ```sos kernel="python3"
@@ -380,7 +320,8 @@ lb.beautify(table_number = 1,
     constraint = True,
     city_industry = False, 
     new_row = decile,
-    table_nte =tb)
+    table_nte =tb,
+           test_city_industry = True)
 ```
 
 <!-- #region kernel="python3" -->
@@ -397,33 +338,29 @@ Replicate table three with the following threshold:
 Output latex table available here
 
 - https://www.overleaf.com/project/5deca0097e9f3a0001506527
-    - Temp_tables_revision/02_Paper_version_Revised/09_decile_6
-    - Temp_tables_revision/02_Paper_version_Revised/10_decile_7
-    - Temp_tables_revision/02_Paper_version_Revised/11_decile_8
-    - Temp_tables_revision/02_Paper_version_Revised/12_decile_9
+    - Temp_tables_revision/04_city_industry/09_decile_6
+    - Temp_tables_revision/04_city_industry/10_decile_7
+    - Temp_tables_revision/04_city_industry/11_decile_8
+    - Temp_tables_revision/04_city_industry/12_decile_9
 
 In Google Drive:
 
 **decile 6**
 
-![](https://drive.google.com/uc?export=view&id=1ApfZN2W3vZEebIUi1CZkgoXUot7FFLWH)
+![](https://drive.google.com/uc?export=view&id=1LNlZoNXdn4SciBrvCVv9Ub_0pv0VQ4yq)
 
 **decile 7: baseline**
 
-![](https://drive.google.com/uc?export=view&id=1aorWpjhGWkiJvS429MyaMz5zJ8qkana-)
+![](https://drive.google.com/uc?export=view&id=1UN8VN-CSm3dAyxUsa9XudEKM5g2J9RRN)
 
 **decile 8**
 
-![](https://drive.google.com/uc?export=view&id=1jaoVHQnWkw_cdRPPxzd-l7f2P9vxM3sZ)
+![](https://drive.google.com/uc?export=view&id=1RYnTCsAJKWCp0IrYkGxcJ2Ht0hRLv3-O)
 
 **decile 9**
 
-![](https://drive.google.com/uc?export=view&id=1rREe_OQo6RBDbY_phf7SLTVs557tjGuQ)
+![](https://drive.google.com/uc?export=view&id=1L-tFzsEamVbzQA2Cj54iAr4iZmRY4FR_)
 <!-- #endregion -->
-
-```sos kernel="SoS"
-df_final_ci.head()
-```
 
 ```sos kernel="SoS"
 %put df_final_1 --to R
@@ -570,7 +507,8 @@ lb.beautify(table_number = 9,
     constraint = True,
     city_industry = False, 
     new_row = decile,
-    table_nte =tb)
+    table_nte =tb,
+test_city_industry = True)
 ```
 
 <!-- #region kernel="python3" -->
@@ -682,7 +620,8 @@ lb.beautify(table_number = 10,
     constraint = True,
     city_industry = False, 
     new_row = decile,
-    table_nte =tb)
+    table_nte =tb,
+test_city_industry = True)
 ```
 
 <!-- #region kernel="python3" -->
@@ -794,7 +733,8 @@ lb.beautify(table_number = 11,
     constraint = True,
     city_industry = False, 
     new_row = decile,
-    table_nte =tb)
+    table_nte =tb,
+test_city_industry = True)
 ```
 
 <!-- #region kernel="python3" -->
@@ -906,7 +846,8 @@ lb.beautify(table_number = 12,
     constraint = True,
     city_industry = False, 
     new_row = decile,
-    table_nte =tb)
+    table_nte =tb,
+test_city_industry = True)
 ```
 
 <!-- #region kernel="python3" -->
@@ -915,11 +856,11 @@ lb.beautify(table_number = 12,
 Output latex table available here
 
 - https://www.overleaf.com/project/5deca0097e9f3a0001506527
-    - Temp_tables_revision/02_Paper_version_Revised/02_table_5_rob_1
+    - Temp_tables_revision/04_city_industry/02_table_5_rob_1
 
 In Google Drive:
 
-![](https://drive.google.com/uc?export=view&id=1DEGkD2yQHKwOwlHfrRxeAkfNRBJPsfDJ)
+![](https://drive.google.com/uc?export=view&id=1mdxml_aPhGnujWrT7aX574lcV19tmtoh)
 
 Note, we download the file `df_TCZ_list_china` from Google spreadsheet because SOS kernel has trouble loading the json file to connect to the remote.
 <!-- #endregion -->
@@ -1060,7 +1001,7 @@ table_1 <- go_latex(list(
     t5
 ),
     dep_var = "Dependent variable: \\text { SO2 emission }_{i k t}",
-    title="Soft budget constraint as reflected in the SOEs reaction to the SPZs and coastal area's policies in China ",
+    title="Soft budget constraint as reflected in the SOE s reaction to the SPZ s and coastal area's policies in China ",
     addFE=fe1,
     save=TRUE,
                     note = FALSE,
@@ -1081,7 +1022,8 @@ lb.beautify(table_number = 2,
             constraint = True,
             city_industry = False, 
             new_row = decile,
-            table_nte =tb)
+            table_nte =tb,
+           test_city_industry = True)
 
 try:
     os.remove("df_TCZ_list_china.csv")
@@ -1095,11 +1037,11 @@ except:
 Output latex table available here
 
 - https://www.overleaf.com/project/5deca0097e9f3a0001506527
-    - Temp_tables_revision/02_Paper_version_Revised/03_table_6_rob_2
+    - Temp_tables_revision/04_city_industry/03_table_6_rob_2
 
 In Google Drive:
 
-![](https://drive.google.com/uc?export=view&id=1xbk2-z3ilwwqVOyJhfqhjtV-QLgQWfbp)
+![](https://drive.google.com/uc?export=view&id=1bFSPlreNmmdmHhNnbtAhckkir6MSatC-)
 
 Note, we download the file `df_TCZ_list_china` from Google spreadsheet because SOS kernel has trouble loading the json file to connect to the remote.
 <!-- #endregion -->
@@ -1257,7 +1199,9 @@ lb.beautify(table_number = 3,
             constraint = True,
             city_industry = False, 
             new_row = decile,
-            table_nte =tb)
+            table_nte =tb,
+            test_city_industry = True
+           )
 
 try:
     os.remove("df_chinese_city_characteristics.csv")
@@ -1271,11 +1215,11 @@ except:
 Output latex table available here
 
 - https://www.overleaf.com/project/5deca0097e9f3a0001506527
-    - Temp_tables_revision/02_Paper_version_Revised/04_table_7_rob_3
+    - Temp_tables_revision/04_city_industry/04_table_7_rob_3
 
 In Google Drive:
 
-![](https://drive.google.com/uc?export=view&id=1SdsGKkZsAr4QC5_95VkpOjccHftFLRjo)
+![](https://drive.google.com/uc?export=view&id=1WbmKaM9OUu3U-TWCM01wVJLbZz2K0-U1)
 
 <!-- #endregion -->
 
@@ -1357,7 +1301,7 @@ df_share.head()
 
 ```sos kernel="SoS"
 %put df_final_i --to R
-df_final_i = (df_final.merge(
+df_final_i = (df_final_ci.merge(
     df_share.reset_index()[
         ['industry',
          'out_share_for', 'out_share_SOE_',
@@ -1479,7 +1423,8 @@ lb.beautify(table_number = 4,
             constraint = True,
             city_industry = False, 
             new_row = decile,
-            table_nte =tb)
+            table_nte =tb,
+           test_city_industry = True)
 ```
 
 <!-- #region kernel="python3" -->
@@ -1488,11 +1433,11 @@ lb.beautify(table_number = 4,
 Output latex table available here
 
 - https://www.overleaf.com/project/5deca0097e9f3a0001506527
-    - Temp_tables_revision/02_Paper_version_Revised/04bis_table_7_rob_3
+    - Temp_tables_revision/04_city_industry/04bis_table_7_rob_3
 
 In Google Drive:
 
-![](https://drive.google.com/uc?export=view&id=1ViG0sVNByinkLXOtkLRPDnBDNsQd1r0a)
+![](https://drive.google.com/uc?export=view&id=1UmRn_aSnU8-8lZp4-8R0y1OYxpy-lI9X)
 <!-- #endregion -->
 
 <!-- #region kernel="python3" -->
@@ -1603,7 +1548,9 @@ lb.beautify(table_number = 4,
             constraint = True,
             city_industry = False, 
             new_row = decile,
-            table_nte =tb)
+            table_nte =tb,
+test_city_industry = True
+)
 ```
 
 <!-- #region kernel="python3" -->
@@ -1612,11 +1559,11 @@ lb.beautify(table_number = 4,
 Output latex table available here
 
 - https://www.overleaf.com/project/5deca0097e9f3a0001506527
-    - Temp_tables_revision/02_Paper_version_Revised/05_table_8_rob_4
+    - Temp_tables_revision/04_city_industry/05_table_8_rob_4
 
 In Google Drive:
 
-![](https://drive.google.com/uc?export=view&id=1KO2N1e7tis4Dfb5DhYmxbQ_LqklI91s3)
+![](https://drive.google.com/uc?export=view&id=1eMdEZGXGOs2UQMXPVA3rcFsI-irV407l)
 <!-- #endregion -->
 
 <!-- #region kernel="python3" -->
@@ -1744,7 +1691,7 @@ df_herfhindal_ind = (df_herfhindal
                      .groupby('industry')['Herfindahl']
                      .mean()
                      .reset_index())
-df_herfhindal_final = df_final.merge(df_herfhindal_ind,
+df_herfhindal_final = df_final_ci.merge(df_herfhindal_ind,
                                      on=['industry'],
                                      how='left',
                                      indicator=True
@@ -1870,7 +1817,9 @@ lb.beautify(table_number = 5,
             constraint = True,
             city_industry = False, 
             new_row = decile,
-            table_nte =tb)
+            table_nte =tb,
+            test_city_industry = True
+           )
 ```
 
 <!-- #region kernel="python3" -->
@@ -1898,19 +1847,21 @@ So the strategy here is to estimate the model on cumulative subsample by city-se
 Output latex table available here
 
 - https://www.overleaf.com/project/5deca0097e9f3a0001506527
-    - Temp_tables_revision/02_Paper_version_Revised/06_table_9_size_output
+    - Temp_tables_revision/04_city_industry/06_table_9_size_output
+    - Temp_tables_revision/04_city_industry/07_table_9_size_capital
+    - Temp_tables_revision/04_city_industry/08_table_9_size_employement
 
 In Google Drive:
 
 **Output**
-![](https://drive.google.com/uc?export=view&id=1INHvj-AqUeL6wJ3YW8WNigS-_d-GqAj2)
+![](https://drive.google.com/uc?export=view&id=1rNUQoXMdXsrrbxE5pzoYV4UYIXlGfTQ8)
 
 **Capital**
-![](https://drive.google.com/uc?export=view&id=1Vm6_-DbPEeLDXOSagtoudVPbXqzuUv7r)
+![](https://drive.google.com/uc?export=view&id=1kOBIcEFgKs3AM2wrgxi4suttTNSAq6El)
 
 
 **Employement**
-![](https://drive.google.com/uc?export=view&id=1NHzlZ1xki6HFrJ_Ic1Jj_zfyRLx3oJxI)
+![](https://drive.google.com/uc?export=view&id=1K3wx1VUyF8T_FdywjFl3yVO9lfbcpFNC)
 <!-- #endregion -->
 
 <!-- #region kernel="python3" -->
@@ -1919,15 +1870,11 @@ In Google Drive:
 
 ```sos kernel="SoS"
 %put df_herfhindal_final --to R
-df_herfhindal_final = df_final.merge(df_herfhindal,
+df_herfhindal_final = df_final_ci.merge(df_herfhindal,
                                      on=['geocode4_corr','industry'],
                                      how='left',
                                      indicator=True
                                      )
-```
-
-```sos kernel="SoS"
-df_herfhindal_final['decile_herfhindal'].value_counts()
 ```
 
 ```sos kernel="R"
@@ -2014,7 +1961,8 @@ lb.beautify(table_number = 6,
             constraint = True,
             city_industry = False, 
             new_row = decile,
-            table_nte =tb)
+            table_nte =tb,
+           test_city_industry = True)
 ```
 
 <!-- #region kernel="python3" -->
@@ -2086,7 +2034,8 @@ lb.beautify(table_number = 7,
             constraint = True,
             city_industry = False, 
             new_row = decile,
-            table_nte =tb)
+            table_nte =tb,
+           test_city_industry = True)
 ```
 
 <!-- #region kernel="python3" -->
@@ -2158,5 +2107,6 @@ lb.beautify(table_number = 8,
             constraint = True,
             city_industry = False, 
             new_row = decile,
-            table_nte =tb)
+            table_nte =tb,
+           test_city_industry = True)
 ```
