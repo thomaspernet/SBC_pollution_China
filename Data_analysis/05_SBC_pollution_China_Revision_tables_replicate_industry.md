@@ -979,7 +979,8 @@ df_chinese_city_characteristics = (gdr.upload_data_from_spreadsheet(
     .apply(pd.to_numeric, errors='ignore')
     .assign(year=lambda x:
             x['year_lagged'] + 1,
-            gdp_cap=lambda x: x['gdp'] / x['population']
+            gdp_cap=lambda x: x['gdp'] / x['population'],
+            gdp_cap_sqred = gdp_cap ** 2
             )
 ).to_csv('df_chinese_city_characteristics.csv', index = False)
 ```
@@ -991,7 +992,12 @@ df_chinese_city_characteristics = (gdr.upload_data_from_spreadsheet(
 ```sos kernel="R"
 df_chinese_city_characteristics = read_csv('df_chinese_city_characteristics.csv') %>% 
 select(-cityen) %>%
-left_join(df_final, by = c('year', 'geocode4_corr'))
+left_join(df_final, by = c('year', 'geocode4_corr')) %>%
+mutate(
+    ln_gdp_cap= log(gdp_cap),
+    ln_gdp_cap_sqred = ln_gdp_cap * ln_gdp_cap,
+    ln_pop = log(population)
+)
 ```
 
 ```sos kernel="R"
@@ -999,6 +1005,7 @@ left_join(df_final, by = c('year', 'geocode4_corr'))
 t0 <- felm(formula=log(tso2_cit) ~ 
            TCZ_c * Period *polluted_thre * out_share_SOE
           + polluted_thre * log(gdp_cap)
+          + polluted_thre * log(gdp_cap ** 2)
           + polluted_thre * log(population)
           + output_fcit + capital_fcit + labour_fcit
                   |
@@ -1107,6 +1114,281 @@ lb.beautify(table_number = 3,
             city_industry = False, 
             new_row = decile,
             table_nte =tb)
+```
+
+<!-- #region kernel="python3" -->
+### Table 06 BIS 1: Robustness check: Test for Kuznet curve
+
+Together with next part
+
+Output latex table available here
+
+- https://www.overleaf.com/project/5deca0097e9f3a0001506527
+    - Temp_tables_revision/05_Kuznet/01_kuznet
+
+In Google Drive:
+
+![](https://drive.google.com/uc?export=view&id=1klnGcZOdL37MIGo-UEeB2-HkbbwP5Umw)
+
+Note, we download the file `df_TCZ_list_china` from Google spreadsheet because SOS kernel has trouble loading the json file to connect to the remote.
+<!-- #endregion -->
+
+<!-- #region kernel="python3" -->
+#### Load data
+<!-- #endregion -->
+
+```sos kernel="R"
+df_chinese_city_characteristics = read_csv('df_chinese_city_characteristics.csv') %>% 
+select(-cityen) %>%
+left_join(df_final, by = c('year', 'geocode4_corr')) %>%
+mutate(
+    ln_gdp_cap= log(gdp_cap),
+    ln_gdp_cap_sqred = ln_gdp_cap * ln_gdp_cap,
+    ln_pop = log(population)
+)
+```
+
+<!-- #region kernel="python3" -->
+#### Code
+<!-- #endregion -->
+
+```sos kernel="R"
+### Low FE
+t0 <- felm(formula=log(tso2_cit) ~ 
+           TCZ_c * Period *polluted_thre * out_share_SOE
+          + ln_gdp_cap
+          + ln_gdp_cap_sqred
+          + ln_pop
+          + output_fcit + capital_fcit + labour_fcit
+                  |
+             cityen +  year + industry | 0 |
+             industry, data= df_chinese_city_characteristics,
+             exactDOF=TRUE)
+
+t1 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period *polluted_thre * cap_share_SOE
+           + ln_gdp_cap
+           + ln_gdp_cap_sqred
+           + ln_pop
+           + output_fcit + capital_fcit + labour_fcit
+                  |
+             cityen +  year + industry | 0 |
+             industry, data= df_chinese_city_characteristics,
+             exactDOF=TRUE)
+
+t2 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period *polluted_thre * lab_share_SOE
+          + ln_gdp_cap
+           + ln_gdp_cap_sqred
+           + ln_pop
+           + output_fcit + capital_fcit + labour_fcit
+                  |
+             cityen +  year + industry | 0 |
+             industry, data= df_chinese_city_characteristics,
+             exactDOF=TRUE)
+```
+
+<!-- #region kernel="R" -->
+#### Load data output decile
+<!-- #endregion -->
+
+```sos kernel="SoS"
+query_c = """WITH sum_co AS (
+  SELECT 
+    case WHEN ownership = 'Foreign' THEN 'FOREIGN' WHEN ownership = 'SOE' 
+    THEN 'SOE' ELSE 'DOMESTIC' END AS OWNERSHIP, 
+    SUM(output / 10000000) as output_co, 
+    SUM(fa_net / 10000000) as fa_net_co, 
+    SUM(employment / 100000) as employment_co,
+    geocode4_corr 
+  FROM 
+    China.asif_firm_china 
+  WHERE 
+    year >= 2002 
+    AND year < 2006 
+    AND output > 0 
+    AND fa_net > 0 
+    AND employment > 0 
+  GROUP BY 
+    OWNERSHIP, 
+    geocode4_corr
+  ORDER BY geocode4_corr, OWNERSHIP
+) 
+SELECT 
+  * 
+FROM 
+  (
+    WITH sum_c AS(
+      SELECT 
+        SUM(output_co) as output_c, 
+        SUM(fa_net_co) as fa_net_c, 
+        SUM(employment_co) as employment_c, 
+        geocode4_corr AS geocode4_corr_b 
+      FROM 
+        sum_co
+      GROUP BY geocode4_corr
+    )
+SELECT 
+      * 
+    FROM 
+      (
+        WITH share_co AS(
+          SELECT 
+            OWNERSHIP, 
+            output_co / output_c AS share_output_co, 
+            fa_net_co / fa_net_c AS share_fa_net_co, 
+            employment_co / employment_c AS share_employement_co, 
+            geocode4_corr
+          FROM 
+            sum_co 
+            LEFT JOIN sum_c ON sum_co.geocode4_corr = sum_c.geocode4_corr_b
+          WHERE OWNERSHIP = 'SOE'
+        )
+SELECT *,
+NTILE(10) OVER (ORDER BY share_output_co) as decile_share_output_c,
+NTILE(10) OVER (ORDER BY share_fa_net_co) as decile_share_fa_net_c,              
+NTILE(10) OVER (ORDER BY share_employement_co) as decile_share_employement_c,                  
+FROM share_co ORDER BY geocode4_corr, OWNERSHIP
+)
+)"""
+
+df_share = gcp.upload_data_from_bigquery(query = query_c,
+                                         location = 'US')
+
+df_share.head()
+```
+
+```sos kernel="SoS"
+%put df_final_c --to R
+df_final_c =  df_final.merge(df_share)
+```
+
+```sos kernel="R"
+df_chinese_city_characteristics = read_csv('df_chinese_city_characteristics.csv') %>% 
+select(-cityen) %>%
+left_join(df_final_c, by = c('year', 'geocode4_corr')) %>%
+mutate_if(is.character, as.factor) %>%
+mutate_at(vars(starts_with("FE")), as.factor) %>%
+mutate(
+         Period = relevel(Period, ref='Before'),
+         TCZ_c = relevel(TCZ_c, ref='No_TCZ'),
+         effort_c = relevel(effort_c, ref='Below'),
+         polluted_di = relevel(polluted_di, ref='Below'),
+         polluted_mi = relevel(polluted_mi, ref='Below'),
+         polluted_thre = relevel(polluted_thre, ref='Below'),
+    dummy_SOE_c_output5 = factor(ifelse(decile_share_output_c > 5, 
+                                    "Above", "Below"),
+                                         c("Above","Below")),
+    dummy_SOE_c_capital5 = factor(ifelse(decile_share_fa_net_c > 5, 
+                                    "Above", "Below"),
+                                         c("Above","Below")),
+    dummy_SOE_c_emp5 = factor(ifelse(decile_share_employement_c > 5, 
+                                    "Above", "Below"),
+                                         c("Above","Below")),
+                              ln_gdp_cap= log(gdp_cap),
+                              ln_gdp_cap_sqred = ln_gdp_cap * ln_gdp_cap,
+                              ln_pop = log(population),
+    dummy_SOE_c_output5 = relevel(dummy_SOE_c_output5, ref='Below'),
+    dummy_SOE_c_capital5 = relevel(dummy_SOE_c_capital5, ref='Below'),
+    dummy_SOE_c_emp5 = relevel(dummy_SOE_c_emp5, ref='Below')
+                                        
+)
+```
+
+<!-- #region kernel="R" -->
+#### code
+<!-- #endregion -->
+
+```sos kernel="R"
+t3 <- felm(formula=log(tso2_cit) ~ 
+           TCZ_c * Period *polluted_thre * out_share_SOE
+          + ln_gdp_cap * dummy_SOE_c_output5
+          + ln_gdp_cap_sqred * dummy_SOE_c_output5
+          + ln_pop
+          + output_fcit + capital_fcit + labour_fcit
+                  |
+             cityen +  year + industry | 0 |
+             industry, data= df_chinese_city_characteristics,
+             exactDOF=TRUE)
+t4 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period *polluted_thre * cap_share_SOE
+           + ln_gdp_cap * dummy_SOE_c_output5
+           + ln_gdp_cap_sqred * dummy_SOE_c_output5
+           + ln_pop
+           + output_fcit + capital_fcit + labour_fcit
+                  |
+             cityen +  year + industry | 0 |
+             industry, data= df_chinese_city_characteristics,
+             exactDOF=TRUE)
+
+t5 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period *polluted_thre * lab_share_SOE
+          + ln_gdp_cap * dummy_SOE_c_output5
+           + ln_gdp_cap_sqred * dummy_SOE_c_output5
+           + ln_pop
+           + output_fcit + capital_fcit + labour_fcit
+                  |
+             cityen +  year + industry | 0 |
+             industry, data= df_chinese_city_characteristics,
+             exactDOF=TRUE)
+```
+
+```sos kernel="python3"
+import os
+decile=['& Output','Capital', 'Labour',
+        'Output','Capital', 'Labour'
+       ]
+try:
+    os.remove("table_4.txt")
+except:
+    pass
+try:
+    os.remove("table_4.tex")
+except:
+    pass
+```
+
+```sos kernel="R"
+fe1 <- list(c("City fixed effects", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"),
+             c("Industry fixed effects", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"),
+             c("Year fixed effects","Yes", "Yes", "Yes", "Yes", "Yes", "Yes")
+             )
+
+table_1 <- go_latex(list(
+    t0,
+    t1,
+    t2,
+    t3,
+    t4,
+    t5
+),
+    dep_var = "Dependent variable: \\text { SO2 emission }_{i k t}",
+    title="Test for the Kuznet curve ",
+    addFE=fe1,
+    save=TRUE,
+                    note = FALSE,
+    name="table_4.txt"
+)
+```
+
+```sos kernel="python3"
+tb = """\\footnotesize{
+Due to limited space, only the coefficients of interest are presented 
+for the regressions with city,industry, year fixed effect (i.e. columns 1-6).
+Output SOE median is a dummy variable taking the value of 1 if the output share of the SOE computed \\
+at the city level is above the median.
+\sym{*} Significance at the 10\%, \sym{**} Significance at the 5\%, \sym{***} Significance at the 1\% \\
+heteroscedasticity-robust standard errors in parentheses are clustered by city 
+}
+"""
+
+try:
+    os.remove("table_4.tex")
+except:
+    pass
+
+lb.beautify(table_number = 4,
+            remove_control= True,
+            constraint = True,
+            city_industry = False, 
+            new_row = decile,
+            table_nte =tb)
 
 try:
     os.remove("df_chinese_city_characteristics.csv")
@@ -1120,7 +1402,7 @@ except:
 Output latex table available here
 
 - https://www.overleaf.com/project/5deca0097e9f3a0001506527
-    - Temp_tables_revision/02_Paper_version_Revised/04_table_7_rob_3
+    - Temp_tables_revision/05_Kuznet/02_decile_5
 
 In Google Drive:
 
@@ -1332,7 +1614,7 @@ lb.beautify(table_number = 4,
 ```
 
 <!-- #region kernel="python3" -->
-## Table 07 BIS: Robustness check: Foreign share & SOE share
+### Table 07 BIS: Robustness check: Foreign share & SOE share
 
 Output latex table available here
 
