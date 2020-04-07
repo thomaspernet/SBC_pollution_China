@@ -60,9 +60,14 @@ remove_control = True,
 
     r_tfp = r"^\s\spolluted\\_threAbove\:PeriodAfter\:SOESOE\s"
 
-    r_pop_gdp = \
-    r"\s\slog\(gdp\\_cap\)\s|" \
-    r"\s\slog\(population\)\s"
+    r_kuznet = \
+    r"\s\sdummy\\_SOE\\_c\\_output5Above\s|" \
+    r"\s\sdummy\\_SOE\\_c\\_capital5Above\s|" \
+    r"\s\sdummy\\_SOE\\_c\\_emp5Above\s"
+
+    #r_pop_gdp = \
+    #r"\s\slog\(gdp\\_cap\)\s|" \
+    #r"\s\slog\(population\)\s"
 
 
     if city_industry:
@@ -297,6 +302,11 @@ remove_control = True,
             line_to_remove.append(x + 13)
             line_to_remove.append((x + 13) + 1)
 
+        test_kuznet = bool(re.search(r_kuznet, line))
+        if test_kuznet == True:
+            line_to_remove.append(x + 13)
+            line_to_remove.append((x + 13) + 1)
+
         test_decile = bool(re.search(r_decile, line))
         if test_decile == True:
             line_to_remove.append(x + 13)
@@ -325,10 +335,10 @@ remove_control = True,
                 line_to_remove.append(x + 13)
                 line_to_remove.append((x + 13) + 1)
 
-            test_pop_gdp = bool(re.search(r_pop_gdp, line))
-            if test_pop_gdp == True:
-                line_to_remove.append(x + 13)
-                line_to_remove.append((x + 13) + 1)
+            #test_pop_gdp = bool(re.search(r_pop_gdp, line))
+            #if test_pop_gdp == True:
+            #    line_to_remove.append(x + 13)
+            #    line_to_remove.append((x + 13) + 1)
 
 
 
@@ -462,6 +472,37 @@ remove_control = True,
                               'Coastal:polluted\_threAbove:PeriodAfter:SOESOE',
                                1)
 
+        ### kuznet
+        lines = lines.replace('dummy\_SOE\_c\_output5Above:ln\_gdp\_cap\_sqred',
+                              'ln\_gdp\_cap\_sqred:dummy\_SOE\_c\_output5Above',
+                               1)
+
+        lines = lines.replace('dummy\_SOE\_c\_capital5Above:ln\_gdp\_cap\_sqred',
+                              'ln\_gdp\_cap\_sqred:dummy\_SOE\_c\_capital5Above',
+                               1)
+
+        lines = lines.replace('dummy\_SOE\_c\_emp5Above:ln\_gdp\_cap\_sqred',
+                              'ln\_gdp\_cap\_sqred:dummy\_SOE\_c\_emp5Above',
+                               1)
+
+
+        lines = lines.replace('ln\_gdp\_cap\_sqred',
+          ' \\text{(ln gdp per cap) squared}_{ct} ')
+
+        lines = lines.replace('ln\\_pop',
+          ' \\text{(ln population)}_{ct} ')
+
+        lines = lines.replace('ln\_gdp\_cap',
+         ' \\text{(ln gdp per cap)}_{ct} ')
+
+        lines = lines.replace('dummy\_SOE\_c\_output5Above',
+          ' \\text{Output SOE median} ')
+
+        lines = lines.replace('dummy\_SOE\_c\_capital5Above',
+          ' \\text{Capital SOE median} ')
+
+        lines = lines.replace('dummy\_SOE\_c\_emp5Above',
+          ' \\text{Employment SOE median} ')
 
         # regex replace
         lines = lines.replace('output\_fcit', 'output_{cit}')
