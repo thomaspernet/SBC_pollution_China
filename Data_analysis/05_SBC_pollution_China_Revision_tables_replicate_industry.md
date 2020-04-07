@@ -99,6 +99,9 @@ path = "functions/SBC_pollution_R.R"
 source(path)
 path = "functions/SBC_pollutiuon_golatex.R"
 source(path)
+```
+
+```sos kernel="R"
 
 df_final <- df_final %>% 
     mutate_if(is.character, as.factor) %>%
@@ -1394,6 +1397,273 @@ try:
     os.remove("df_chinese_city_characteristics.csv")
 except:
     pass
+```
+
+<!-- #region kernel="python3" -->
+### Table 06 BIS 2: Robustness check: Test for Kuznet curve, decile
+
+Together with next part
+
+Output latex table available here
+
+- https://www.overleaf.com/project/5deca0097e9f3a0001506527
+    - Temp_tables_revision/05_Kuznet/02_kuznet_decile_output
+    - Temp_tables_revision/05_Kuznet/03_kuznet_decile_capital
+    - Temp_tables_revision/05_Kuznet/04_kuznet_decile_emp
+
+In Google Drive:
+
+**Output**
+![](https://drive.google.com/uc?export=view&id=1_j98ysnq-9Dps5Pih-TOHwgfafeIlX3Y)
+
+**Capital**
+![](https://drive.google.com/uc?export=view&id=1KNkBXfH8fu_2FB20lSu9FtKrAqv3sCRh)
+
+**Employment**
+![](https://drive.google.com/uc?export=view&id=1M1q7oJK_sM9Sp7WdZY7Kd-NHCWaAL0zu)
+<!-- #endregion -->
+
+<!-- #region kernel="python3" -->
+#### Output
+<!-- #endregion -->
+
+```sos kernel="R"
+i <- 1
+l = list()
+turning = c()
+turning_dol = c()
+while(i < 11) {
+    t1 <- felm(formula=log(tso2_cit) ~ 
+               TCZ_c * Period *polluted_thre * out_share_SOE
+          + ln_gdp_cap
+          + ln_gdp_cap_sqred 
+          + ln_pop
+          + output_fcit + capital_fcit + labour_fcit
+                  |
+             cityen +  year + industry | 0 |
+             industry, data= df_chinese_city_characteristics %>% 
+               filter(decile_share_output_c <= i),
+             exactDOF=TRUE)
+    
+    l[[i]] <- t1
+    turning = append(turning, round(exp(abs(t1$beta[5] / (2 * t1$beta[6]))), 0))
+    turning_dol <- append(turning_dol, round(exp(abs(t1$beta[5] / (2 * t1$beta[6])))/8.07,0))
+    i <- i + 1
+}
+```
+
+```sos kernel="python3"
+import os
+decile=['& decile .1','decile .2', ' decile .3', 'decile .4',
+        'decile .5','decile .6', ' decile .7', 
+       'decile .8','decile .9', ' Baseline']
+try:
+    os.remove("table_5.txt")
+except:
+    pass
+try:
+    os.remove("table_5.tex")
+except:
+    pass
+```
+
+```sos kernel="R"
+fe1 <- list(
+    c('turning point RMB', turning),
+    c('turning point Dollar', turning_dol),
+    c("City fixed effects", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"),
+             c("Industry fixed effects", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"),
+             c("Year fixed effects","Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes")
+             )
+table_1 <- go_latex(l,
+    dep_var = "Dependent variable: \\text { SO2 emission }_{i k t}",
+    title='Deciles output',
+    addFE=fe1,
+    save=TRUE,
+                    note = FALSE,
+    name="table_5.txt"
+)
+```
+
+```sos kernel="python3"
+tb = """\\footnotesize{
+A decile indicates the rank of the city output share by SOE \\
+More specifically, the low deciles means a low SOE share by city \\
+Deciles close to one, however, implies a stronger share of SO2.
+Due to limited space, only the coefficients of interest are presented 
+for the regressions with city,industry, year fixed effect (i.e. columns 1-3).
+\sym{*} Significance at the 10\%, \sym{**} Significance at the 5\%, \sym{***} Significance at the 1\% \\
+heteroscedasticity-robust standard errors in parentheses are clustered by city 
+}
+"""
+lb.beautify(table_number = 5,
+            remove_control= True,
+            constraint = True,
+            city_industry = False, 
+            new_row = decile,
+            table_nte =tb)
+```
+
+<!-- #region kernel="python3" -->
+#### Capital
+<!-- #endregion -->
+
+```sos kernel="R"
+i <- 1
+l = list()
+turning = c()
+turning_dol = c()
+while(i < 11) {
+    t1 <- felm(formula=log(tso2_cit) ~ 
+               TCZ_c * Period *polluted_thre * cap_share_SOE
+          + ln_gdp_cap
+          + ln_gdp_cap_sqred 
+          + ln_pop
+          + output_fcit + capital_fcit + labour_fcit
+                  |
+             cityen +  year + industry | 0 |
+             industry, data= df_chinese_city_characteristics %>% 
+               filter(decile_share_output_c <= i),
+             exactDOF=TRUE)
+    
+    l[[i]] <- t1
+    turning = append(turning, round(exp(abs(t1$beta[5] / (2 * t1$beta[6]))), 0))
+    turning_dol <- append(turning_dol, round(exp(abs(t1$beta[5] / (2 * t1$beta[6])))/8.07,0))
+    i <- i + 1
+}
+```
+
+```sos kernel="python3"
+import os
+decile=['& decile .1','decile .2', ' decile .3', 'decile .4',
+        'decile .5','decile .6', ' decile .7', 
+       'decile .8','decile .9', ' Baseline']
+try:
+    os.remove("table_5.txt")
+except:
+    pass
+try:
+    os.remove("table_5.tex")
+except:
+    pass
+```
+
+```sos kernel="R"
+fe1 <- list(
+    c('turning point RMB', turning),
+    c('turning point Dollar', turning_dol),
+    c("City fixed effects", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"),
+             c("Industry fixed effects", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"),
+             c("Year fixed effects","Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes")
+             )
+table_1 <- go_latex(l,
+    dep_var = "Dependent variable: \\text { SO2 emission }_{i k t}",
+    title='Deciles capital',
+    addFE=fe1,
+    save=TRUE,
+                    note = FALSE,
+    name="table_6.txt"
+)
+```
+
+```sos kernel="python3"
+tb = """\\footnotesize{
+A decile indicates the rank of the city output share by SOE \\
+More specifically, the low deciles means a low SOE share by city \\
+Deciles close to one, however, implies a stronger share of SO2.
+Due to limited space, only the coefficients of interest are presented 
+for the regressions with city,industry, year fixed effect (i.e. columns 1-3).
+\sym{*} Significance at the 10\%, \sym{**} Significance at the 5\%, \sym{***} Significance at the 1\% \\
+heteroscedasticity-robust standard errors in parentheses are clustered by city 
+}
+"""
+lb.beautify(table_number = 6,
+            remove_control= True,
+            constraint = True,
+            city_industry = False, 
+            new_row = decile,
+            table_nte =tb)
+```
+
+<!-- #region kernel="python3" -->
+#### Employment
+<!-- #endregion -->
+
+```sos kernel="R"
+i <- 1
+l = list()
+turning = c()
+turning_dol = c()
+while(i < 11) {
+    t1 <- felm(formula=log(tso2_cit) ~ 
+               TCZ_c * Period *polluted_thre * lab_share_SOE
+          + ln_gdp_cap
+          + ln_gdp_cap_sqred 
+          + ln_pop
+          + output_fcit + capital_fcit + labour_fcit
+                  |
+             cityen +  year + industry | 0 |
+             industry, data= df_chinese_city_characteristics %>% 
+               filter(decile_share_output_c <= i),
+             exactDOF=TRUE)
+    
+    l[[i]] <- t1
+    turning = append(turning, round(exp(abs(t1$beta[5] / (2 * t1$beta[6]))), 0))
+    turning_dol <- append(turning_dol, round(exp(abs(t1$beta[5] / (2 * t1$beta[6])))/8.07,0))
+    i <- i + 1
+}
+```
+
+```sos kernel="python3"
+import os
+decile=['& decile .1','decile .2', ' decile .3', 'decile .4',
+        'decile .5','decile .6', ' decile .7', 
+       'decile .8','decile .9', ' Baseline']
+try:
+    os.remove("table_5.txt")
+except:
+    pass
+try:
+    os.remove("table_5.tex")
+except:
+    pass
+```
+
+```sos kernel="R"
+fe1 <- list(
+    c('turning point RMB', turning),
+    c('turning point Dollar', turning_dol),
+    c("City fixed effects", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"),
+             c("Industry fixed effects", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"),
+             c("Year fixed effects","Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes")
+             )
+table_1 <- go_latex(l,
+    dep_var = "Dependent variable: \\text { SO2 emission }_{i k t}",
+    title='Deciles employment',
+    addFE=fe1,
+    save=TRUE,
+                    note = FALSE,
+    name="table_7.txt"
+)
+```
+
+```sos kernel="python3"
+tb = """\\footnotesize{
+A decile indicates the rank of the city output share by SOE \\
+More specifically, the low deciles means a low SOE share by city \\
+Deciles close to one, however, implies a stronger share of SO2.
+Due to limited space, only the coefficients of interest are presented 
+for the regressions with city,industry, year fixed effect (i.e. columns 1-3).
+\sym{*} Significance at the 10\%, \sym{**} Significance at the 5\%, \sym{***} Significance at the 1\% \\
+heteroscedasticity-robust standard errors in parentheses are clustered by city 
+}
+"""
+lb.beautify(table_number = 7,
+            remove_control= True,
+            constraint = True,
+            city_industry = False, 
+            new_row = decile,
+            table_nte =tb)
 ```
 
 <!-- #region kernel="python3" -->
