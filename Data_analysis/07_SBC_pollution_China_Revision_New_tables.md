@@ -808,19 +808,19 @@ In Google Drive:
 
 ```sos kernel="R"
 ### Big
-t0 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre
+t0 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period *polluted_thre * out_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
              industry, data= df_herfhindal_r %>% filter(decile_herfhindal_c >= 5),
              exactDOF=TRUE)
-t1 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre
+t1 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre * cap_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
              industry, data= df_herfhindal_r %>% filter(decile_herfhindal_c >= 5),
              exactDOF=TRUE)
-t2 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre
+t2 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre * lab_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
@@ -828,57 +828,57 @@ t2 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre
              exactDOF=TRUE)
 
 ### Foreign
-t3 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre
+t3 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre * out_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
              industry, data= df_final_FOREIGN %>% filter(foreign_output == 'Above'),
              exactDOF=TRUE)
-t4 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre
+t4 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre* cap_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
              industry, data= df_final_FOREIGN %>% filter(foreign_capital == 'Above'),
              exactDOF=TRUE)
-t5 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre
+t5 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre* lab_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
              industry, data= df_final_FOREIGN %>% filter(foreign_employment == 'Above'),
              exactDOF=TRUE)
 ### SOE
-t6 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre
+t6 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre* out_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
              industry, data= df_final_SOE %>% filter(soe_output == 'Above'),
              exactDOF=TRUE)
-t7 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre
+t7 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre* cap_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
              industry, data= df_final_SOE %>% filter(soe_capital == 'Above'),
              exactDOF=TRUE)
-t8 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre
+t8 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre* lab_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
              industry, data= df_final_SOE %>% filter(soe_employment == 'Above'),
              exactDOF=TRUE)
 ### SPZ
-t9 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre
+t9 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre* out_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
              industry, data= df_TCZ_list_china %>% filter(SPZ == 1),
              exactDOF=TRUE)
-t10 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre
+t10 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre* cap_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
              industry, data= df_TCZ_list_china %>% filter(SPZ == 1),
              exactDOF=TRUE)
-t11 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre
+t11 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre* lab_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
@@ -886,19 +886,19 @@ t11 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre
              exactDOF=TRUE)
 
 ### Coastal
-t12 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre
+t12 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre* out_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
              industry, data= df_TCZ_list_china %>% filter(Coastal == TRUE),
              exactDOF=TRUE)
-t13 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre
+t13 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre* cap_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
              industry, data= df_TCZ_list_china %>% filter(Coastal == TRUE),
              exactDOF=TRUE)
-t14 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre
+t14 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre* lab_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
@@ -907,12 +907,13 @@ t14 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre
 ```
 
 ```sos kernel="R"
-test <- list(t0, t1, t2, t3,t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14)
+test <- list(t0, t1, t2, t3,t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14
+            )
 ```
 
 ```sos kernel="python3"
 import os
-decile=['& Output','Capital', 'Labour',
+decile=['& Output','Capital', 'Labour'#,
         'Output','Capital', 'Labour',
         'Output','Capital', 'Labour',
         'Output','Capital', 'Labour',
@@ -959,7 +960,7 @@ heteroscedasticity-robust standard errors in parentheses are clustered by city
 """
 lb.beautify(table_number = 2,
             remove_control= True,
-            constraint = True,
+            constraint = False,
             city_industry = False, 
             new_row = decile,
             table_nte =tb)
@@ -980,22 +981,19 @@ In Google Drive:
 
 ```sos kernel="R"
 ### Big
-t0 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre
-           +TCZ_c * Period *polluted_thre * out_share_SOE
+t0 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period *polluted_thre * out_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
              industry, data= df_herfhindal_r %>% filter(decile_herfhindal_c < 5),
              exactDOF=TRUE)
-t1 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre
-           +TCZ_c * Period *polluted_thre * cap_share_SOE
+t1 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre * cap_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
              industry, data= df_herfhindal_r %>% filter(decile_herfhindal_c < 5),
              exactDOF=TRUE)
-t2 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre
-           +TCZ_c * Period *polluted_thre * lab_share_SOE
+t2 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre * lab_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
@@ -1003,66 +1001,57 @@ t2 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre
              exactDOF=TRUE)
 
 ### Foreign
-t3 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre
-           +TCZ_c * Period *polluted_thre * out_share_SOE
+t3 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre * out_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
              industry, data= df_final_FOREIGN %>% filter(foreign_output == 'Below'),
              exactDOF=TRUE)
-t4 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre
-           +TCZ_c * Period *polluted_thre * cap_share_SOE
+t4 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre* cap_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
              industry, data= df_final_FOREIGN %>% filter(foreign_capital == 'Below'),
              exactDOF=TRUE)
-t5 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre
-           +TCZ_c * Period *polluted_thre * lab_share_SOE
+t5 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre* lab_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
              industry, data= df_final_FOREIGN %>% filter(foreign_employment == 'Below'),
              exactDOF=TRUE)
 ### SOE
-t6 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre
-           +TCZ_c * Period *polluted_thre * out_share_SOE
+t6 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre* out_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
              industry, data= df_final_SOE %>% filter(soe_output == 'Below'),
              exactDOF=TRUE)
-t7 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre
-           +TCZ_c * Period *polluted_thre * cap_share_SOE
+t7 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre* cap_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
              industry, data= df_final_SOE %>% filter(soe_capital == 'Below'),
              exactDOF=TRUE)
-t8 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre
-           +TCZ_c * Period *polluted_thre * lab_share_SOE
+t8 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre* lab_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
              industry, data= df_final_SOE %>% filter(soe_employment == 'Below'),
              exactDOF=TRUE)
 ### SPZ
-t9 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre
-           +TCZ_c * Period *polluted_thre * out_share_SOE
+t9 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre* out_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
              industry, data= df_TCZ_list_china %>% filter(SPZ == 0),
              exactDOF=TRUE)
-t10 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre
-           +TCZ_c * Period *polluted_thre * cap_share_SOE
+t10 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre* cap_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
              industry, data= df_TCZ_list_china %>% filter(SPZ == 0),
              exactDOF=TRUE)
-t11 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre
-           +TCZ_c * Period *polluted_thre * lab_share_SOE
+t11 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre* lab_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
@@ -1070,22 +1059,19 @@ t11 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre
              exactDOF=TRUE)
 
 ### Coastal
-t12 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre
-           +TCZ_c * Period *polluted_thre * out_share_SOE
+t12 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre* out_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
              industry, data= df_TCZ_list_china %>% filter(Coastal == FALSE),
              exactDOF=TRUE)
-t13 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre
-           +TCZ_c * Period *polluted_thre * cap_share_SOE
+t13 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre* cap_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
              industry, data= df_TCZ_list_china %>% filter(Coastal == FALSE),
              exactDOF=TRUE)
-t14 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre
-           +TCZ_c * Period *polluted_thre * lab_share_SOE
+t14 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre* lab_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
@@ -1146,7 +1132,7 @@ heteroscedasticity-robust standard errors in parentheses are clustered by city
 """
 lb.beautify(table_number = 3,
             remove_control= True,
-            constraint = True,
+            constraint = False,
             city_industry = False, 
             new_row = decile,
             table_nte =tb)
@@ -1167,22 +1153,20 @@ In Google Drive:
 
 ```sos kernel="R"
 ### Big
-t0 <- felm(formula=log(tso2_cit) ~ target_c * Period * polluted_thre
-           +target_c * Period *polluted_thre * out_share_SOE
+t0 <- felm(formula=log(tso2_cit) ~target_c * Period *polluted_thre * out_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
              industry, data= df_herfhindal_r %>% filter(decile_herfhindal_c > 5),
              exactDOF=TRUE)
-t1 <- felm(formula=log(tso2_cit) ~ target_c * Period * polluted_thre
-           +target_c * Period *polluted_thre * cap_share_SOE
+t1 <- felm(formula=log(tso2_cit) ~target_c * Period *polluted_thre * cap_share_SOE
+           
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
              industry, data= df_herfhindal_r %>% filter(decile_herfhindal_c > 5),
              exactDOF=TRUE)
-t2 <- felm(formula=log(tso2_cit) ~ target_c * Period * polluted_thre
-           +target_c * Period *polluted_thre * lab_share_SOE
+t2 <- felm(formula=log(tso2_cit) ~ target_c * Period *polluted_thre * lab_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
@@ -1190,8 +1174,7 @@ t2 <- felm(formula=log(tso2_cit) ~ target_c * Period * polluted_thre
              exactDOF=TRUE)
 
 ### Foreign
-t3 <- felm(formula=log(tso2_cit) ~ target_c * Period * polluted_thre
-           +target_c * Period *polluted_thre * out_share_SOE
+t3 <- felm(formula=log(tso2_cit) ~ target_c * Period *polluted_thre * out_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
@@ -1204,52 +1187,45 @@ t4 <- felm(formula=log(tso2_cit) ~ target_c * Period * polluted_thre
              FE_t_c + FE_t_i + FE_c_i  | 0 |
              industry, data= df_final_FOREIGN %>% filter(foreign_capital == 'Above'),
              exactDOF=TRUE)
-t5 <- felm(formula=log(tso2_cit) ~ target_c * Period * polluted_thre
-           +target_c * Period *polluted_thre * lab_share_SOE
+t5 <- felm(formula=log(tso2_cit) ~ target_c * Period *polluted_thre * lab_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
              industry, data= df_final_FOREIGN %>% filter(foreign_employment == 'Above'),
              exactDOF=TRUE)
 ### SOE
-t6 <- felm(formula=log(tso2_cit) ~ target_c * Period * polluted_thre
-           +target_c * Period *polluted_thre * out_share_SOE
+t6 <- felm(formula=log(tso2_cit) ~ target_c * Period *polluted_thre * out_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
              industry, data= df_final_SOE %>% filter(soe_output == 'Above'),
              exactDOF=TRUE)
-t7 <- felm(formula=log(tso2_cit) ~ target_c * Period * polluted_thre
-           +target_c * Period *polluted_thre * cap_share_SOE
+t7 <- felm(formula=log(tso2_cit) ~ target_c * Period *polluted_thre * cap_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
              industry, data= df_final_SOE %>% filter(soe_capital == 'Above'),
              exactDOF=TRUE)
-t8 <- felm(formula=log(tso2_cit) ~ target_c * Period * polluted_thre
-           +target_c * Period *polluted_thre * lab_share_SOE
+t8 <- felm(formula=log(tso2_cit) ~ target_c * Period *polluted_thre * lab_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
              industry, data= df_final_SOE %>% filter(soe_employment == 'Above'),
              exactDOF=TRUE)
 ### SPZ
-t9 <- felm(formula=log(tso2_cit) ~ target_c * Period * polluted_thre
-           +target_c * Period *polluted_thre * out_share_SOE
+t9 <- felm(formula=log(tso2_cit) ~ target_c * Period *polluted_thre * out_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
              industry, data= df_TCZ_list_china %>% filter(SPZ == 1),
              exactDOF=TRUE)
-t10 <- felm(formula=log(tso2_cit) ~ target_c * Period * polluted_thre
-           +target_c * Period *polluted_thre * cap_share_SOE
+t10 <- felm(formula=log(tso2_cit) ~target_c * Period *polluted_thre * cap_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
              industry, data= df_TCZ_list_china %>% filter(SPZ == 1),
              exactDOF=TRUE)
-t11 <- felm(formula=log(tso2_cit) ~ target_c * Period * polluted_thre
-           +target_c * Period *polluted_thre * lab_share_SOE
+t11 <- felm(formula=log(tso2_cit) ~ target_c * Period *polluted_thre * lab_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
@@ -1257,22 +1233,19 @@ t11 <- felm(formula=log(tso2_cit) ~ target_c * Period * polluted_thre
              exactDOF=TRUE)
 
 ### Coastal
-t12 <- felm(formula=log(tso2_cit) ~ target_c * Period * polluted_thre
-           +target_c * Period *polluted_thre * out_share_SOE
+t12 <- felm(formula=log(tso2_cit) ~ target_c * Period *polluted_thre * out_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
              industry, data= df_TCZ_list_china %>% filter(Coastal == TRUE),
              exactDOF=TRUE)
-t13 <- felm(formula=log(tso2_cit) ~ target_c * Period * polluted_thre
-           +target_c * Period *polluted_thre * cap_share_SOE
+t13 <- felm(formula=log(tso2_cit) ~ target_c * Period *polluted_thre * cap_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
              industry, data= df_TCZ_list_china %>% filter(Coastal == TRUE),
              exactDOF=TRUE)
-t14 <- felm(formula=log(tso2_cit) ~ target_c * Period * polluted_thre
-           +target_c * Period *polluted_thre * lab_share_SOE
+t14 <- felm(formula=log(tso2_cit) ~ target_c * Period *polluted_thre * lab_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
@@ -1354,22 +1327,19 @@ In Google Drive:
 
 ```sos kernel="R"
 ### Big
-t0 <- felm(formula=log(tso2_cit) ~ target_c * Period * polluted_thre
-           +target_c * Period *polluted_thre * out_share_SOE
+t0 <- felm(formula=log(tso2_cit) ~ target_c * Period *polluted_thre * out_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
              industry, data= df_herfhindal_r %>% filter(decile_herfhindal_c <= 5),
              exactDOF=TRUE)
-t1 <- felm(formula=log(tso2_cit) ~ target_c * Period * polluted_thre
-           +target_c * Period *polluted_thre * cap_share_SOE
+t1 <- felm(formula=log(tso2_cit) ~ target_c * Period *polluted_thre * cap_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
              industry, data= df_herfhindal_r %>% filter(decile_herfhindal_c <= 5),
              exactDOF=TRUE)
-t2 <- felm(formula=log(tso2_cit) ~ target_c * Period * polluted_thre
-           +target_c * Period *polluted_thre * lab_share_SOE
+t2 <- felm(formula=log(tso2_cit) ~ target_c * Period *polluted_thre * lab_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
@@ -1377,66 +1347,57 @@ t2 <- felm(formula=log(tso2_cit) ~ target_c * Period * polluted_thre
              exactDOF=TRUE)
 
 ### Foreign
-t3 <- felm(formula=log(tso2_cit) ~ target_c * Period * polluted_thre
-           +target_c * Period *polluted_thre * out_share_SOE
+t3 <- felm(formula=log(tso2_cit) ~ target_c * Period *polluted_thre * out_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
              industry, data= df_final_FOREIGN %>% filter(foreign_output == 'Below'),
              exactDOF=TRUE)
-t4 <- felm(formula=log(tso2_cit) ~ target_c * Period * polluted_thre
-           +target_c * Period *polluted_thre * cap_share_SOE
+t4 <- felm(formula=log(tso2_cit) ~target_c * Period *polluted_thre * cap_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
              industry, data= df_final_FOREIGN %>% filter(foreign_capital == 'Below'),
              exactDOF=TRUE)
-t5 <- felm(formula=log(tso2_cit) ~ target_c * Period * polluted_thre
-           +target_c * Period *polluted_thre * lab_share_SOE
+t5 <- felm(formula=log(tso2_cit) ~ target_c * Period *polluted_thre * lab_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
              industry, data= df_final_FOREIGN %>% filter(foreign_employment == 'Below'),
              exactDOF=TRUE)
 ### SOE
-t6 <- felm(formula=log(tso2_cit) ~ target_c * Period * polluted_thre
-           +target_c * Period *polluted_thre * out_share_SOE
+t6 <- felm(formula=log(tso2_cit) ~ target_c * Period *polluted_thre * out_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
              industry, data= df_final_SOE %>% filter(soe_output == 'Below'),
              exactDOF=TRUE)
-t7 <- felm(formula=log(tso2_cit) ~ target_c * Period * polluted_thre
-           +target_c * Period *polluted_thre * cap_share_SOE
+t7 <- felm(formula=log(tso2_cit) ~ target_c * Period *polluted_thre * cap_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
              industry, data= df_final_SOE %>% filter(soe_capital == 'Below'),
              exactDOF=TRUE)
-t8 <- felm(formula=log(tso2_cit) ~ target_c * Period * polluted_thre
-           +target_c * Period *polluted_thre * lab_share_SOE
+t8 <- felm(formula=log(tso2_cit) ~target_c * Period *polluted_thre * lab_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
              industry, data= df_final_SOE %>% filter(soe_employment == 'Below'),
              exactDOF=TRUE)
 ### SPZ
-t9 <- felm(formula=log(tso2_cit) ~ target_c * Period * polluted_thre
-           +target_c * Period *polluted_thre * out_share_SOE
+t9 <- felm(formula=log(tso2_cit) ~ target_c * Period *polluted_thre * out_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
              industry, data= df_TCZ_list_china %>% filter(SPZ == 0),
              exactDOF=TRUE)
-t10 <- felm(formula=log(tso2_cit) ~ target_c * Period * polluted_thre
-           +target_c * Period *polluted_thre * cap_share_SOE
+t10 <- felm(formula=log(tso2_cit) ~ target_c * Period *polluted_thre * cap_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
              industry, data= df_TCZ_list_china %>% filter(SPZ == 0),
              exactDOF=TRUE)
-t11 <- felm(formula=log(tso2_cit) ~ target_c * Period * polluted_thre
-           +target_c * Period *polluted_thre * lab_share_SOE
+t11 <- felm(formula=log(tso2_cit) ~ target_c * Period *polluted_thre * lab_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
@@ -1444,22 +1405,19 @@ t11 <- felm(formula=log(tso2_cit) ~ target_c * Period * polluted_thre
              exactDOF=TRUE)
 
 ### Coastal
-t12 <- felm(formula=log(tso2_cit) ~ target_c * Period * polluted_thre
-           +target_c * Period *polluted_thre * out_share_SOE
+t12 <- felm(formula=log(tso2_cit) ~ target_c * Period *polluted_thre * out_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
              industry, data= df_TCZ_list_china %>% filter(Coastal == FALSE),
              exactDOF=TRUE)
-t13 <- felm(formula=log(tso2_cit) ~ target_c * Period * polluted_thre
-           +target_c * Period *polluted_thre * cap_share_SOE
+t13 <- felm(formula=log(tso2_cit) ~ target_c * Period *polluted_thre * cap_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
              industry, data= df_TCZ_list_china %>% filter(Coastal == FALSE),
              exactDOF=TRUE)
-t14 <- felm(formula=log(tso2_cit) ~ target_c * Period * polluted_thre
-           +target_c * Period *polluted_thre * lab_share_SOE
+t14 <- felm(formula=log(tso2_cit) ~ target_c * Period *polluted_thre * lab_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
