@@ -304,7 +304,7 @@ $$
 Log SO2 emission $_{i k t}=\alpha\left(\text { Period } \times \text { Target }_{i} \times \text { Polluting sectors }_{k}\right)+\nu_{i k}+\lambda_{i t}+\phi_{k t}+\epsilon_{i k t}
 $$
 
-* Big
+* Size
     * Via Herfhindal 
         * benchmark →Revision
 * Foreign 
@@ -316,10 +316,21 @@ $$
 <!-- #endregion -->
 
 <!-- #region kernel="python3" -->
-### Load data Herfhindal -Industry
+### Compute Herfhindal: proxy Size
 
-- Average Herfhindal by Industry
-- Compute the decile
+$$
+H=\sum_{i=1}^{N} s_{i}^{2}
+$$
+
+where $s_i$ is the market share of firm $i$ in the market, and $N$ is the number of firms. 
+
+We proceed as follow:
+- Step 1: Compute the share [output, capital, employment] by firm-industry: `market_share_fit`
+- Step 2: compute the sum of squared market share by industry: `Herfindahl_it`
+- Step 3: Compute the average across time: `Herfindahl_i`
+- Step 4: Compute the deciles of step 3: `decile_herfhindal_i`
+    - Low decile implies a low concentration within sectors
+    - High decile implies a high concentration within sectors
 <!-- #endregion -->
 
 ```sos kernel="SoS"
@@ -341,11 +352,10 @@ SELECT
   * 
 FROM 
   (
-    WITH sum_out AS (
+    WITH sum_it AS (
       SELECT 
-        geocode4_corr, 
         cic, 
-        SUM(output) as sum_output, 
+        SUM(output) as sum_o_it, 
         year 
       FROM 
         China.asif_firm_china 
@@ -354,26 +364,23 @@ FROM
         AND year <= 2007
       GROUP BY 
         year, 
-        geocode4_corr, 
         cic
     ) 
     SELECT 
       * 
     FROM 
       (
-        WITH agg AS (
+        WITH market_share_fit AS (
           SELECT 
             data.id, 
             data.cic, 
-            data.geocode4_corr, 
             data.year, 
-            data.output / NULLIF(sum_out.sum_output, 0) as market_share 
+            data.output / NULLIF(sum_it.sum_o_it, 0) as market_share_fit 
           FROM 
             data 
-            LEFT JOIN sum_out ON (
-              data.year = sum_out.year 
-              AND data.cic = sum_out.cic 
-              AND data.geocode4_corr = sum_out.geocode4_corr
+            LEFT JOIN sum_it ON (
+              data.year = sum_it.year 
+              AND data.cic = sum_it.cic 
             )
         ) 
         SELECT 
@@ -383,45 +390,42 @@ FROM
             WITH agg_1 AS (
               SELECT 
                 cic, 
-                geocode4_corr, 
                 SUM(
-                  POW(market_share, 2)
-                ) as Herfindahl, 
+                  POW(market_share_fit, 2)
+                ) as Herfindahl_it, 
                 year 
               FROM 
-                agg 
+                market_share_fit 
               GROUP BY 
                 year, 
-                cic, 
-                geocode4_corr 
+                cic
               ORDER BY 
                 year, 
-                geocode4_corr, 
                 cic
             ) 
             SELECT 
               * 
             FROM 
               (
-                WITH avg_H AS (
+                WITH avg_H_i AS (
                   SELECT 
                     cic, 
-                    AVG(Herfindahl) as Herfindahl 
+                    AVG(Herfindahl_it) as Herfindahl_i 
                   FROM 
                     agg_1 
-                  WHERE Herfindahl IS NOT NULL
+                  WHERE Herfindahl_it IS NOT NULL
                   GROUP BY 
                     cic
                 ) 
                 SELECT 
                   cic as industry, 
-                  Herfindahl, 
+                  Herfindahl_i, 
                   NTILE(10) OVER (
                     ORDER BY 
-                      Herfindahl
-                  ) as decile_herfhindal 
+                      Herfindahl_i
+                  ) as decile_herfhindal_i 
                 FROM 
-                  avg_H
+                  avg_H_i
               )
           )
       )
@@ -429,29 +433,36 @@ FROM
 """
 df_herfhindal = gcp.upload_data_from_bigquery(query = query,
                                          location = 'US')
-df_herfhindal['decile_herfhindal'].value_counts()
+df_herfhindal['decile_herfhindal_i'].value_counts()
 ```
 
 <!-- #region kernel="SoS" -->
-### Level industry
+### Compute Ownership: proxy Foreign/SOE
+
+$$\sum output_{io}/ \sum output_i$$
+
+- with $i$ stands for industry
+- $o$ stands for ownership (Foreign vs Domestic or SOE vs private)
+
+
+<!-- #endregion -->
+
+<!-- #region kernel="SoS" -->
+#### Foreign vs domestic
 
 We proceed as follow:
-- Step 1: Compute the share [output, capital, employment] by industry, ownership: `Share_io`
-- Step 2: Compute the deciles of step 1 by  ownership: `Share_io`
-
-We only need when `ownership` is equal to `SOE`. First decile indicates a low share of SOE in these sectors. For instance, when the decile is 1, it means this is the bottom 10% of sectors with the lowest share of SOE. The larger the decile, the higher the state presences.
-
-In a nutshell, we can run estimate in two ways:
-
-- by decile 
-- by cumulated decile
+- Step 1: Compute the share [output, capital, employment] by industry, ownership (Foreign/Domestic): `Share_io`
+- Step 2: Compute the deciles of step 1 `Share_io`
+- Step 3: filter on Foreign
+    - Low decile implies sector high share of domestic firms
+    - High decile implies a high share of foreign firms
 <!-- #endregion -->
 
 ```sos kernel="SoS"
-query_share = """ WITH sum_io AS (
+query_share_foreign = """ 
+WITH sum_io AS (
   SELECT 
-    case WHEN ownership = 'Foreign' THEN 'FOREIGN' WHEN ownership = 'SOE' 
-    THEN 'SOE' ELSE 'DOMESTIC' END AS OWNERSHIP, 
+    case WHEN ownership = 'Foreign' THEN 'FOREIGN' ELSE 'DOMESTIC' END AS OWNERSHIP, 
     SUM(output / 10000000) as output_io, 
     SUM(fa_net / 10000000) as fa_net_io, 
     SUM(employment / 100000) as employment_io,
@@ -499,24 +510,123 @@ FROM
             LEFT JOIN sum_i ON sum_io.cic = sum_i.cic_b
         ) 
         SELECT 
+        * 
+        FROM(
+        WITH decile_i AS (
+        SELECT 
         cic as industry,
         OWNERSHIP,  
-        NTILE(10)  OVER (PARTITION BY OWNERSHIP ORDER BY share_output_io) 
+        NTILE(10)  OVER ( ORDER BY share_output_io) 
           as rank_share_output_io,
-          NTILE(10)  OVER (PARTITION BY OWNERSHIP ORDER BY share_fa_net_io) 
+          NTILE(10)  OVER (ORDER BY share_fa_net_io) 
           as rank_share_capital_io,
-          NTILE(10)  OVER (PARTITION BY OWNERSHIP ORDER BY share_employement_io) 
-          as rank_share_employement_io,
-        share_output_io
+          NTILE(10)  OVER (ORDER BY share_employement_io) 
+          as rank_share_employement_io
         FROM share_io
- 
+        ORDER BY industry
+        )
+        SELECT * 
+        FROM decile_i 
+        WHERE OWNERSHIP = 'FOREIGN'
+        ORDER BY rank_share_output_io
         )
         )
-        
+        )
 """
-df_share = gcp.upload_data_from_bigquery(query = query_share,
+df_share_foreign = gcp.upload_data_from_bigquery(query = query_share_foreign,
                                          location = 'US')
-df_share.head()
+df_share_foreign['rank_share_output_io'].value_counts()
+```
+
+<!-- #region kernel="SoS" -->
+#### SOE
+
+We proceed as follow:
+- Step 1: Compute the share [output, capital, employment] by industry, ownership (SOE/Private): `Share_io`
+- Step 2: Compute the deciles of step 1 `Share_io`
+- Step 3: filter on Foreign
+    - Low decile implies sector high share of SOE firms
+    - High decile implies a high share of Private firms
+<!-- #endregion -->
+
+```sos kernel="SoS"
+query_share_soe = """ 
+WITH sum_io AS (
+  SELECT 
+    case WHEN ownership = 'SOE' THEN 'SOE' ELSE 'PRIVATE' END AS OWNERSHIP, 
+    SUM(output / 10000000) as output_io, 
+    SUM(fa_net / 10000000) as fa_net_io, 
+    SUM(employment / 100000) as employment_io,
+    cic 
+  FROM 
+    China.asif_firm_china 
+  WHERE 
+    year >= 2002 
+    AND year < 2006 
+    AND output > 0 
+    AND fa_net > 0 
+    AND employment > 0 
+  GROUP BY 
+    OWNERSHIP, 
+    cic
+) 
+SELECT 
+  * 
+FROM 
+  (
+    WITH sum_i AS(
+      SELECT 
+        SUM(output_io) as output_i, 
+        SUM(fa_net_io) as fa_net_i, 
+        SUM(employment_io) as employment_i, 
+        cic AS cic_b 
+      FROM 
+        sum_io 
+      GROUP BY 
+        cic
+    ) 
+    SELECT 
+      * 
+    FROM 
+      (
+        WITH share_io AS(
+          SELECT 
+            OWNERSHIP, 
+            output_io / output_i AS share_output_io, 
+            fa_net_io / fa_net_i AS share_fa_net_io, 
+            employment_io / employment_i AS share_employement_io, 
+            cic 
+          FROM 
+            sum_io 
+            LEFT JOIN sum_i ON sum_io.cic = sum_i.cic_b
+        ) 
+        SELECT 
+        * 
+        FROM(
+        WITH decile_i AS (
+        SELECT 
+        cic as industry,
+        OWNERSHIP,  
+        NTILE(10)  OVER ( ORDER BY share_output_io) 
+          as rank_share_output_io,
+          NTILE(10)  OVER (ORDER BY share_fa_net_io) 
+          as rank_share_capital_io,
+          NTILE(10)  OVER (ORDER BY share_employement_io) 
+          as rank_share_employement_io
+        FROM share_io
+        ORDER BY industry
+        )
+        SELECT * 
+        FROM decile_i 
+        WHERE OWNERSHIP = 'SOE'
+        ORDER BY rank_share_output_io
+        )
+        )
+        )
+"""
+df_share_soe = gcp.upload_data_from_bigquery(query = query_share_soe,
+                                         location = 'US')
+df_share_soe['rank_share_output_io'].value_counts()
 ```
 
 <!-- #region kernel="SoS" -->
@@ -571,13 +681,12 @@ df_herfhindal_r <- df_herfhindal_final %>%
          polluted_mi = relevel(polluted_mi, ref='Below'),
          polluted_thre = relevel(polluted_thre, ref='Below'),
   )
-head(df_herfhindal_r)
 ```
 
 ```sos kernel="SoS"
 %put df_final_SOE --to R
 df_final_SOE = (df_final.merge(
-    df_share.loc[lambda x: x['OWNERSHIP'].isin(['SOE'])][
+    df_share_soe[
         [
             'industry',
             'rank_share_output_io',
@@ -607,7 +716,7 @@ df_final_SOE <- df_final_SOE %>%
 ```sos kernel="SoS"
 %put df_final_FOREIGN --to R
 df_final_FOREIGN = (df_final.merge(
-    df_share.loc[lambda x: x['OWNERSHIP'].isin(['FOREIGN'])][
+    df_share_foreign[
         [
             'industry',
             'rank_share_output_io',
@@ -659,21 +768,21 @@ t0 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
-             industry, data= df_herfhindal_r %>% filter(decile_herfhindal > 5),
+             industry, data= df_herfhindal_r %>% filter(decile_herfhindal_i >= 5),
              exactDOF=TRUE)
 t1 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre
            +TCZ_c * Period *polluted_thre * cap_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
-             industry, data= df_herfhindal_r %>% filter(decile_herfhindal > 5),
+             industry, data= df_herfhindal_r %>% filter(decile_herfhindal_i >= 5),
              exactDOF=TRUE)
 t2 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre
            +TCZ_c * Period *polluted_thre * lab_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
-             industry, data= df_herfhindal_r %>% filter(decile_herfhindal > 5),
+             industry, data= df_herfhindal_r %>% filter(decile_herfhindal_i >= 5),
              exactDOF=TRUE)
 
 ### Foreign
@@ -682,21 +791,21 @@ t3 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
-             industry, data= df_final_FOREIGN %>% filter(rank_share_output_io > 5),
+             industry, data= df_final_FOREIGN %>% filter(rank_share_output_io >= 5),
              exactDOF=TRUE)
 t4 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre
            +TCZ_c * Period *polluted_thre * cap_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
-             industry, data= df_final_FOREIGN %>% filter(rank_share_capital_io > 5),
+             industry, data= df_final_FOREIGN %>% filter(rank_share_capital_io >= 5),
              exactDOF=TRUE)
 t5 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre
            +TCZ_c * Period *polluted_thre * lab_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
-             industry, data= df_final_FOREIGN %>% filter(rank_share_employement_io > 5),
+             industry, data= df_final_FOREIGN %>% filter(rank_share_employement_io >= 5),
              exactDOF=TRUE)
 ### SOE
 t6 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre
@@ -704,21 +813,21 @@ t6 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
-             industry, data= df_final_SOE %>% filter(rank_share_output_io > 5),
+             industry, data= df_final_SOE %>% filter(rank_share_output_io >= 5),
              exactDOF=TRUE)
 t7 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre
            +TCZ_c * Period *polluted_thre * cap_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
-             industry, data= df_final_SOE %>% filter(rank_share_capital_io > 5),
+             industry, data= df_final_SOE %>% filter(rank_share_capital_io >= 5),
              exactDOF=TRUE)
 t8 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre
            +TCZ_c * Period *polluted_thre * lab_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
-             industry, data= df_final_SOE %>% filter(rank_share_employement_io > 5),
+             industry, data= df_final_SOE %>% filter(rank_share_employement_io >= 5),
              exactDOF=TRUE)
 ### SPZ
 t9 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre
@@ -843,21 +952,21 @@ t0 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
-             industry, data= df_herfhindal_r %>% filter(decile_herfhindal < 5),
+             industry, data= df_herfhindal_r %>% filter(decile_herfhindal_i < 5),
              exactDOF=TRUE)
 t1 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre
            +TCZ_c * Period *polluted_thre * cap_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
-             industry, data= df_herfhindal_r %>% filter(decile_herfhindal < 5),
+             industry, data= df_herfhindal_r %>% filter(decile_herfhindal_i < 5),
              exactDOF=TRUE)
 t2 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre
            +TCZ_c * Period *polluted_thre * lab_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
-             industry, data= df_herfhindal_r %>% filter(decile_herfhindal < 5),
+             industry, data= df_herfhindal_r %>% filter(decile_herfhindal_i < 5),
              exactDOF=TRUE)
 
 ### Foreign
