@@ -288,20 +288,20 @@ lb.beautify(table_number = 1,
 <!-- #endregion -->
 
 <!-- #region kernel="python3" -->
-## Tableau 8: 
+## Tableau 8 A and B 
 
 Estimate the following models using different subsamples:
 
-1. 
+### Model A 
 
 $$
-Log SO2 emission $_{i k t}=\alpha\left(\text { Period } \times \text { TCZ }_{i} \times \text { Polluting sectors }_{k}\right)+\nu_{i k}+\lambda_{i t}+\phi_{k t}+\epsilon_{i k t}
+Log SO2 emission _{i k t}=\alpha\left(\text { Period } \times \text { TCZ }_{i} \times \text { Polluting sectors }_{k}\right)+\nu_{i k}+\lambda_{i t}+\phi_{k t}+\epsilon_{i k t}
 $$
 
-2.
+### Model B
 
 $$
-Log SO2 emission $_{i k t}=\alpha\left(\text { Period } \times \text { Target }_{i} \times \text { Polluting sectors }_{k}\right)+\nu_{i k}+\lambda_{i t}+\phi_{k t}+\epsilon_{i k t}
+Log SO2 emission _{i k t}=\alpha\left(\text { Period } \times \text { Target }_{i} \times \text { Polluting sectors }_{k}\right)+\nu_{i k}+\lambda_{i t}+\phi_{k t}+\epsilon_{i k t}
 $$
 
 * Size
@@ -316,10 +316,14 @@ $$
 <!-- #endregion -->
 
 <!-- #region kernel="python3" -->
+## Load Data
+<!-- #endregion -->
+
+<!-- #region kernel="python3" -->
 ### Compute Herfhindal: proxy Size
 
 $$
-H=\sum_{i=1}^{N} s_{i}^{2}
+H=\sum_{i=1}^{N} s_{ci}^{2}
 $$
 
 where $s_i$ is the market share of firm $i$ in the market, and $N$ is the number of firms. 
@@ -336,112 +340,66 @@ We proceed as follow:
 ```sos kernel="SoS"
 query = """
 WITH data AS (
-  SELECT 
-    id, 
-    geocode4_corr, 
-    cic, 
-    output, 
-    year 
-  FROM 
-    China.asif_firm_china 
-  WHERE 
-    year >= 2002 
-    AND year <= 2007
+  SELECT id, geocode4_corr, cic, output, year
+  FROM China.asif_firm_china 
+  WHERE year >= 2002 AND year <= 2005
 ) 
-SELECT 
-  * 
+SELECT * 
 FROM 
-  (
-    WITH sum_it AS (
-      SELECT 
-        cic, 
-        SUM(output) as sum_o_it, 
-        year 
-      FROM 
-        China.asif_firm_china 
-      WHERE 
-        year >= 2002 
-        AND year <= 2007
-      GROUP BY 
-        year, 
-        cic
-    ) 
-    SELECT 
-      * 
-    FROM 
-      (
-        WITH market_share_fit AS (
-          SELECT 
-            data.id, 
-            data.cic, 
-            data.year, 
-            data.output / NULLIF(sum_it.sum_o_it, 0) as market_share_fit 
-          FROM 
-            data 
-            LEFT JOIN sum_it ON (
-              data.year = sum_it.year 
-              AND data.cic = sum_it.cic 
-            )
-        ) 
-        SELECT 
-          * 
-        FROM 
-          (
-            WITH agg_1 AS (
-              SELECT 
-                cic, 
-                SUM(
-                  POW(market_share_fit, 2)
-                ) as Herfindahl_it, 
-                year 
-              FROM 
-                market_share_fit 
-              GROUP BY 
-                year, 
-                cic
-              ORDER BY 
-                year, 
-                cic
-            ) 
-            SELECT 
-              * 
-            FROM 
-              (
-                WITH avg_H_i AS (
-                  SELECT 
-                    cic, 
-                    AVG(Herfindahl_it) as Herfindahl_i 
-                  FROM 
-                    agg_1 
-                  WHERE Herfindahl_it IS NOT NULL
-                  GROUP BY 
-                    cic
-                ) 
-                SELECT 
-                  cic as industry, 
-                  Herfindahl_i, 
-                  NTILE(10) OVER (
-                    ORDER BY 
-                      Herfindahl_i
-                  ) as decile_herfhindal_i 
-                FROM 
-                  avg_H_i
-              )
-          )
-      )
-  )
+  (WITH sum_cit AS (
+    SELECT geocode4_corr, cic, SUM(output) as sum_o_cit, year
+    FROM China.asif_firm_china
+    WHERE year >= 2002 AND year <= 2005
+    GROUP BY year, geocode4_corr, cic
+)
+SELECT *
+FROM
+  (WITH ms_fcit AS (
+    SELECT  data.id, data.cic, data.geocode4_corr, data.year,
+    data.output/NULLIF(sum_cit.sum_o_cit, 0) as market_share_fcit
+    FROM data
+    LEFT JOIN sum_cit
+ON (
+data.year = sum_cit.year AND 
+data.cic = sum_cit.cic AND 
+data.geocode4_corr = sum_cit.geocode4_corr
+)
+)
+SELECT *
+FROM
+  (WITH agg_1 AS (
+SELECT cic, geocode4_corr, SUM(POW(market_share_fcit, 2)) as Herfindahl_cit,
+year
+FROM ms_fcit
+GROUP BY year, cic, geocode4_corr
+ORDER BY year, geocode4_corr	, cic 
+)
+SELECT *
+FROM (
+WITH avg_H_ci AS (
+SELECT cic, geocode4_corr, AVG(Herfindahl_cit) as Herfindahl_ci
+FROM agg_1
+GROUP BY cic, geocode4_corr
+)
+SELECT cic as industry,geocode4_corr, Herfindahl_ci ,
+NTILE(10)  OVER (PARTITION BY geocode4_corr ORDER BY Herfindahl_ci) as
+decile_herfhindal_c
+FROM avg_H_ci
+ORDER BY Herfindahl_ci
+))))
 """
 df_herfhindal = gcp.upload_data_from_bigquery(query = query,
                                          location = 'US')
-df_herfhindal['decile_herfhindal_i'].value_counts()
+df_herfhindal['decile_herfhindal_c'].value_counts()
 ```
 
 <!-- #region kernel="SoS" -->
 ### Compute Ownership: proxy Foreign/SOE
 
-$$\sum output_{io}/ \sum output_i$$
+$$\sum output_{cio}/ \sum output_ci$$
 
 - with $i$ stands for industry
+- with $c$ stands for city
 - $o$ stands for ownership (Foreign vs Domestic or SOE vs private)
 
 
@@ -460,13 +418,14 @@ We proceed as follow:
 
 ```sos kernel="SoS"
 query_share_foreign = """ 
-WITH sum_io AS (
+WITH sum_cio AS (
   SELECT 
     case WHEN ownership = 'Foreign' THEN 'FOREIGN' ELSE 'DOMESTIC' END AS OWNERSHIP, 
-    SUM(output / 10000000) as output_io, 
-    SUM(fa_net / 10000000) as fa_net_io, 
-    SUM(employment / 100000) as employment_io,
-    cic 
+    SUM(output / 10000000) as output_cio, 
+    SUM(fa_net / 10000000) as fa_net_cio, 
+    SUM(employment / 100000) as employment_cio,
+    cic,
+    geocode4_corr
   FROM 
     China.asif_firm_china 
   WHERE 
@@ -477,65 +436,98 @@ WITH sum_io AS (
     AND employment > 0 
   GROUP BY 
     OWNERSHIP, 
-    cic
+    cic,
+    geocode4_corr
 ) 
 SELECT 
   * 
 FROM 
   (
-    WITH sum_i AS(
+    WITH sum_ci AS(
       SELECT 
-        SUM(output_io) as output_i, 
-        SUM(fa_net_io) as fa_net_i, 
-        SUM(employment_io) as employment_i, 
-        cic AS cic_b 
+        SUM(output_cio) as output_ci, 
+        SUM(fa_net_cio) as fa_net_ci, 
+        SUM(employment_cio) as employment_ci, 
+        cic AS cic_b,
+        geocode4_corr AS geocode4_corr_b
       FROM 
-        sum_io 
+        sum_cio 
       GROUP BY 
-        cic
+        cic,
+        geocode4_corr
     ) 
     SELECT 
       * 
     FROM 
       (
-        WITH share_io AS(
+        WITH share_cio AS(
           SELECT 
             OWNERSHIP, 
-            output_io / output_i AS share_output_io, 
-            fa_net_io / fa_net_i AS share_fa_net_io, 
-            employment_io / employment_i AS share_employement_io, 
-            cic 
+            output_cio / output_ci AS share_output_cio, 
+            fa_net_cio / fa_net_ci AS share_fa_net_cio, 
+            employment_cio / employment_ci AS share_employement_cio, 
+            cic,
+            geocode4_corr
           FROM 
-            sum_io 
-            LEFT JOIN sum_i ON sum_io.cic = sum_i.cic_b
+            sum_cio 
+            LEFT JOIN sum_ci ON sum_cio.cic = sum_ci.cic_b AND
+            sum_cio.geocode4_corr = sum_ci.geocode4_corr_b
         ) 
         SELECT 
         * 
         FROM(
-        WITH decile_i AS (
+        WITH decile_ci AS (
         SELECT 
         cic as industry,
+        geocode4_corr,
         OWNERSHIP,  
-        NTILE(10)  OVER ( ORDER BY share_output_io) 
-          as rank_share_output_io,
-          NTILE(10)  OVER (ORDER BY share_fa_net_io) 
-          as rank_share_capital_io,
-          NTILE(10)  OVER (ORDER BY share_employement_io) 
-          as rank_share_employement_io
-        FROM share_io
-        ORDER BY industry
+        NTILE(10)  OVER (PARTITION BY geocode4_corr ORDER BY share_output_cio) 
+          as rank_share_output_ci,
+          NTILE(10)  OVER (PARTITION BY geocode4_corr ORDER BY share_fa_net_cio) 
+          as rank_share_capital_ci,
+          NTILE(10)  OVER (PARTITION BY geocode4_corr ORDER BY share_employement_cio) 
+          as rank_share_employement_ci,
+          share_output_cio, share_fa_net_cio, share_employement_cio
+        FROM share_cio
+        ORDER BY geocode4_corr, industry
         )
         SELECT * 
-        FROM decile_i 
-        WHERE OWNERSHIP = 'FOREIGN'
-        ORDER BY rank_share_output_io
+        FROM decile_ci 
         )
         )
         )
 """
 df_share_foreign = gcp.upload_data_from_bigquery(query = query_share_foreign,
                                          location = 'US')
-df_share_foreign['rank_share_output_io'].value_counts()
+df_share_foreign['rank_share_output_ci'].value_counts()
+```
+
+```sos kernel="SoS"
+df_share_foreign = (df_share_foreign
+ .set_index(['industry', 'geocode4_corr', 'OWNERSHIP'])
+ .drop(columns = ['rank_share_output_ci',
+                  'rank_share_capital_ci',
+                  'rank_share_employement_ci'])
+ .unstack(-1)
+ .fillna(0)
+ .assign(
+ foreign_output = lambda x: np.where(
+     x.iloc[:,1] > x.iloc[:,0],
+     'Above', 'Below'
+ ),
+     foreign_capital = lambda x: np.where(
+     x.iloc[:,1] > x.iloc[:,0],
+     'Above', 'Below'
+ ),
+     foreign_employment = lambda x: np.where(
+     x.iloc[:,1] > x.iloc[:,0],
+     'Above', 'Below'
+ )
+ )
+ .iloc[:, -3:]
+ .droplevel(level = 1, axis = 1)
+ .reset_index()
+)
 ```
 
 <!-- #region kernel="SoS" -->
@@ -551,13 +543,14 @@ We proceed as follow:
 
 ```sos kernel="SoS"
 query_share_soe = """ 
-WITH sum_io AS (
+WITH sum_cio AS (
   SELECT 
-    case WHEN ownership = 'SOE' THEN 'SOE' ELSE 'PRIVATE' END AS OWNERSHIP, 
-    SUM(output / 10000000) as output_io, 
-    SUM(fa_net / 10000000) as fa_net_io, 
-    SUM(employment / 100000) as employment_io,
-    cic 
+    case WHEN ownership = 'SOE' THEN 'SOE' ELSE 'DOMESTIC' END AS OWNERSHIP, 
+    SUM(output / 10000000) as output_cio, 
+    SUM(fa_net / 10000000) as fa_net_cio, 
+    SUM(employment / 100000) as employment_cio,
+    cic,
+    geocode4_corr
   FROM 
     China.asif_firm_china 
   WHERE 
@@ -568,65 +561,98 @@ WITH sum_io AS (
     AND employment > 0 
   GROUP BY 
     OWNERSHIP, 
-    cic
+    cic,
+    geocode4_corr
 ) 
 SELECT 
   * 
 FROM 
   (
-    WITH sum_i AS(
+    WITH sum_ci AS(
       SELECT 
-        SUM(output_io) as output_i, 
-        SUM(fa_net_io) as fa_net_i, 
-        SUM(employment_io) as employment_i, 
-        cic AS cic_b 
+        SUM(output_cio) as output_ci, 
+        SUM(fa_net_cio) as fa_net_ci, 
+        SUM(employment_cio) as employment_ci, 
+        cic AS cic_b,
+        geocode4_corr AS geocode4_corr_b
       FROM 
-        sum_io 
+        sum_cio 
       GROUP BY 
-        cic
+        cic,
+        geocode4_corr
     ) 
     SELECT 
       * 
     FROM 
       (
-        WITH share_io AS(
+        WITH share_cio AS(
           SELECT 
             OWNERSHIP, 
-            output_io / output_i AS share_output_io, 
-            fa_net_io / fa_net_i AS share_fa_net_io, 
-            employment_io / employment_i AS share_employement_io, 
-            cic 
+            output_cio / output_ci AS share_output_cio, 
+            fa_net_cio / fa_net_ci AS share_fa_net_cio, 
+            employment_cio / employment_ci AS share_employement_cio, 
+            cic,
+            geocode4_corr
           FROM 
-            sum_io 
-            LEFT JOIN sum_i ON sum_io.cic = sum_i.cic_b
+            sum_cio 
+            LEFT JOIN sum_ci ON sum_cio.cic = sum_ci.cic_b AND
+            sum_cio.geocode4_corr = sum_ci.geocode4_corr_b
         ) 
         SELECT 
         * 
         FROM(
-        WITH decile_i AS (
+        WITH decile_ci AS (
         SELECT 
         cic as industry,
+        geocode4_corr,
         OWNERSHIP,  
-        NTILE(10)  OVER ( ORDER BY share_output_io) 
-          as rank_share_output_io,
-          NTILE(10)  OVER (ORDER BY share_fa_net_io) 
-          as rank_share_capital_io,
-          NTILE(10)  OVER (ORDER BY share_employement_io) 
-          as rank_share_employement_io
-        FROM share_io
-        ORDER BY industry
+        NTILE(10)  OVER (PARTITION BY geocode4_corr ORDER BY share_output_cio) 
+          as rank_share_output_ci,
+          NTILE(10)  OVER (PARTITION BY geocode4_corr ORDER BY share_fa_net_cio) 
+          as rank_share_capital_ci,
+          NTILE(10)  OVER (PARTITION BY geocode4_corr ORDER BY share_employement_cio) 
+          as rank_share_employement_ci,
+          share_output_cio,share_fa_net_cio,share_employement_cio
+        FROM share_cio
+        ORDER BY geocode4_corr, industry
         )
         SELECT * 
-        FROM decile_i 
-        WHERE OWNERSHIP = 'SOE'
-        ORDER BY rank_share_output_io
+        FROM decile_ci 
         )
         )
         )
 """
 df_share_soe = gcp.upload_data_from_bigquery(query = query_share_soe,
                                          location = 'US')
-df_share_soe['rank_share_output_io'].value_counts()
+df_share_soe['rank_share_output_ci'].value_counts()
+```
+
+```sos kernel="SoS"
+df_share_soe = (df_share_soe
+ .set_index(['industry', 'geocode4_corr', 'OWNERSHIP'])
+ .drop(columns = ['rank_share_output_ci',
+                  'rank_share_capital_ci',
+                  'rank_share_employement_ci'])
+ .unstack(-1)
+ .fillna(0)
+ .assign(
+ soe_output = lambda x: np.where(
+     x.iloc[:,1] > x.iloc[:,0],
+     'Above', 'Below'
+ ),
+     soe_capital = lambda x: np.where(
+     x.iloc[:,1] > x.iloc[:,0],
+     'Above', 'Below'
+ ),
+     soe_employment = lambda x: np.where(
+     x.iloc[:,1] > x.iloc[:,0],
+     'Above', 'Below'
+ )
+ )
+ .iloc[:, -3:]
+ .droplevel(level = 1, axis = 1)
+ .reset_index()
+)
 ```
 
 <!-- #region kernel="SoS" -->
@@ -663,7 +689,7 @@ left_join(df_final)
 ```sos kernel="SoS"
 %put df_herfhindal_final --to R
 df_herfhindal_final = df_final.merge(df_herfhindal,
-                                     on=['industry'],
+                                     on=['geocode4_corr','industry'],
                                      how='left',
                                      indicator=True
                                      )
@@ -687,16 +713,25 @@ df_herfhindal_r <- df_herfhindal_final %>%
 %put df_final_SOE --to R
 df_final_SOE = (df_final.merge(
     df_share_soe[
-        [
-            'industry',
-            'rank_share_output_io',
-            'rank_share_capital_io',
-            'rank_share_employement_io'
+        ['geocode4_corr',
+            'industry', 
+            'soe_output',
+            'soe_capital',
+            'soe_employment'
              ]],
     how = 'left',
     indicator = True
 )
+                #.assign(
+                #    rank_share_output_ci= lambda x: 
+                #    x['rank_share_output_ci'].fillna(0),
+                #    rank_share_capital_ci= lambda x: 
+                #    x['rank_share_output_ci'].fillna(0),
+                #    rank_share_employement_ci= lambda x: 
+                #    x['rank_share_output_ci'].fillna(0),
+                #)
 )
+df_final_SOE['soe_output'].value_counts()
 ```
 
 ```sos kernel="R"
@@ -717,16 +752,26 @@ df_final_SOE <- df_final_SOE %>%
 %put df_final_FOREIGN --to R
 df_final_FOREIGN = (df_final.merge(
     df_share_foreign[
-        [
-            'industry',
-            'rank_share_output_io',
-            'rank_share_capital_io',
-            'rank_share_employement_io'
+        ['geocode4_corr',
+            'industry', 
+            'foreign_output',
+            'foreign_capital',
+            'foreign_employment'
              ]],
     how = 'left',
+    on = ['geocode4_corr', 'industry'],
     indicator = True
 )
+                #.assign(
+                #    rank_share_output_ci= lambda x: 
+                #    x['rank_share_output_ci'].fillna(0),
+                #    rank_share_capital_ci= lambda x: 
+                #    x['rank_share_output_ci'].fillna(0),
+                #    rank_share_employement_ci= lambda x: 
+                #    x['rank_share_output_ci'].fillna(0),
+                #)
 )
+df_final_FOREIGN['foreign_output'].value_counts()
 ```
 
 ```sos kernel="R"
@@ -744,12 +789,12 @@ df_final_FOREIGN <- df_final_FOREIGN %>%
 ```
 
 <!-- #region kernel="SoS" -->
-### Table 8: Panel A
+## Table 8 Model A: Panel A
 
 Output latex table available here
 
 - https://www.overleaf.com/project/5deca0097e9f3a0001506527
-    - Temp_tables_revision/06_new_tables/02_table_8_panel_A
+    - Temp_tables_revision/06_new_tables/02_table_8_model_A_panel_A
 
 In Google Drive:
 
@@ -764,88 +809,76 @@ In Google Drive:
 ```sos kernel="R"
 ### Big
 t0 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre
-           +TCZ_c * Period *polluted_thre * out_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
-             industry, data= df_herfhindal_r %>% filter(decile_herfhindal_i >= 5),
+             industry, data= df_herfhindal_r %>% filter(decile_herfhindal_c >= 5),
              exactDOF=TRUE)
 t1 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre
-           +TCZ_c * Period *polluted_thre * cap_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
-             industry, data= df_herfhindal_r %>% filter(decile_herfhindal_i >= 5),
+             industry, data= df_herfhindal_r %>% filter(decile_herfhindal_c >= 5),
              exactDOF=TRUE)
 t2 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre
-           +TCZ_c * Period *polluted_thre * lab_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
-             industry, data= df_herfhindal_r %>% filter(decile_herfhindal_i >= 5),
+             industry, data= df_herfhindal_r %>% filter(decile_herfhindal_c >= 5),
              exactDOF=TRUE)
 
 ### Foreign
 t3 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre
-           +TCZ_c * Period *polluted_thre * out_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
-             industry, data= df_final_FOREIGN %>% filter(rank_share_output_io >= 5),
+             industry, data= df_final_FOREIGN %>% filter(foreign_output == 'Above'),
              exactDOF=TRUE)
 t4 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre
-           +TCZ_c * Period *polluted_thre * cap_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
-             industry, data= df_final_FOREIGN %>% filter(rank_share_capital_io >= 5),
+             industry, data= df_final_FOREIGN %>% filter(foreign_capital == 'Above'),
              exactDOF=TRUE)
 t5 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre
-           +TCZ_c * Period *polluted_thre * lab_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
-             industry, data= df_final_FOREIGN %>% filter(rank_share_employement_io >= 5),
+             industry, data= df_final_FOREIGN %>% filter(foreign_employment == 'Above'),
              exactDOF=TRUE)
 ### SOE
 t6 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre
-           +TCZ_c * Period *polluted_thre * out_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
-             industry, data= df_final_SOE %>% filter(rank_share_output_io >= 5),
+             industry, data= df_final_SOE %>% filter(soe_output == 'Above'),
              exactDOF=TRUE)
 t7 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre
-           +TCZ_c * Period *polluted_thre * cap_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
-             industry, data= df_final_SOE %>% filter(rank_share_capital_io >= 5),
+             industry, data= df_final_SOE %>% filter(soe_capital == 'Above'),
              exactDOF=TRUE)
 t8 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre
-           +TCZ_c * Period *polluted_thre * lab_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
-             industry, data= df_final_SOE %>% filter(rank_share_employement_io >= 5),
+             industry, data= df_final_SOE %>% filter(soe_employment == 'Above'),
              exactDOF=TRUE)
 ### SPZ
 t9 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre
-           +TCZ_c * Period *polluted_thre * out_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
              industry, data= df_TCZ_list_china %>% filter(SPZ == 1),
              exactDOF=TRUE)
 t10 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre
-           +TCZ_c * Period *polluted_thre * cap_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
              industry, data= df_TCZ_list_china %>% filter(SPZ == 1),
              exactDOF=TRUE)
 t11 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre
-           +TCZ_c * Period *polluted_thre * lab_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
@@ -854,21 +887,18 @@ t11 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre
 
 ### Coastal
 t12 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre
-           +TCZ_c * Period *polluted_thre * out_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
              industry, data= df_TCZ_list_china %>% filter(Coastal == TRUE),
              exactDOF=TRUE)
 t13 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre
-           +TCZ_c * Period *polluted_thre * cap_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
              industry, data= df_TCZ_list_china %>% filter(Coastal == TRUE),
              exactDOF=TRUE)
 t14 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre
-           +TCZ_c * Period *polluted_thre * lab_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
@@ -900,15 +930,18 @@ except:
 
 ```sos kernel="R"
 fe1 <- list(
-    c("City fixed effects", "Yes", "Yes", "Yes"),
-    c("Industry fixed effects", "Yes", "Yes", "Yes"),
-    c("Yes fixed effects","Yes", "Yes", "Yes", "No")
+    c("City fixed effects", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes",
+      "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"),
+    c("Industry fixed effects", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes",
+      "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"),
+    c("Yes fixed effects","Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes",
+      "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes")
 )
 
 table_1 <- go_latex(
     test,
     dep_var = "Dependent variable: \\text { SO2 emission }_{i k t}",
-    title="Kuznet Curve hypothesis",
+    title="Test Median city",
     addFE=fe1,
     save=TRUE,
                     note = FALSE,
@@ -933,12 +966,12 @@ lb.beautify(table_number = 2,
 ```
 
 <!-- #region kernel="python3" -->
-### Table 8: Panel B
+## Table 8 Model A: Panel B
 
 Output latex table available here
 
 - https://www.overleaf.com/project/5deca0097e9f3a0001506527
-    - Temp_tables_revision/06_new_tables/02_table_8_panel_B
+    - Temp_tables_revision/06_new_tables/02_table_8_model_A_panel_B
 
 In Google Drive:
 
@@ -952,21 +985,21 @@ t0 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
-             industry, data= df_herfhindal_r %>% filter(decile_herfhindal_i < 5),
+             industry, data= df_herfhindal_r %>% filter(decile_herfhindal_c < 5),
              exactDOF=TRUE)
 t1 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre
            +TCZ_c * Period *polluted_thre * cap_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
-             industry, data= df_herfhindal_r %>% filter(decile_herfhindal_i < 5),
+             industry, data= df_herfhindal_r %>% filter(decile_herfhindal_c < 5),
              exactDOF=TRUE)
 t2 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre
            +TCZ_c * Period *polluted_thre * lab_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
-             industry, data= df_herfhindal_r %>% filter(decile_herfhindal_i < 5),
+             industry, data= df_herfhindal_r %>% filter(decile_herfhindal_c < 5),
              exactDOF=TRUE)
 
 ### Foreign
@@ -975,21 +1008,21 @@ t3 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
-             industry, data= df_final_FOREIGN %>% filter(rank_share_output_io < 5),
+             industry, data= df_final_FOREIGN %>% filter(foreign_output == 'Below'),
              exactDOF=TRUE)
 t4 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre
            +TCZ_c * Period *polluted_thre * cap_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
-             industry, data= df_final_FOREIGN %>% filter(rank_share_capital_io < 5),
+             industry, data= df_final_FOREIGN %>% filter(foreign_capital == 'Below'),
              exactDOF=TRUE)
 t5 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre
            +TCZ_c * Period *polluted_thre * lab_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
-             industry, data= df_final_FOREIGN %>% filter(rank_share_employement_io < 5),
+             industry, data= df_final_FOREIGN %>% filter(foreign_employment == 'Below'),
              exactDOF=TRUE)
 ### SOE
 t6 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre
@@ -997,21 +1030,21 @@ t6 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
-             industry, data= df_final_SOE %>% filter(rank_share_output_io < 5),
+             industry, data= df_final_SOE %>% filter(soe_output == 'Below'),
              exactDOF=TRUE)
 t7 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre
            +TCZ_c * Period *polluted_thre * cap_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
-             industry, data= df_final_SOE %>% filter(rank_share_capital_io < 5),
+             industry, data= df_final_SOE %>% filter(soe_capital == 'Below'),
              exactDOF=TRUE)
 t8 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre
            +TCZ_c * Period *polluted_thre * lab_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
-             industry, data= df_final_SOE %>% filter(rank_share_employement_io < 5),
+             industry, data= df_final_SOE %>% filter(soe_employment == 'Below'),
              exactDOF=TRUE)
 ### SPZ
 t9 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre
@@ -1084,15 +1117,18 @@ except:
 
 ```sos kernel="R"
 fe1 <- list(
-    c("City fixed effects", "Yes", "Yes", "Yes"),
-    c("Industry fixed effects", "Yes", "Yes", "Yes"),
-    c("Yes fixed effects","Yes", "Yes", "Yes", "Yes")
+    c("City fixed effects", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes",
+      "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"),
+    c("Industry fixed effects", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes",
+      "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"),
+    c("Yes fixed effects","Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes",
+      "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes")
 )
 
 table_1 <- go_latex(
     test,
     dep_var = "Dependent variable: \\text { SO2 emission }_{i k t}",
-    title="Kuznet Curve hypothesis",
+    title="Test Median city",
     addFE=fe1,
     save=TRUE,
                     note = FALSE,
@@ -1109,6 +1145,380 @@ heteroscedasticity-robust standard errors in parentheses are clustered by city
 }
 """
 lb.beautify(table_number = 3,
+            remove_control= True,
+            constraint = True,
+            city_industry = False, 
+            new_row = decile,
+            table_nte =tb)
+```
+
+<!-- #region kernel="python3" -->
+## Table 8 Model B: Panel A
+
+Output latex table available here
+
+- https://www.overleaf.com/project/5deca0097e9f3a0001506527
+    - Temp_tables_revision/06_new_tables/02_table_8_model_B_panel_A
+
+In Google Drive:
+
+![](https://drive.google.com/uc?export=view&id=)
+<!-- #endregion -->
+
+```sos kernel="R"
+### Big
+t0 <- felm(formula=log(tso2_cit) ~ target_c * Period * polluted_thre
+           +target_c * Period *polluted_thre * out_share_SOE
+                  + output_fcit + capital_fcit + labour_fcit
+                  |
+             FE_t_c + FE_t_i + FE_c_i  | 0 |
+             industry, data= df_herfhindal_r %>% filter(decile_herfhindal_c > 5),
+             exactDOF=TRUE)
+t1 <- felm(formula=log(tso2_cit) ~ target_c * Period * polluted_thre
+           +target_c * Period *polluted_thre * cap_share_SOE
+                  + output_fcit + capital_fcit + labour_fcit
+                  |
+             FE_t_c + FE_t_i + FE_c_i  | 0 |
+             industry, data= df_herfhindal_r %>% filter(decile_herfhindal_c > 5),
+             exactDOF=TRUE)
+t2 <- felm(formula=log(tso2_cit) ~ target_c * Period * polluted_thre
+           +target_c * Period *polluted_thre * lab_share_SOE
+                  + output_fcit + capital_fcit + labour_fcit
+                  |
+             FE_t_c + FE_t_i + FE_c_i  | 0 |
+             industry, data= df_herfhindal_r %>% filter(decile_herfhindal_c > 5),
+             exactDOF=TRUE)
+
+### Foreign
+t3 <- felm(formula=log(tso2_cit) ~ target_c * Period * polluted_thre
+           +target_c * Period *polluted_thre * out_share_SOE
+                  + output_fcit + capital_fcit + labour_fcit
+                  |
+             FE_t_c + FE_t_i + FE_c_i  | 0 |
+             industry, data= df_final_FOREIGN %>% filter(foreign_output == 'Above'),
+             exactDOF=TRUE)
+t4 <- felm(formula=log(tso2_cit) ~ target_c * Period * polluted_thre
+           +target_c * Period *polluted_thre * cap_share_SOE
+                  + output_fcit + capital_fcit + labour_fcit
+                  |
+             FE_t_c + FE_t_i + FE_c_i  | 0 |
+             industry, data= df_final_FOREIGN %>% filter(foreign_capital == 'Above'),
+             exactDOF=TRUE)
+t5 <- felm(formula=log(tso2_cit) ~ target_c * Period * polluted_thre
+           +target_c * Period *polluted_thre * lab_share_SOE
+                  + output_fcit + capital_fcit + labour_fcit
+                  |
+             FE_t_c + FE_t_i + FE_c_i  | 0 |
+             industry, data= df_final_FOREIGN %>% filter(foreign_employment == 'Above'),
+             exactDOF=TRUE)
+### SOE
+t6 <- felm(formula=log(tso2_cit) ~ target_c * Period * polluted_thre
+           +target_c * Period *polluted_thre * out_share_SOE
+                  + output_fcit + capital_fcit + labour_fcit
+                  |
+             FE_t_c + FE_t_i + FE_c_i  | 0 |
+             industry, data= df_final_SOE %>% filter(soe_output == 'Above'),
+             exactDOF=TRUE)
+t7 <- felm(formula=log(tso2_cit) ~ target_c * Period * polluted_thre
+           +target_c * Period *polluted_thre * cap_share_SOE
+                  + output_fcit + capital_fcit + labour_fcit
+                  |
+             FE_t_c + FE_t_i + FE_c_i  | 0 |
+             industry, data= df_final_SOE %>% filter(soe_capital == 'Above'),
+             exactDOF=TRUE)
+t8 <- felm(formula=log(tso2_cit) ~ target_c * Period * polluted_thre
+           +target_c * Period *polluted_thre * lab_share_SOE
+                  + output_fcit + capital_fcit + labour_fcit
+                  |
+             FE_t_c + FE_t_i + FE_c_i  | 0 |
+             industry, data= df_final_SOE %>% filter(soe_employment == 'Above'),
+             exactDOF=TRUE)
+### SPZ
+t9 <- felm(formula=log(tso2_cit) ~ target_c * Period * polluted_thre
+           +target_c * Period *polluted_thre * out_share_SOE
+                  + output_fcit + capital_fcit + labour_fcit
+                  |
+             FE_t_c + FE_t_i + FE_c_i  | 0 |
+             industry, data= df_TCZ_list_china %>% filter(SPZ == 1),
+             exactDOF=TRUE)
+t10 <- felm(formula=log(tso2_cit) ~ target_c * Period * polluted_thre
+           +target_c * Period *polluted_thre * cap_share_SOE
+                  + output_fcit + capital_fcit + labour_fcit
+                  |
+             FE_t_c + FE_t_i + FE_c_i  | 0 |
+             industry, data= df_TCZ_list_china %>% filter(SPZ == 1),
+             exactDOF=TRUE)
+t11 <- felm(formula=log(tso2_cit) ~ target_c * Period * polluted_thre
+           +target_c * Period *polluted_thre * lab_share_SOE
+                  + output_fcit + capital_fcit + labour_fcit
+                  |
+             FE_t_c + FE_t_i + FE_c_i  | 0 |
+             industry, data= df_TCZ_list_china %>% filter(SPZ == 1),
+             exactDOF=TRUE)
+
+### Coastal
+t12 <- felm(formula=log(tso2_cit) ~ target_c * Period * polluted_thre
+           +target_c * Period *polluted_thre * out_share_SOE
+                  + output_fcit + capital_fcit + labour_fcit
+                  |
+             FE_t_c + FE_t_i + FE_c_i  | 0 |
+             industry, data= df_TCZ_list_china %>% filter(Coastal == TRUE),
+             exactDOF=TRUE)
+t13 <- felm(formula=log(tso2_cit) ~ target_c * Period * polluted_thre
+           +target_c * Period *polluted_thre * cap_share_SOE
+                  + output_fcit + capital_fcit + labour_fcit
+                  |
+             FE_t_c + FE_t_i + FE_c_i  | 0 |
+             industry, data= df_TCZ_list_china %>% filter(Coastal == TRUE),
+             exactDOF=TRUE)
+t14 <- felm(formula=log(tso2_cit) ~ target_c * Period * polluted_thre
+           +target_c * Period *polluted_thre * lab_share_SOE
+                  + output_fcit + capital_fcit + labour_fcit
+                  |
+             FE_t_c + FE_t_i + FE_c_i  | 0 |
+             industry, data= df_TCZ_list_china %>% filter(Coastal == TRUE),
+             exactDOF=TRUE)
+```
+
+```sos kernel="R"
+test <- list(t0, t1, t2, t3,t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14)
+```
+
+```sos kernel="python3"
+import os
+decile=['& Output','Capital', 'Labour',
+        'Output','Capital', 'Labour',
+        'Output','Capital', 'Labour',
+        'Output','Capital', 'Labour',
+        'Output','Capital', 'Labour'
+       ]
+try:
+    os.remove("table_4.txt")
+except:
+    pass
+try:
+    os.remove("table_4.tex")
+except:
+    pass
+```
+
+```sos kernel="R"
+fe1 <- list(
+    c("City fixed effects", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes",
+      "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"),
+    c("Industry fixed effects", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes",
+      "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"),
+    c("Yes fixed effects","Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes",
+      "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes")
+)
+
+table_1 <- go_latex(
+    test,
+    dep_var = "Dependent variable: \\text { SO2 emission }_{i k t}",
+    title="Test Median city",
+    addFE=fe1,
+    save=TRUE,
+                    note = FALSE,
+    name="table_4.txt"
+)
+```
+
+```sos kernel="python3"
+tb = """\\footnotesize{
+Due to limited space, only the coefficients of interest are presented 
+for the regressions with city,industry, year fixed effect (i.e. columns 1-3).
+\sym{*} Significance at the 10\%, \sym{**} Significance at the 5\%, \sym{***} Significance at the 1\% \\
+heteroscedasticity-robust standard errors in parentheses are clustered by city 
+}
+"""
+lb.beautify(table_number = 4,
+            remove_control= True,
+            constraint = True,
+            city_industry = False, 
+            new_row = decile,
+            table_nte =tb)
+```
+
+<!-- #region kernel="R" -->
+## Table 8 Model B: Panel B
+
+Output latex table available here
+
+- https://www.overleaf.com/project/5deca0097e9f3a0001506527
+    - Temp_tables_revision/06_new_tables/02_table_8_model_B_panel_B
+
+In Google Drive:
+
+![](https://drive.google.com/uc?export=view&id=)
+<!-- #endregion -->
+
+```sos kernel="R"
+### Big
+t0 <- felm(formula=log(tso2_cit) ~ target_c * Period * polluted_thre
+           +target_c * Period *polluted_thre * out_share_SOE
+                  + output_fcit + capital_fcit + labour_fcit
+                  |
+             FE_t_c + FE_t_i + FE_c_i  | 0 |
+             industry, data= df_herfhindal_r %>% filter(decile_herfhindal_c <= 5),
+             exactDOF=TRUE)
+t1 <- felm(formula=log(tso2_cit) ~ target_c * Period * polluted_thre
+           +target_c * Period *polluted_thre * cap_share_SOE
+                  + output_fcit + capital_fcit + labour_fcit
+                  |
+             FE_t_c + FE_t_i + FE_c_i  | 0 |
+             industry, data= df_herfhindal_r %>% filter(decile_herfhindal_c <= 5),
+             exactDOF=TRUE)
+t2 <- felm(formula=log(tso2_cit) ~ target_c * Period * polluted_thre
+           +target_c * Period *polluted_thre * lab_share_SOE
+                  + output_fcit + capital_fcit + labour_fcit
+                  |
+             FE_t_c + FE_t_i + FE_c_i  | 0 |
+             industry, data= df_herfhindal_r %>% filter(decile_herfhindal_c <= 5),
+             exactDOF=TRUE)
+
+### Foreign
+t3 <- felm(formula=log(tso2_cit) ~ target_c * Period * polluted_thre
+           +target_c * Period *polluted_thre * out_share_SOE
+                  + output_fcit + capital_fcit + labour_fcit
+                  |
+             FE_t_c + FE_t_i + FE_c_i  | 0 |
+             industry, data= df_final_FOREIGN %>% filter(foreign_output == 'Below'),
+             exactDOF=TRUE)
+t4 <- felm(formula=log(tso2_cit) ~ target_c * Period * polluted_thre
+           +target_c * Period *polluted_thre * cap_share_SOE
+                  + output_fcit + capital_fcit + labour_fcit
+                  |
+             FE_t_c + FE_t_i + FE_c_i  | 0 |
+             industry, data= df_final_FOREIGN %>% filter(foreign_capital == 'Below'),
+             exactDOF=TRUE)
+t5 <- felm(formula=log(tso2_cit) ~ target_c * Period * polluted_thre
+           +target_c * Period *polluted_thre * lab_share_SOE
+                  + output_fcit + capital_fcit + labour_fcit
+                  |
+             FE_t_c + FE_t_i + FE_c_i  | 0 |
+             industry, data= df_final_FOREIGN %>% filter(foreign_employment == 'Below'),
+             exactDOF=TRUE)
+### SOE
+t6 <- felm(formula=log(tso2_cit) ~ target_c * Period * polluted_thre
+           +target_c * Period *polluted_thre * out_share_SOE
+                  + output_fcit + capital_fcit + labour_fcit
+                  |
+             FE_t_c + FE_t_i + FE_c_i  | 0 |
+             industry, data= df_final_SOE %>% filter(soe_output == 'Below'),
+             exactDOF=TRUE)
+t7 <- felm(formula=log(tso2_cit) ~ target_c * Period * polluted_thre
+           +target_c * Period *polluted_thre * cap_share_SOE
+                  + output_fcit + capital_fcit + labour_fcit
+                  |
+             FE_t_c + FE_t_i + FE_c_i  | 0 |
+             industry, data= df_final_SOE %>% filter(soe_capital == 'Below'),
+             exactDOF=TRUE)
+t8 <- felm(formula=log(tso2_cit) ~ target_c * Period * polluted_thre
+           +target_c * Period *polluted_thre * lab_share_SOE
+                  + output_fcit + capital_fcit + labour_fcit
+                  |
+             FE_t_c + FE_t_i + FE_c_i  | 0 |
+             industry, data= df_final_SOE %>% filter(soe_employment == 'Below'),
+             exactDOF=TRUE)
+### SPZ
+t9 <- felm(formula=log(tso2_cit) ~ target_c * Period * polluted_thre
+           +target_c * Period *polluted_thre * out_share_SOE
+                  + output_fcit + capital_fcit + labour_fcit
+                  |
+             FE_t_c + FE_t_i + FE_c_i  | 0 |
+             industry, data= df_TCZ_list_china %>% filter(SPZ == 0),
+             exactDOF=TRUE)
+t10 <- felm(formula=log(tso2_cit) ~ target_c * Period * polluted_thre
+           +target_c * Period *polluted_thre * cap_share_SOE
+                  + output_fcit + capital_fcit + labour_fcit
+                  |
+             FE_t_c + FE_t_i + FE_c_i  | 0 |
+             industry, data= df_TCZ_list_china %>% filter(SPZ == 0),
+             exactDOF=TRUE)
+t11 <- felm(formula=log(tso2_cit) ~ target_c * Period * polluted_thre
+           +target_c * Period *polluted_thre * lab_share_SOE
+                  + output_fcit + capital_fcit + labour_fcit
+                  |
+             FE_t_c + FE_t_i + FE_c_i  | 0 |
+             industry, data= df_TCZ_list_china %>% filter(SPZ == 0),
+             exactDOF=TRUE)
+
+### Coastal
+t12 <- felm(formula=log(tso2_cit) ~ target_c * Period * polluted_thre
+           +target_c * Period *polluted_thre * out_share_SOE
+                  + output_fcit + capital_fcit + labour_fcit
+                  |
+             FE_t_c + FE_t_i + FE_c_i  | 0 |
+             industry, data= df_TCZ_list_china %>% filter(Coastal == FALSE),
+             exactDOF=TRUE)
+t13 <- felm(formula=log(tso2_cit) ~ target_c * Period * polluted_thre
+           +target_c * Period *polluted_thre * cap_share_SOE
+                  + output_fcit + capital_fcit + labour_fcit
+                  |
+             FE_t_c + FE_t_i + FE_c_i  | 0 |
+             industry, data= df_TCZ_list_china %>% filter(Coastal == FALSE),
+             exactDOF=TRUE)
+t14 <- felm(formula=log(tso2_cit) ~ target_c * Period * polluted_thre
+           +target_c * Period *polluted_thre * lab_share_SOE
+                  + output_fcit + capital_fcit + labour_fcit
+                  |
+             FE_t_c + FE_t_i + FE_c_i  | 0 |
+             industry, data= df_TCZ_list_china %>% filter(Coastal == FALSE),
+             exactDOF=TRUE)
+```
+
+```sos kernel="R"
+test <- list(t0, t1, t2, t3,t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14)
+```
+
+```sos kernel="python3"
+import os
+decile=['& Output','Capital', 'Labour',
+        'Output','Capital', 'Labour',
+        'Output','Capital', 'Labour',
+        'Output','Capital', 'Labour',
+        'Output','Capital', 'Labour'
+       ]
+try:
+    os.remove("table_5.txt")
+except:
+    pass
+try:
+    os.remove("table_5.tex")
+except:
+    pass
+```
+
+```sos kernel="R"
+fe1 <- list(
+    c("City fixed effects", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes",
+      "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"),
+    c("Industry fixed effects", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes",
+      "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"),
+    c("Yes fixed effects","Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes",
+      "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes")
+)
+
+table_1 <- go_latex(
+    test,
+    dep_var = "Dependent variable: \\text { SO2 emission }_{i k t}",
+    title="Test Median city",
+    addFE=fe1,
+    save=TRUE,
+                    note = FALSE,
+    name="table_5.txt"
+)
+```
+
+```sos kernel="python3"
+tb = """\\footnotesize{
+Due to limited space, only the coefficients of interest are presented 
+for the regressions with city,industry, year fixed effect (i.e. columns 1-3).
+\sym{*} Significance at the 10\%, \sym{**} Significance at the 5\%, \sym{***} Significance at the 1\% \\
+heteroscedasticity-robust standard errors in parentheses are clustered by city 
+}
+"""
+lb.beautify(table_number = 5,
             remove_control= True,
             constraint = True,
             city_industry = False, 
