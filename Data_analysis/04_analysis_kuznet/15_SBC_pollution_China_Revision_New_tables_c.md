@@ -1105,8 +1105,12 @@ lb.beautify(table_number = 3,
 ### SPZ/Coastal/TCZ
 <!-- #endregion -->
 
-```sos kernel="R"
+```sos kernel="SoS"
 %put df_chinese_city_characteristics --to R
+```
+
+```sos kernel="R"
+%put df_TCZ_list_china --to R
 df_TCZ_list_china = read_csv('../df_TCZ_list_china.csv') %>% 
 select(-c(TCZ, Province)) %>% 
 left_join(df_chinese_city_characteristics) %>%
