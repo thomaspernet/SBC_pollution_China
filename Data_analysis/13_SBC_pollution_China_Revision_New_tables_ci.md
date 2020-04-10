@@ -1256,28 +1256,28 @@ Not enough observation, or say differently, no sectors are dominated by Foreign 
 ```sos kernel="R"
 ##### Panel A
 ## Output
-t1 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period *polluted_thre 
+t1 <- felm(formula=log(tso2_cit) ~ target_c * Period *polluted_thre 
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
              industry, data= df_final_FOREIGN %>% filter(output =='Above'),
              exactDOF=TRUE)
     
-t2 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period *polluted_thre * out_share_SOE
+t2 <- felm(formula=log(tso2_cit) ~ target_c * Period *polluted_thre * out_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
              industry, data= df_final_FOREIGN %>% filter(output =='Above'),
              exactDOF=TRUE)
 ## Capital
-t3 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period *polluted_thre 
+t3 <- felm(formula=log(tso2_cit) ~ target_c * Period *polluted_thre 
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
              industry, data= df_final_FOREIGN %>% filter(capital =='Above'),
              exactDOF=TRUE)
     
-t4 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period *polluted_thre * cap_share_SOE
+t4 <- felm(formula=log(tso2_cit) ~ target_c * Period *polluted_thre * cap_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
@@ -1285,14 +1285,14 @@ t4 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period *polluted_thre * cap_share_SOE
              exactDOF=TRUE)
 
 ## Employment
-t5 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period *polluted_thre 
+t5 <- felm(formula=log(tso2_cit) ~ target_c * Period *polluted_thre 
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
              industry, data= df_final_FOREIGN %>% filter(employment =='Above'),
              exactDOF=TRUE)
     
-t6 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period *polluted_thre * lab_share_SOE
+t6 <- felm(formula=log(tso2_cit) ~ target_c * Period *polluted_thre * lab_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
@@ -1302,28 +1302,28 @@ la <- list(t1, t2, t3, t4, t5, t6)
 ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### 
 ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### 
 ##### Panel B
-t1 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period *polluted_thre 
+t1 <- felm(formula=log(tso2_cit) ~ target_c * Period *polluted_thre 
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
              industry, data= df_final_FOREIGN %>% filter(output =='Below'),
              exactDOF=TRUE)
     
-t2 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period *polluted_thre * out_share_SOE
+t2 <- felm(formula=log(tso2_cit) ~ target_c * Period *polluted_thre * out_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
              industry, data= df_final_FOREIGN %>% filter(output =='Below'),
              exactDOF=TRUE)
 ## Capital
-t3 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period *polluted_thre 
+t3 <- felm(formula=log(tso2_cit) ~ target_c * Period *polluted_thre 
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
              industry, data= df_final_FOREIGN %>% filter(capital =='Below'),
              exactDOF=TRUE)
     
-t4 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period *polluted_thre * cap_share_SOE
+t4 <- felm(formula=log(tso2_cit) ~ target_c * Period *polluted_thre * cap_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
@@ -1331,14 +1331,14 @@ t4 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period *polluted_thre * cap_share_SOE
              exactDOF=TRUE)
 
 ## Employment
-t5 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period *polluted_thre 
+t5 <- felm(formula=log(tso2_cit) ~ target_c * Period *polluted_thre 
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
              industry, data= df_final_FOREIGN %>% filter(employment =='Below'),
              exactDOF=TRUE)
     
-t6 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period *polluted_thre * lab_share_SOE
+t6 <- felm(formula=log(tso2_cit) ~ target_c * Period *polluted_thre * lab_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
@@ -1429,28 +1429,28 @@ Reminder, in the table below, we include sectors solenly dominated by SOE -> Sha
 ```sos kernel="R"
 ##### Panel A
 ## Output
-t1 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period *polluted_thre 
+t1 <- felm(formula=log(tso2_cit) ~ target_c * Period *polluted_thre 
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
              industry, data= df_final_SOE %>% filter(output =='Above'),
              exactDOF=TRUE)
     
-t2 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period *polluted_thre * out_share_SOE
+t2 <- felm(formula=log(tso2_cit) ~ target_c * Period *polluted_thre * out_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
              industry, data= df_final_SOE %>% filter(output =='Above'),
              exactDOF=TRUE)
 ## Capital
-t3 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period *polluted_thre 
+t3 <- felm(formula=log(tso2_cit) ~ target_c * Period *polluted_thre 
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
              industry, data= df_final_SOE %>% filter(capital =='Above'),
              exactDOF=TRUE)
     
-t4 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period *polluted_thre * cap_share_SOE
+t4 <- felm(formula=log(tso2_cit) ~ target_c * Period *polluted_thre * cap_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
@@ -1458,14 +1458,14 @@ t4 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period *polluted_thre * cap_share_SOE
              exactDOF=TRUE)
 
 ## Employment
-t5 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period *polluted_thre 
+t5 <- felm(formula=log(tso2_cit) ~ target_c * Period *polluted_thre 
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
              industry, data= df_final_SOE %>% filter(employment =='Above'),
              exactDOF=TRUE)
     
-t6 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period *polluted_thre * lab_share_SOE
+t6 <- felm(formula=log(tso2_cit) ~ target_c * Period *polluted_thre * lab_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
@@ -1475,28 +1475,28 @@ la <- list(t1, t2, t3, t4, t5, t6)
 ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### 
 ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### 
 ##### Panel B
-t1 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period *polluted_thre 
+t1 <- felm(formula=log(tso2_cit) ~ target_c * Period *polluted_thre 
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
              industry, data= df_final_SOE %>% filter(output =='Below'),
              exactDOF=TRUE)
     
-t2 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period *polluted_thre * out_share_SOE
+t2 <- felm(formula=log(tso2_cit) ~ target_c * Period *polluted_thre * out_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
              industry, data= df_final_SOE %>% filter(output =='Below'),
              exactDOF=TRUE)
 ## Capital
-t3 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period *polluted_thre 
+t3 <- felm(formula=log(tso2_cit) ~ target_c * Period *polluted_thre 
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
              industry, data= df_final_SOE %>% filter(capital =='Below'),
              exactDOF=TRUE)
     
-t4 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period *polluted_thre * cap_share_SOE
+t4 <- felm(formula=log(tso2_cit) ~ target_c * Period *polluted_thre * cap_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
@@ -1504,14 +1504,14 @@ t4 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period *polluted_thre * cap_share_SOE
              exactDOF=TRUE)
 
 ## Employment
-t5 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period *polluted_thre 
+t5 <- felm(formula=log(tso2_cit) ~ target_c * Period *polluted_thre 
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
              industry, data= df_final_SOE %>% filter(employment =='Below'),
              exactDOF=TRUE)
     
-t6 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period *polluted_thre * lab_share_SOE
+t6 <- felm(formula=log(tso2_cit) ~ target_c * Period *polluted_thre * lab_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
