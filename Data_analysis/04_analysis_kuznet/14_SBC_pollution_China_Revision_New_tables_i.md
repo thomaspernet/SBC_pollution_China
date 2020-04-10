@@ -14,7 +14,7 @@ jupyter:
 ---
 
 <!-- #region kernel="SoS" -->
-# New Tables: city level
+# New Tables: Industry level
 
 * Faire les tableaux suivants:
   * Tableau 4: Kuznet: benchmark → Revision
