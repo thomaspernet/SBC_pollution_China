@@ -1254,6 +1254,13 @@ lb.beautify(table_number = 4,
 
 ```sos kernel="Python 3"
 import os
+import time
+
+os.system('jupyter nbconvert --no-input --to html 15_SBC_pollution_China_Revision_New_tables_c.ipynb')
+```
+
+```sos kernel="Python 3"
+time.sleep(5)
 for i in range(1, 19):
     try:
         os.remove("table_{}.pdf".format(i))
