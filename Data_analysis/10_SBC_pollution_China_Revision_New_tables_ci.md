@@ -1259,7 +1259,7 @@ lb.beautify(table_number = 12,
 <!-- #endregion -->
 
 <!-- #region kernel="python3" -->
-#### Foreign: Not applicable
+#### Foreign
 
 Not enough observation, or say differently, no sectors are dominated by Foreign firms solenly
 <!-- #endregion -->
@@ -1357,10 +1357,10 @@ t6 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period *polluted_thre * lab_share_SOE
              exactDOF=TRUE)
 lb <- list(t1, t2, t3, t4, t5, t6)
 
-file.remove("table_5.txt")
-file.remove("table_5.tex")
-file.remove("table_6.txt")
-file.remove("table_6.tex")
+file.remove("table_13.txt")
+file.remove("table_13.tex")
+file.remove("table_14.txt")
+file.remove("table_14.tex")
 fe1 <- list(
     c("City fixed effects", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"),
              c("Industry fixed effects", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"),
@@ -1373,7 +1373,7 @@ table_1 <- go_latex(la,
     addFE=fe1,
     save=TRUE,
                     note = FALSE,
-    name="table_5.txt"
+    name="table_13.txt"
 )
 table_1 <- go_latex(lb,
     dep_var = "Dependent variable: \\text { SO2 emission }_{i k t}",
@@ -1381,7 +1381,7 @@ table_1 <- go_latex(lb,
     addFE=fe1,
     save=TRUE,
                     note = FALSE,
-    name="table_6.txt"
+    name="table_14.txt"
 )
 ```
 
@@ -1398,7 +1398,7 @@ for the regressions with city,industry, year fixed effect (i.e. columns 1-3).
 heteroscedasticity-robust standard errors in parentheses are clustered by city 
 }
 """
-lb.beautify(table_number = 5,
+lb.beautify(table_number = 13,
             remove_control= True,
             constraint = False,
             city_industry = False, 
@@ -1421,7 +1421,7 @@ for the regressions with city,industry, year fixed effect (i.e. columns 1-3).
 heteroscedasticity-robust standard errors in parentheses are clustered by city 
 }
 """
-lb.beautify(table_number = 6,
+lb.beautify(table_number = 14,
             remove_control= True,
             constraint = False,
             city_industry = False, 
@@ -1530,10 +1530,10 @@ t6 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period *polluted_thre * lab_share_SOE
              exactDOF=TRUE)
 lb <- list(t1, t2, t3, t4, t5, t6)
 
-file.remove("table_7.txt")
-file.remove("table_7.tex")
-file.remove("table_8.txt")
-file.remove("table_8.tex")
+file.remove("table_15.txt")
+file.remove("table_15.tex")
+file.remove("table_16.txt")
+file.remove("table_16.tex")
 fe1 <- list(
     c("City fixed effects", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"),
              c("Industry fixed effects", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"),
@@ -1546,7 +1546,7 @@ table_1 <- go_latex(la,
     addFE=fe1,
     save=TRUE,
                     note = FALSE,
-    name="table_7.txt"
+    name="table_15.txt"
 )
 table_1 <- go_latex(lb,
     dep_var = "Dependent variable: \\text { SO2 emission }_{i k t}",
@@ -1554,7 +1554,7 @@ table_1 <- go_latex(lb,
     addFE=fe1,
     save=TRUE,
                     note = FALSE,
-    name="table_8.txt"
+    name="table_16.txt"
 )
 ```
 
@@ -1571,7 +1571,7 @@ for the regressions with city,industry, year fixed effect (i.e. columns 1-3).
 heteroscedasticity-robust standard errors in parentheses are clustered by city 
 }
 """
-lb.beautify(table_number = 7,
+lb.beautify(table_number = 15,
             remove_control= True,
             constraint = False,
             city_industry = False, 
@@ -1582,7 +1582,7 @@ lb.beautify(table_number = 7,
 ```
 
 ```sos kernel="Python 3"
-lb.beautify(table_number = 8,
+lb.beautify(table_number = 16,
             remove_control= True,
             constraint = False,
             city_industry = False, 
