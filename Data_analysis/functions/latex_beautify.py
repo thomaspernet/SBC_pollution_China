@@ -1,4 +1,5 @@
-import re
+import re, tex2pix
+from wand.image import Image as WImage
 
 # The idea here is to define regex to remove_control
 # Different option indicating what to keep -> based on the paper objective
@@ -8,7 +9,9 @@ remove_control = True,
  constraint = True,
   city_industry = False,
  new_row= False, table_nte = None,
- test_city_industry = False):
+ test_city_industry = False,
+ jupyter_preview = True,
+ resolution = 150):
     """
     Contrainst -> when all FE: pair and not pair
     remove_control -> remove output, capital, labour (first three row)
@@ -379,9 +382,15 @@ remove_control = True,
     len_line = len(lines)
     for x, line in enumerate(lines):
         if x ==1:
-            header= "\documentclass[12pt]{article} \n\\usepackage[utf8]{inputenc}\n" \
+            if jupyter_preview:
+                header= "\documentclass[preview]{standalone} \n\\usepackage[utf8]{inputenc}\n" \
             "\\usepackage{booktabs,caption,threeparttable, siunitx, adjustbox}\n\n" \
             "\\begin{document}"
+            else:
+                header= "\documentclass[12pt]{article} \n\\usepackage[utf8]{inputenc}\n" \
+            "\\usepackage{booktabs,caption,threeparttable, siunitx, adjustbox}\n\n" \
+            "\\begin{document}"
+
             lines[x] =  header
 
         if x == len_line- 1:
@@ -618,3 +627,11 @@ remove_control = True,
         with open(table_out, "w") as f:
             for line in lines:
                 f.write(line)
+
+    if jupyter_preview:
+        f = open('table_{}.tex'.format(table_number))
+        r = tex2pix.Renderer(f, runbibtex=False)
+        r.mkpdf('table_{}.pdf'.format(table_number))
+        img = WImage(filename='table_{}.pdf'.format(table_number),
+         resolution = resolution)
+        return img
