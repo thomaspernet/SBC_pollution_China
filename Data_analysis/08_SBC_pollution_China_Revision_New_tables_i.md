@@ -130,12 +130,6 @@ $$
 Log SO2 emission _{i k t}=\alpha\left(\text { Period } \times \text { TCZ }_{i} \times \text { Polluting sectors }_{k} \times \text{ Share X}_i \right)+\nu_{i k}+\lambda_{i t}+\phi_{k t}+\epsilon_{i k t}
 $$
 
-### Model B
-
-$$
-Log SO2 emission _{i k t}=\alpha\left(\text { Period } \times \text { Target }_{i} \times \text { Polluting sectors }_{k}\right)+\nu_{i k}+\lambda_{i t}+\phi_{k t}+\epsilon_{i k t}
-$$
-
 * Size
     * Via Herfhindal 
         * benchmark →Revision
@@ -158,7 +152,7 @@ $$
 H=\sum_{i=1}^{N} s_{i}^{2}
 $$
 
-where $s_i$ is the market share of city $i$ in the industry, and $N$ is the number of firms. 
+where $s_i$ is the market share of industry $i$ in a city, and $N$ is the number of firms. 
 
 We proceed as follow:
 - Step 1: Compute the share [output, capital, employment] by city-industry: `market_share_cit`
@@ -245,7 +239,8 @@ $$\sum output_{io}/ \sum output_i$$
 We proceed as follow:
 - Step 1: Compute the share [output, capital, employment] by industry, ownership (Foreign/Domestic): `Share_X_io`
 - Step 2: Compute dummy when share Foreign above share domestic by industry
-
+- Step 3: Compute decile by industry-ownership
+    - Note,  high decile in Foreign means the industry has relatively high share of foreign output, but not in absolule value as in step 2. A decile 9 in foreign can be a decile 2 or 3 in Domestic
 <!-- #endregion -->
 
 ```sos kernel="SoS"
@@ -377,6 +372,8 @@ df_share_foreign =  (df_share_foreign
 We proceed as follow:
 - Step 1: Compute the share [output, capital, employment] by industry, ownership (SOE/Private): `Share_X_io`
 - Step 2: Compute dummy when share SOE above share Private by industry
+- Step 3: Compute decile by industry-ownership
+    - Note,  high decile in SOE means the industry has relatively high share of SOE output, but not in absolule value as in step 2. A decile 9 in SOE can be a decile 2 or 3 in Private
 <!-- #endregion -->
 
 ```sos kernel="SoS"
@@ -647,7 +644,7 @@ df_final_FOREIGN <- df_final_FOREIGN %>%
 #### Output
 l <- list()
 l1 <- list()
-for (i in seq(3, 9)){
+for (i in seq(3, 7)){
     
     t1 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre 
                   + output_fcit + capital_fcit + labour_fcit
@@ -669,7 +666,7 @@ for (i in seq(3, 9)){
 
 #### Capital
 l2 <- list()
-for (i in seq(3, 9)){
+for (i in seq(3, 7)){
     
     t1 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period *polluted_thre * cap_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
@@ -683,7 +680,7 @@ for (i in seq(3, 9)){
 
 #### Employment
 l3 <- list()
-for (i in seq(3, 9)){
+for (i in seq(3, 7)){
     
     t1 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period *polluted_thre * lab_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
@@ -705,9 +702,9 @@ file.remove("table_4.txt")
 file.remove("table_4.tex")
 
 fe1 <- list(
-    c("City fixed effects", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"),
-             c("Industry fixed effects", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"),
-             c("Year fixed effects","Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes")
+    c("City fixed effects", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"),
+             c("Industry fixed effects", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"),
+             c("Year fixed effects","Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes")
              )
 
 table_1 <- go_latex(l,
@@ -749,8 +746,7 @@ table_1 <- go_latex(l3,
 ```sos kernel="Python 3"
 import os
 decile=['& decile .3', 'decile .4',
-        'decile .5','decile .6', ' decile .7', 
-       'decile .8','decile .9']
+        'decile .5','decile .6', ' decile .7']
 
 tb = """\\footnotesize{
 Due to limited space, only the coefficients of interest are presented 
@@ -766,7 +762,7 @@ lb.beautify(table_number = 1,
             new_row = decile,
             table_nte =tb,
            jupyter_preview = True,
-           resolution = 200)
+           resolution = 150)
 ```
 
 ```sos kernel="Python 3"
@@ -777,7 +773,7 @@ lb.beautify(table_number = 2,
             new_row = decile,
             table_nte =tb,
            jupyter_preview = True, 
-           resolution = 200)
+           resolution = 150)
 ```
 
 ```sos kernel="Python 3"
@@ -803,15 +799,14 @@ lb.beautify(table_number = 4,
 ```
 
 <!-- #region kernel="python3" -->
-#### Foreign: Not applicable
+#### Foreign
 
-Not enough observation, or say differently, no sectors are dominated by Foreign firms solenly
 <!-- #endregion -->
 
 ```sos kernel="R"
 l <- list()
 l1 <- list()
-for (i in seq(3, 9)){
+for (i in seq(3, 8)){
     
     t1 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre 
                   + output_fcit + capital_fcit + labour_fcit
@@ -833,7 +828,7 @@ for (i in seq(3, 9)){
 
 #### Capital
 l2 <- list()
-for (i in seq(3, 9)){
+for (i in seq(3, 8)){
     
     t1 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period *polluted_thre * cap_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
@@ -847,7 +842,7 @@ for (i in seq(3, 9)){
 
 #### Employment
 l3 <- list()
-for (i in seq(3, 9)){
+for (i in seq(3, 8)){
     
     t1 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period *polluted_thre * lab_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
@@ -914,7 +909,7 @@ table_1 <- go_latex(l3,
 import os
 decile=['& decile .3', 'decile .4',
         'decile .5','decile .6', ' decile .7', 
-       'decile .8','decile .9']
+       'decile .8']
 
 tb = """\\footnotesize{
 Due to limited space, only the coefficients of interest are presented 
@@ -937,7 +932,7 @@ lb.beautify(table_number = 5,
 import os
 decile=['& decile .3', 'decile .4',
         'decile .5','decile .6', ' decile .7', 
-       'decile .8','decile .9']
+       'decile .8']
 
 tb = """\\footnotesize{
 Due to limited space, only the coefficients of interest are presented 
@@ -960,7 +955,7 @@ lb.beautify(table_number = 6,
 import os
 decile=['& decile .3', 'decile .4',
         'decile .5','decile .6', ' decile .7', 
-       'decile .8','decile .9']
+       'decile .8']
 
 tb = """\\footnotesize{
 Due to limited space, only the coefficients of interest are presented 
@@ -983,7 +978,7 @@ lb.beautify(table_number = 7,
 import os
 decile=['& decile .3', 'decile .4',
         'decile .5','decile .6', ' decile .7', 
-       'decile .8','decile .9']
+       'decile .8']
 
 tb = """\\footnotesize{
 Due to limited space, only the coefficients of interest are presented 
@@ -1332,7 +1327,7 @@ table_1 <- go_latex(lb,
 )
 ```
 
-```sos kernel="python3"
+```sos kernel="Python 3"
 import os
 decile=['& Output','Output',
         'Capital', 'Capital',
@@ -1355,7 +1350,7 @@ lb.beautify(table_number = 13,
            resolution = 200)
 ```
 
-```sos kernel="python3"
+```sos kernel="Python 3"
 lb.beautify(table_number = 14,
             remove_control= True,
             constraint = False,
@@ -1487,11 +1482,11 @@ table_1 <- go_latex(lb,
     addFE=fe1,
     save=TRUE,
                     note = FALSE,
-    name="table_1(.txt"
+    name="table_16.txt"
 )
 ```
 
-```sos kernel="python3"
+```sos kernel="Python 3"
 import os
 decile=['& Output','Output',
         'Capital', 'Capital',
@@ -1514,7 +1509,7 @@ lb.beautify(table_number = 15,
            resolution = 200)
 ```
 
-```sos kernel="python3"
+```sos kernel="Python 3"
 import os
 decile=['& Output','Output',
         'Capital', 'Capital',
@@ -1662,7 +1657,7 @@ table_1 <- go_latex(lb,
 )
 ```
 
-```sos kernel="python3"
+```sos kernel="Python 3"
 import os
 decile=['& Output','Output',
         'Capital', 'Capital',
@@ -1685,7 +1680,7 @@ lb.beautify(table_number = 17,
            resolution = 200)
 ```
 
-```sos kernel="python3"
+```sos kernel="Python 3"
 import os
 decile=['& Output','Output',
         'Capital', 'Capital',
@@ -1706,4 +1701,15 @@ lb.beautify(table_number = 18,
             table_nte =tb,
             jupyter_preview = True, 
            resolution = 200)
+```
+
+```sos kernel="Python 3"
+import os
+for i in range(1, 19):
+    try:
+        os.remove("table_{}.pdf".format(i))
+        os.remove("table_{}.tex".format(i))
+        os.remove("table_{}.txt".format(i))
+    except:
+        pass
 ```
