@@ -52,7 +52,7 @@ from Fast_connectCloud import connector
 import numpy as np
 ```
 
-```sos kernel="python3"
+```sos kernel="Python 3"
 import functions.latex_beautify as lb
 
 %load_ext autoreload
@@ -130,7 +130,7 @@ In Google Drive:
 Note, we download the file `df_TCZ_list_china` from Google spreadsheet because SOS kernel has trouble loading the json file to connect to the remote.
 <!-- #endregion -->
 
-```sos kernel="python3"
+```sos kernel="Python 3"
 from Fast_connectCloud import connector
 from GoogleDrivePy.google_drive import connect_drive
 import pandas as pd
@@ -151,7 +151,7 @@ Feel free to add description about the dataset or any usefull information.
 Profiling will be available soon for this dataset
 <!-- #endregion -->
 
-```sos kernel="python3"
+```sos kernel="Python 3"
 # Please go here https://docs.google.com/spreadsheets/d/1-x9DCX4cun6Ed9iH5MiI4g21fXm7seRHHz7WXGiVKVU
 # To change the range
 
