@@ -330,7 +330,7 @@ df_share_foreign['rank_share_output_i'].value_counts().sort_index()
 ```
 
 ```sos kernel="SoS"
-df_share_foreign = (df_share_foreign
+df_share_foreign_ = (df_share_foreign
  .set_index(['industry', 'OWNERSHIP'])
  .drop(columns = ['rank_share_output_i',
                   'rank_share_capital_i',
@@ -356,7 +356,19 @@ df_share_foreign = (df_share_foreign
  .reset_index()
 )
 for i in ['output','capital', 'employment']:
-    print(df_share_foreign[i].value_counts().sort_index())
+    print(df_share_foreign_[i].value_counts().sort_index())
+```
+
+```sos kernel="SoS"
+df_share_foreign =  (df_share_foreign
+ .set_index(['industry','OWNERSHIP'])
+ .drop(columns = ['share_output_io',
+                  'share_fa_net_io',
+                  'share_employement_io'])
+ .xs('FOREIGN', level='OWNERSHIP', axis=0)
+ .reset_index()
+ .merge(df_share_foreign_)
+)
 ```
 
 <!-- #region kernel="SoS" -->
@@ -449,7 +461,7 @@ df_share_soe['rank_share_output_i'].value_counts().sort_index()
 ```
 
 ```sos kernel="SoS"
-df_share_soe = (df_share_soe
+df_share_soe_ = (df_share_soe
  .set_index(['industry', 'OWNERSHIP'])
  .drop(columns = ['rank_share_output_i',
                   'rank_share_capital_i',
@@ -476,7 +488,21 @@ df_share_soe = (df_share_soe
 )
 
 for i in ['output','capital', 'employment']:
-    print(df_share_soe[i].value_counts().sort_index())
+    print(df_share_soe_[i].value_counts().sort_index())
+```
+
+```sos kernel="SoS"
+df_share_soe = (df_share_soe
+ .set_index(['industry','OWNERSHIP'])
+ .drop(columns = ['share_output_io',
+                  'share_fa_net_io',
+                  'share_employement_io'])
+ .xs('SOE', level='OWNERSHIP', axis=0)
+ .reset_index()
+ .merge(df_share_soe_)
+ #.loc[lambda x: x.index.get_level_values('OWNERSHIP').isin(['FOREIGN'])]
+)
+df_share_soe.head()
 ```
 
 <!-- #region kernel="SoS" -->
@@ -549,15 +575,8 @@ df_final_SOE = (df_final.merge(
                 #    x['rank_share_output_i'].fillna(0),
                 #)
 )
-df_final_SOE['output'].value_counts()
-```
-
-```sos kernel="SoS"
-df_final_SOE['capital'].value_counts()
-```
-
-```sos kernel="SoS"
-df_final_SOE['employment'].value_counts()
+for i in ['output', 'capital', 'employment']:
+    print(df_final_SOE[i].value_counts())
 ```
 
 ```sos kernel="R"
@@ -592,7 +611,8 @@ df_final_FOREIGN = (df_final.merge(
                 #)
 
 )
-df_final_FOREIGN['output'].value_counts()
+for i in ['output', 'capital', 'employment']:
+    print(df_final_FOREIGN[i].value_counts())
 ```
 
 ```sos kernel="R"
@@ -615,8 +635,12 @@ df_final_FOREIGN <- df_final_FOREIGN %>%
 
 <!-- #endregion -->
 
+<!-- #region kernel="R" -->
+### Decile
+<!-- #endregion -->
+
 <!-- #region kernel="python3" -->
-### Test Size
+#### Size
 <!-- #endregion -->
 
 ```sos kernel="R"
@@ -629,14 +653,14 @@ for (i in seq(3, 9)){
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
-             industry, data= df_herfhindal_r %>% filter(decile_herfhindal_i < i),
+             industry, data= df_herfhindal_r %>% filter(decile_herfhindal_i > i),
              exactDOF=TRUE)
     
     t2 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period *polluted_thre * out_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
-             industry, data= df_herfhindal_r %>% filter(decile_herfhindal_i < i),
+             industry, data= df_herfhindal_r %>% filter(decile_herfhindal_i > i),
              exactDOF=TRUE)
     
     l[[i - 2]] <- t1
@@ -651,7 +675,7 @@ for (i in seq(3, 9)){
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
-             industry, data= df_herfhindal_r %>% filter(decile_herfhindal_i < i),
+             industry, data= df_herfhindal_r %>% filter(decile_herfhindal_i > i),
              exactDOF=TRUE)
 
     l2[[i - 2]] <- t1
@@ -665,7 +689,7 @@ for (i in seq(3, 9)){
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
-             industry, data= df_herfhindal_r %>% filter(decile_herfhindal_i < i),
+             industry, data= df_herfhindal_r %>% filter(decile_herfhindal_i > i),
              exactDOF=TRUE)
     
     l3[[i - 2]] <- t1
@@ -722,7 +746,7 @@ table_1 <- go_latex(l3,
 )
 ```
 
-```sos kernel="python3"
+```sos kernel="Python 3"
 import os
 decile=['& decile .3', 'decile .4',
         'decile .5','decile .6', ' decile .7', 
@@ -745,7 +769,7 @@ lb.beautify(table_number = 1,
            resolution = 200)
 ```
 
-```sos kernel="python3"
+```sos kernel="Python 3"
 lb.beautify(table_number = 2,
             remove_control= True,
             constraint = False,
@@ -756,7 +780,7 @@ lb.beautify(table_number = 2,
            resolution = 200)
 ```
 
-```sos kernel="python3"
+```sos kernel="Python 3"
 lb.beautify(table_number = 3,
             remove_control= True,
             constraint = False,
@@ -767,7 +791,7 @@ lb.beautify(table_number = 3,
            resolution = 200)
 ```
 
-```sos kernel="python3"
+```sos kernel="Python 3"
 lb.beautify(table_number = 4,
             remove_control= True,
             constraint = False,
@@ -782,6 +806,403 @@ lb.beautify(table_number = 4,
 #### Foreign: Not applicable
 
 Not enough observation, or say differently, no sectors are dominated by Foreign firms solenly
+<!-- #endregion -->
+
+```sos kernel="R"
+l <- list()
+l1 <- list()
+for (i in seq(3, 9)){
+    
+    t1 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre 
+                  + output_fcit + capital_fcit + labour_fcit
+                  |
+             FE_t_c + FE_t_i + FE_c_i  | 0 |
+             industry, data= df_final_FOREIGN %>% filter(rank_share_output_i > i),
+             exactDOF=TRUE)
+    
+    t2 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period *polluted_thre * out_share_SOE
+                  + output_fcit + capital_fcit + labour_fcit
+                  |
+             FE_t_c + FE_t_i + FE_c_i  | 0 |
+             industry, data= df_final_FOREIGN %>% filter(rank_share_output_i > i),
+             exactDOF=TRUE)
+    
+    l[[i - 2]] <- t1
+    l1[[i-2]] <- t2
+}
+
+#### Capital
+l2 <- list()
+for (i in seq(3, 9)){
+    
+    t1 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period *polluted_thre * cap_share_SOE
+                  + output_fcit + capital_fcit + labour_fcit
+                  |
+             FE_t_c + FE_t_i + FE_c_i  | 0 |
+             industry, data= df_final_FOREIGN %>% filter(rank_share_capital_i > i),
+             exactDOF=TRUE)
+
+    l2[[i - 2]] <- t1
+}
+
+#### Employment
+l3 <- list()
+for (i in seq(3, 9)){
+    
+    t1 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period *polluted_thre * lab_share_SOE
+                  + output_fcit + capital_fcit + labour_fcit
+                  |
+             FE_t_c + FE_t_i + FE_c_i  | 0 |
+             industry, data= df_final_FOREIGN %>% filter(rank_share_employement_i > i),
+             exactDOF=TRUE)
+    
+    l3[[i - 2]] <- t1
+}
+
+file.remove("table_5.txt")
+file.remove("table_5.tex")
+file.remove("table_6.txt")
+file.remove("table_6.tex")
+file.remove("table_7.txt")
+file.remove("table_7.tex")
+file.remove("table_8.txt")
+file.remove("table_8.tex")
+
+fe1 <- list(
+    c("City fixed effects", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"),
+             c("Industry fixed effects", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"),
+             c("Year fixed effects","Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes")
+             )
+
+table_1 <- go_latex(l,
+    dep_var = "Dependent variable: \\text { SO2 emission }_{i k t}",
+    title='Deciles output: Foreign',
+    addFE=fe1,
+    save=TRUE,
+                    note = FALSE,
+    name="table_5.txt"
+)
+
+table_1 <- go_latex(l1,
+    dep_var = "Dependent variable: \\text { SO2 emission }_{i k t}",
+    title='Deciles output: Foreign',
+    addFE=fe1,
+    save=TRUE,
+                    note = FALSE,
+    name="table_6.txt"
+)
+
+table_1 <- go_latex(l2,
+    dep_var = "Dependent variable: \\text { SO2 emission }_{i k t}",
+    title='Deciles Capital: Foreign',
+    addFE=fe1,
+    save=TRUE,
+                    note = FALSE,
+    name="table_7.txt"
+)
+table_1 <- go_latex(l3,
+    dep_var = "Dependent variable: \\text { SO2 emission }_{i k t}",
+    title='Deciles Employement: Foreign',
+    addFE=fe1,
+    save=TRUE,
+                    note = FALSE,
+    name="table_8.txt"
+)
+```
+
+```sos kernel="Python 3"
+import os
+decile=['& decile .3', 'decile .4',
+        'decile .5','decile .6', ' decile .7', 
+       'decile .8','decile .9']
+
+tb = """\\footnotesize{
+Due to limited space, only the coefficients of interest are presented 
+for the regressions with city,industry, year fixed effect (i.e. columns 1-3).
+\sym{*} Significance at the 10\%, \sym{**} Significance at the 5\%, \sym{***} Significance at the 1\% \\
+heteroscedasticity-robust standard errors in parentheses are clustered by city 
+}
+"""
+lb.beautify(table_number = 5,
+            remove_control= True,
+            constraint = False,
+            city_industry = False, 
+            new_row = decile,
+            table_nte =tb,
+           jupyter_preview = True,
+           resolution = 200)
+```
+
+```sos kernel="Python 3"
+import os
+decile=['& decile .3', 'decile .4',
+        'decile .5','decile .6', ' decile .7', 
+       'decile .8','decile .9']
+
+tb = """\\footnotesize{
+Due to limited space, only the coefficients of interest are presented 
+for the regressions with city,industry, year fixed effect (i.e. columns 1-3).
+\sym{*} Significance at the 10\%, \sym{**} Significance at the 5\%, \sym{***} Significance at the 1\% \\
+heteroscedasticity-robust standard errors in parentheses are clustered by city 
+}
+"""
+lb.beautify(table_number = 6,
+            remove_control= True,
+            constraint = False,
+            city_industry = False, 
+            new_row = decile,
+            table_nte =tb,
+           jupyter_preview = True,
+           resolution = 200)
+```
+
+```sos kernel="Python 3"
+import os
+decile=['& decile .3', 'decile .4',
+        'decile .5','decile .6', ' decile .7', 
+       'decile .8','decile .9']
+
+tb = """\\footnotesize{
+Due to limited space, only the coefficients of interest are presented 
+for the regressions with city,industry, year fixed effect (i.e. columns 1-3).
+\sym{*} Significance at the 10\%, \sym{**} Significance at the 5\%, \sym{***} Significance at the 1\% \\
+heteroscedasticity-robust standard errors in parentheses are clustered by city 
+}
+"""
+lb.beautify(table_number = 7,
+            remove_control= True,
+            constraint = False,
+            city_industry = False, 
+            new_row = decile,
+            table_nte =tb,
+           jupyter_preview = True,
+           resolution = 200)
+```
+
+```sos kernel="Python 3"
+import os
+decile=['& decile .3', 'decile .4',
+        'decile .5','decile .6', ' decile .7', 
+       'decile .8','decile .9']
+
+tb = """\\footnotesize{
+Due to limited space, only the coefficients of interest are presented 
+for the regressions with city,industry, year fixed effect (i.e. columns 1-3).
+\sym{*} Significance at the 10\%, \sym{**} Significance at the 5\%, \sym{***} Significance at the 1\% \\
+heteroscedasticity-robust standard errors in parentheses are clustered by city 
+}
+"""
+lb.beautify(table_number = 8,
+            remove_control= True,
+            constraint = False,
+            city_industry = False, 
+            new_row = decile,
+            table_nte =tb,
+           jupyter_preview = True,
+           resolution = 200)
+```
+
+<!-- #region kernel="Python 3" -->
+#### SOE
+<!-- #endregion -->
+
+```sos kernel="R"
+#### Output
+l <- list()
+l1 <- list()
+for (i in seq(3, 9)){
+    
+    t1 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre 
+                  + output_fcit + capital_fcit + labour_fcit
+                  |
+             FE_t_c + FE_t_i + FE_c_i  | 0 |
+             industry, data= df_final_SOE %>% filter(rank_share_output_i > i),
+             exactDOF=TRUE)
+    
+    t2 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period *polluted_thre * out_share_SOE
+                  + output_fcit + capital_fcit + labour_fcit
+                  |
+             FE_t_c + FE_t_i + FE_c_i  | 0 |
+             industry, data= df_final_SOE %>% filter(rank_share_output_i > i),
+             exactDOF=TRUE)
+    
+    l[[i - 2]] <- t1
+    l1[[i-2]] <- t2
+}
+
+#### Capital
+l2 <- list()
+for (i in seq(3, 9)){
+    
+    t1 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period *polluted_thre * cap_share_SOE
+                  + output_fcit + capital_fcit + labour_fcit
+                  |
+             FE_t_c + FE_t_i + FE_c_i  | 0 |
+             industry, data= df_final_SOE %>% filter(rank_share_capital_i > i),
+             exactDOF=TRUE)
+
+    l2[[i - 2]] <- t1
+}
+
+#### Employment
+l3 <- list()
+for (i in seq(3, 9)){
+    
+    t1 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period *polluted_thre * lab_share_SOE
+                  + output_fcit + capital_fcit + labour_fcit
+                  |
+             FE_t_c + FE_t_i + FE_c_i  | 0 |
+             industry, data= df_final_SOE %>% filter(rank_share_employement_i > i),
+             exactDOF=TRUE)
+    
+    l3[[i - 2]] <- t1
+}
+
+file.remove("table_9.txt")
+file.remove("table_9.tex")
+file.remove("table_10.txt")
+file.remove("table_10.tex")
+file.remove("table_11.txt")
+file.remove("table_11.tex")
+file.remove("table_12.txt")
+file.remove("table_12.tex")
+
+fe1 <- list(
+    c("City fixed effects", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"),
+             c("Industry fixed effects", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"),
+             c("Year fixed effects","Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes")
+             )
+
+table_1 <- go_latex(l,
+    dep_var = "Dependent variable: \\text { SO2 emission }_{i k t}",
+    title='Deciles output: SOE',
+    addFE=fe1,
+    save=TRUE,
+                    note = FALSE,
+    name="table_9.txt"
+)
+
+table_1 <- go_latex(l1,
+    dep_var = "Dependent variable: \\text { SO2 emission }_{i k t}",
+    title='Deciles output: SOE',
+    addFE=fe1,
+    save=TRUE,
+                    note = FALSE,
+    name="table_10.txt"
+)
+
+table_1 <- go_latex(l2,
+    dep_var = "Dependent variable: \\text { SO2 emission }_{i k t}",
+    title='Deciles Capital: SOE',
+    addFE=fe1,
+    save=TRUE,
+                    note = FALSE,
+    name="table_11.txt"
+)
+table_1 <- go_latex(l3,
+    dep_var = "Dependent variable: \\text { SO2 emission }_{i k t}",
+    title='Deciles Employement: SOE',
+    addFE=fe1,
+    save=TRUE,
+                    note = FALSE,
+    name="table_12.txt"
+)
+```
+
+```sos kernel="Python 3"
+import os
+decile=['& decile .3', 'decile .4',
+        'decile .5','decile .6', ' decile .7', 
+       'decile .8','decile .9']
+
+tb = """\\footnotesize{
+Due to limited space, only the coefficients of interest are presented 
+for the regressions with city,industry, year fixed effect (i.e. columns 1-3).
+\sym{*} Significance at the 10\%, \sym{**} Significance at the 5\%, \sym{***} Significance at the 1\% \\
+heteroscedasticity-robust standard errors in parentheses are clustered by city 
+}
+"""
+lb.beautify(table_number = 9,
+            remove_control= True,
+            constraint = False,
+            city_industry = False, 
+            new_row = decile,
+            table_nte =tb,
+           jupyter_preview = True,
+           resolution = 200)
+```
+
+```sos kernel="Python 3"
+import os
+decile=['& decile .3', 'decile .4',
+        'decile .5','decile .6', ' decile .7', 
+       'decile .8','decile .9']
+
+tb = """\\footnotesize{
+Due to limited space, only the coefficients of interest are presented 
+for the regressions with city,industry, year fixed effect (i.e. columns 1-3).
+\sym{*} Significance at the 10\%, \sym{**} Significance at the 5\%, \sym{***} Significance at the 1\% \\
+heteroscedasticity-robust standard errors in parentheses are clustered by city 
+}
+"""
+lb.beautify(table_number = 10,
+            remove_control= True,
+            constraint = False,
+            city_industry = False, 
+            new_row = decile,
+            table_nte =tb,
+           jupyter_preview = True,
+           resolution = 200)
+```
+
+```sos kernel="Python 3"
+import os
+decile=['& decile .3', 'decile .4',
+        'decile .5','decile .6', ' decile .7', 
+       'decile .8','decile .9']
+
+tb = """\\footnotesize{
+Due to limited space, only the coefficients of interest are presented 
+for the regressions with city,industry, year fixed effect (i.e. columns 1-3).
+\sym{*} Significance at the 10\%, \sym{**} Significance at the 5\%, \sym{***} Significance at the 1\% \\
+heteroscedasticity-robust standard errors in parentheses are clustered by city 
+}
+"""
+lb.beautify(table_number = 11,
+            remove_control= True,
+            constraint = False,
+            city_industry = False, 
+            new_row = decile,
+            table_nte =tb,
+           jupyter_preview = True,
+           resolution = 200)
+```
+
+```sos kernel="Python 3"
+import os
+decile=['& decile .3', 'decile .4',
+        'decile .5','decile .6', ' decile .7', 
+       'decile .8','decile .9']
+
+tb = """\\footnotesize{
+Due to limited space, only the coefficients of interest are presented 
+for the regressions with city,industry, year fixed effect (i.e. columns 1-3).
+\sym{*} Significance at the 10\%, \sym{**} Significance at the 5\%, \sym{***} Significance at the 1\% \\
+heteroscedasticity-robust standard errors in parentheses are clustered by city 
+}
+"""
+lb.beautify(table_number = 12,
+            remove_control= True,
+            constraint = False,
+            city_industry = False, 
+            new_row = decile,
+            table_nte =tb,
+           jupyter_preview = True,
+           resolution = 200)
+```
+
+<!-- #region kernel="Python 3" -->
+### Absolute
 <!-- #endregion -->
 
 <!-- #region kernel="python3" -->
@@ -883,10 +1304,10 @@ t6 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period *polluted_thre * lab_share_SOE
              exactDOF=TRUE)
 lb <- list(t1, t2, t3, t4, t5, t6)
 
-file.remove("table_5.txt")
-file.remove("table_5.tex")
-file.remove("table_6.txt")
-file.remove("table_6.tex")
+file.remove("table_13.txt")
+file.remove("table_13.tex")
+file.remove("table_14.txt")
+file.remove("table_14.tex")
 fe1 <- list(
     c("City fixed effects", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"),
              c("Industry fixed effects", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"),
@@ -899,7 +1320,7 @@ table_1 <- go_latex(la,
     addFE=fe1,
     save=TRUE,
                     note = FALSE,
-    name="table_5.txt"
+    name="table_13.txt"
 )
 table_1 <- go_latex(lb,
     dep_var = "Dependent variable: \\text { SO2 emission }_{i k t}",
@@ -907,7 +1328,7 @@ table_1 <- go_latex(lb,
     addFE=fe1,
     save=TRUE,
                     note = FALSE,
-    name="table_6.txt"
+    name="table_14.txt"
 )
 ```
 
@@ -924,7 +1345,7 @@ for the regressions with city,industry, year fixed effect (i.e. columns 1-3).
 heteroscedasticity-robust standard errors in parentheses are clustered by city 
 }
 """
-lb.beautify(table_number = 5,
+lb.beautify(table_number = 13,
             remove_control= True,
             constraint = False,
             city_industry = False, 
@@ -935,7 +1356,7 @@ lb.beautify(table_number = 5,
 ```
 
 ```sos kernel="python3"
-lb.beautify(table_number = 6,
+lb.beautify(table_number = 14,
             remove_control= True,
             constraint = False,
             city_industry = False, 
@@ -1042,10 +1463,10 @@ t6 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period *polluted_thre * lab_share_SOE
              exactDOF=TRUE)
 lb <- list(t1, t2, t3, t4, t5, t6)
 
-file.remove("table_7.txt")
-file.remove("table_7.tex")
-file.remove("table_8.txt")
-file.remove("table_8.tex")
+file.remove("table_15.txt")
+file.remove("table_15.tex")
+file.remove("table_16.txt")
+file.remove("table_16.tex")
 fe1 <- list(
     c("City fixed effects", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"),
              c("Industry fixed effects", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"),
@@ -1058,7 +1479,7 @@ table_1 <- go_latex(la,
     addFE=fe1,
     save=TRUE,
                     note = FALSE,
-    name="table_7.txt"
+    name="table_15.txt"
 )
 table_1 <- go_latex(lb,
     dep_var = "Dependent variable: \\text { SO2 emission }_{i k t}",
@@ -1066,7 +1487,7 @@ table_1 <- go_latex(lb,
     addFE=fe1,
     save=TRUE,
                     note = FALSE,
-    name="table_8.txt"
+    name="table_1(.txt"
 )
 ```
 
@@ -1083,7 +1504,7 @@ for the regressions with city,industry, year fixed effect (i.e. columns 1-3).
 heteroscedasticity-robust standard errors in parentheses are clustered by city 
 }
 """
-lb.beautify(table_number = 7,
+lb.beautify(table_number = 15,
             remove_control= True,
             constraint = False,
             city_industry = False, 
@@ -1106,7 +1527,7 @@ for the regressions with city,industry, year fixed effect (i.e. columns 1-3).
 heteroscedasticity-robust standard errors in parentheses are clustered by city 
 }
 """
-lb.beautify(table_number = 8,
+lb.beautify(table_number = 16,
             remove_control= True,
             constraint = False,
             city_industry = False, 
@@ -1213,10 +1634,10 @@ t6 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period *polluted_thre * lab_share_SOE
              exactDOF=TRUE)
 lb <- list(t1, t2, t3, t4, t5, t6)
 
-file.remove("table_9.txt")
-file.remove("table_9.tex")
-file.remove("table_10.txt")
-file.remove("table_10.tex")
+file.remove("table_17.txt")
+file.remove("table_17.tex")
+file.remove("table_18.txt")
+file.remove("table_18.tex")
 fe1 <- list(
     c("City fixed effects", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"),
              c("Industry fixed effects", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"),
@@ -1229,7 +1650,7 @@ table_1 <- go_latex(la,
     addFE=fe1,
     save=TRUE,
                     note = FALSE,
-    name="table_9.txt"
+    name="table_17.txt"
 )
 table_1 <- go_latex(lb,
     dep_var = "Dependent variable: \\text { SO2 emission }_{i k t}",
@@ -1237,7 +1658,7 @@ table_1 <- go_latex(lb,
     addFE=fe1,
     save=TRUE,
                     note = FALSE,
-    name="table_10.txt"
+    name="table_18.txt"
 )
 ```
 
@@ -1254,7 +1675,7 @@ for the regressions with city,industry, year fixed effect (i.e. columns 1-3).
 heteroscedasticity-robust standard errors in parentheses are clustered by city 
 }
 """
-lb.beautify(table_number = 9,
+lb.beautify(table_number = 17,
             remove_control= True,
             constraint = False,
             city_industry = False, 
@@ -1277,7 +1698,7 @@ for the regressions with city,industry, year fixed effect (i.e. columns 1-3).
 heteroscedasticity-robust standard errors in parentheses are clustered by city 
 }
 """
-lb.beautify(table_number = 10,
+lb.beautify(table_number = 18,
             remove_control= True,
             constraint = False,
             city_industry = False, 
