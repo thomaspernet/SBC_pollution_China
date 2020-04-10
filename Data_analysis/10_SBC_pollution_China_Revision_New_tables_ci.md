@@ -1580,3 +1580,14 @@ lb.beautify(table_number = 16,
             jupyter_preview = True, 
             resolution = 200)
 ```
+
+```sos kernel="Python 3"
+import os
+for i in range(1, 19):
+    try:
+        os.remove("table_{}.pdf".format(i))
+        os.remove("table_{}.tex".format(i))
+        os.remove("table_{}.txt".format(i))
+    except:
+        pass
+```
