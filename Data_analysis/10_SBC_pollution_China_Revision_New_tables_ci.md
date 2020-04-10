@@ -130,12 +130,6 @@ $$
 Log SO2 emission _{i k t}=\alpha\left(\text { Period } \times \text { TCZ }_{i} \times \text { Polluting sectors }_{k} \times \text{ Share X}_i \right)+\nu_{i k}+\lambda_{i t}+\phi_{k t}+\epsilon_{i k t}
 $$
 
-### Model B
-
-$$
-Log SO2 emission _{i k t}=\alpha\left(\text { Period } \times \text { Target }_{i} \times \text { Polluting sectors }_{k}\right)+\nu_{i k}+\lambda_{i t}+\phi_{k t}+\epsilon_{i k t}
-$$
-
 * Size
     * Via Herfhindal 
         * benchmark →Revision
@@ -309,6 +303,8 @@ $$\sum output_{cio}/ \sum output_{ci}$$
 We proceed as follow:
 - Step 1: Compute the share [output, capital, employment] by city, ownership (Foreign/Domestic): `Share_X_co`
 - Step 2: Compute dummy when share Foreign above share domestic by city
+- Step 3: Compute decile by city-industry-ownership
+    - Note,  high decile in Foreign means the city-industry has relatively high share of foreign output, but not in absolule value as in step 2. A decile 9 in foreign can be a decile 2 or 3 in Domestic
 
 <!-- #endregion -->
 
@@ -450,6 +446,8 @@ df_share_foreign = (df_share_foreign
 We proceed as follow:
 - Step 1: Compute the share [output, capital, employment] by city, ownership (SOE/Private): `Share_X_co`
 - Step 2: Compute dummy when share SOE above share Private by city
+- Step 3: Compute decile by industry-ownership
+    - Note,  high decile in SOE means the city-industry has relatively high share of SOE output, but not in absolule value as in step 2. A decile 9 in SOE can be a decile 2 or 3 in Private
 <!-- #endregion -->
 
 ```sos kernel="SoS"
@@ -701,7 +699,7 @@ df_final_FOREIGN <- df_final_FOREIGN %>%
 #### Output
 l <- list()
 l1 <- list()
-for (i in seq(3, 9)){
+for (i in seq(3, 6)){
     
     t1 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre 
                   + output_fcit + capital_fcit + labour_fcit
@@ -723,7 +721,7 @@ for (i in seq(3, 9)){
 
 #### Capital
 l2 <- list()
-for (i in seq(3, 9)){
+for (i in seq(3, 6)){
     
     t1 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period *polluted_thre * cap_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
@@ -737,7 +735,7 @@ for (i in seq(3, 9)){
 
 #### Employment
 l3 <- list()
-for (i in seq(3, 9)){
+for (i in seq(3, 6)){
     
     t1 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period *polluted_thre * lab_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
@@ -803,8 +801,7 @@ table_1 <- go_latex(l3,
 ```sos kernel="Python 3"
 import os
 decile=['& decile .3', 'decile .4',
-        'decile .5','decile .6', ' decile .7', 
-       'decile .8','decile .9']
+        'decile .5','decile .6']
 
 tb = """\\footnotesize{
 Due to limited space, only the coefficients of interest are presented 
@@ -820,7 +817,7 @@ lb.beautify(table_number = 1,
             new_row = decile,
             table_nte =tb,
            jupyter_preview = True,
-           resolution = 200)
+           resolution = 150)
 ```
 
 ```sos kernel="Python 3"
@@ -864,7 +861,7 @@ lb.beautify(table_number = 4,
 #### Output
 l <- list()
 l1 <- list()
-for (i in seq(3, 9)){
+for (i in seq(3, 7)){
     
     t1 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre 
                   + output_fcit + capital_fcit + labour_fcit
@@ -886,7 +883,7 @@ for (i in seq(3, 9)){
 
 #### Capital
 l2 <- list()
-for (i in seq(3, 9)){
+for (i in seq(3, 7)){
     
     t1 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period *polluted_thre * cap_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
@@ -900,7 +897,7 @@ for (i in seq(3, 9)){
 
 #### Employment
 l3 <- list()
-for (i in seq(3, 9)){
+for (i in seq(3, 7)){
     
     t1 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period *polluted_thre * lab_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
@@ -966,8 +963,7 @@ table_1 <- go_latex(l3,
 ```sos kernel="Python 3"
 import os
 decile=['& decile .3', 'decile .4',
-        'decile .5','decile .6', ' decile .7', 
-       'decile .8','decile .9']
+        'decile .5','decile .6', ' decile .7']
 
 tb = """\\footnotesize{
 Due to limited space, only the coefficients of interest are presented 
@@ -989,8 +985,7 @@ lb.beautify(table_number = 5,
 ```sos kernel="Python 3"
 import os
 decile=['& decile .3', 'decile .4',
-        'decile .5','decile .6', ' decile .7', 
-       'decile .8','decile .9']
+        'decile .5','decile .6', ' decile .7']
 
 tb = """\\footnotesize{
 Due to limited space, only the coefficients of interest are presented 
@@ -1012,8 +1007,7 @@ lb.beautify(table_number = 6,
 ```sos kernel="Python 3"
 import os
 decile=['& decile .3', 'decile .4',
-        'decile .5','decile .6', ' decile .7', 
-       'decile .8','decile .9']
+        'decile .5','decile .6', ' decile .7']
 
 tb = """\\footnotesize{
 Due to limited space, only the coefficients of interest are presented 
@@ -1035,8 +1029,7 @@ lb.beautify(table_number = 7,
 ```sos kernel="Python 3"
 import os
 decile=['& decile .3', 'decile .4',
-        'decile .5','decile .6', ' decile .7', 
-       'decile .8','decile .9']
+        'decile .5','decile .6', ' decile .7']
 
 tb = """\\footnotesize{
 Due to limited space, only the coefficients of interest are presented 
@@ -1063,7 +1056,7 @@ lb.beautify(table_number = 8,
 #### Output
 l <- list()
 l1 <- list()
-for (i in seq(3, 9)){
+for (i in seq(3, 7)){
     
     t1 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period * polluted_thre 
                   + output_fcit + capital_fcit + labour_fcit
@@ -1085,7 +1078,7 @@ for (i in seq(3, 9)){
 
 #### Capital
 l2 <- list()
-for (i in seq(3, 9)){
+for (i in seq(3, 7)){
     
     t1 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period *polluted_thre * cap_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
@@ -1099,7 +1092,7 @@ for (i in seq(3, 9)){
 
 #### Employment
 l3 <- list()
-for (i in seq(3, 9)){
+for (i in seq(3, 7)){
     
     t1 <- felm(formula=log(tso2_cit) ~ TCZ_c * Period *polluted_thre * lab_share_SOE
                   + output_fcit + capital_fcit + labour_fcit
@@ -1165,8 +1158,7 @@ table_1 <- go_latex(l3,
 ```sos kernel="Python 3"
 import os
 decile=['& decile .3', 'decile .4',
-        'decile .5','decile .6', ' decile .7', 
-       'decile .8','decile .9']
+        'decile .5','decile .6', ' decile .7']
 
 tb = """\\footnotesize{
 Due to limited space, only the coefficients of interest are presented 
@@ -1188,8 +1180,7 @@ lb.beautify(table_number = 9,
 ```sos kernel="Python 3"
 import os
 decile=['& decile .3', 'decile .4',
-        'decile .5','decile .6', ' decile .7', 
-       'decile .8','decile .9']
+        'decile .5','decile .6', ' decile .7']
 
 tb = """\\footnotesize{
 Due to limited space, only the coefficients of interest are presented 
@@ -1211,8 +1202,7 @@ lb.beautify(table_number = 10,
 ```sos kernel="Python 3"
 import os
 decile=['& decile .3', 'decile .4',
-        'decile .5','decile .6', ' decile .7', 
-       'decile .8','decile .9']
+        'decile .5','decile .6', ' decile .7']
 
 tb = """\\footnotesize{
 Due to limited space, only the coefficients of interest are presented 
@@ -1234,8 +1224,7 @@ lb.beautify(table_number = 11,
 ```sos kernel="Python 3"
 import os
 decile=['& decile .3', 'decile .4',
-        'decile .5','decile .6', ' decile .7', 
-       'decile .8','decile .9']
+        'decile .5','decile .6', ' decile .7']
 
 tb = """\\footnotesize{
 Due to limited space, only the coefficients of interest are presented 
