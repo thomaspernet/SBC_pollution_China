@@ -1400,7 +1400,7 @@ except:
 ```
 
 <!-- #region kernel="python3" -->
-### Table 06 BIS 2: Robustness check: Test for Kuznet curve, decile
+### Table 06 BIS 2: Robustness check: Test for Kuznet curve, cumul decile
 
 Together with next part
 
@@ -1659,6 +1659,166 @@ heteroscedasticity-robust standard errors in parentheses are clustered by city
 }
 """
 lb.beautify(table_number = 7,
+            remove_control= True,
+            constraint = True,
+            city_industry = False, 
+            new_row = decile,
+            table_nte =tb)
+```
+
+<!-- #region kernel="python3" -->
+### Table 06 BIS 3: Robustness check: Test for Kuznet curve, decile
+
+Together with next part
+
+Output latex table available here
+
+- https://www.overleaf.com/project/5deca0097e9f3a0001506527
+    - Temp_tables_revision/05_Kuznet/02_kuznet_decile_output
+    - Temp_tables_revision/05_Kuznet/03_kuznet_decile_capital
+    - Temp_tables_revision/05_Kuznet/04_kuznet_decile_emp
+
+In Google Drive:
+
+**Output**
+![](https://drive.google.com/uc?export=view&id=)
+
+**Capital**
+![](https://drive.google.com/uc?export=view&id=)
+
+**Employment**
+![](https://drive.google.com/uc?export=view&id=)
+<!-- #endregion -->
+
+```sos kernel="R"
+t1 <- felm(formula=log(tso2_cit) ~ 
+               TCZ_c * Period *polluted_thre * out_share_SOE
+          + ln_gdp_cap
+          #+ ln_gdp_cap_sqred 
+          + ln_pop
+          + output_fcit + capital_fcit + labour_fcit
+                  |
+             cityen +  year + industry | 0 |
+             industry, data= df_chinese_city_characteristics %>% 
+               filter(decile_share_output_c <= 5),
+             exactDOF=TRUE)
+
+t2 <- felm(formula=log(tso2_cit) ~ 
+               TCZ_c * Period *polluted_thre * out_share_SOE
+          + ln_gdp_cap
+          #+ ln_gdp_cap_sqred 
+          + ln_pop
+          + output_fcit + capital_fcit + labour_fcit
+                  |
+             cityen +  year + industry | 0 |
+             industry, data= df_chinese_city_characteristics %>% 
+               filter(decile_share_output_c >5),
+             exactDOF=TRUE)
+
+t3 <- felm(formula=log(tso2_cit) ~ 
+               TCZ_c * Period *polluted_thre * cap_share_SOE
+          + ln_gdp_cap
+          #+ ln_gdp_cap_sqred 
+          + ln_pop
+          + output_fcit + capital_fcit + labour_fcit
+                  |
+             cityen +  year + industry | 0 |
+             industry, data= df_chinese_city_characteristics %>% 
+               filter(decile_share_output_c <= 5),
+             exactDOF=TRUE)
+
+t4 <- felm(formula=log(tso2_cit) ~ 
+               TCZ_c * Period *polluted_thre * cap_share_SOE
+          + ln_gdp_cap
+          #+ ln_gdp_cap_sqred 
+          + ln_pop
+          + output_fcit + capital_fcit + labour_fcit
+                  |
+             cityen +  year + industry | 0 |
+             industry, data= df_chinese_city_characteristics %>% 
+               filter(decile_share_output_c >5),
+             exactDOF=TRUE)
+
+t5 <- felm(formula=log(tso2_cit) ~ 
+               TCZ_c * Period *polluted_thre * lab_share_SOE
+          + ln_gdp_cap
+         # + ln_gdp_cap_sqred 
+          + ln_pop
+          + output_fcit + capital_fcit + labour_fcit
+                  |
+             cityen +  year + industry | 0 |
+             industry, data= df_chinese_city_characteristics %>% 
+               filter(decile_share_output_c <= 5),
+             exactDOF=TRUE)
+
+t6 <- felm(formula=log(tso2_cit) ~ 
+               TCZ_c * Period *polluted_thre * lab_share_SOE
+          + ln_gdp_cap
+          #+ ln_gdp_cap_sqred 
+          + ln_pop
+          + output_fcit + capital_fcit + labour_fcit
+                  |
+             cityen +  year + industry | 0 |
+             industry, data= df_chinese_city_characteristics %>% 
+               filter(decile_share_output_c >5),
+             exactDOF=TRUE)
+```
+
+```sos kernel="R"
+test <- list(t1, t2, t3, t4, t5, t6)   
+turning = c()
+turning_dol = c()
+for (c in test){
+   turning <- append(turning, round(exp(abs(c$beta[5] / (2 * c$beta[6]))), 0))
+    turning_dol <- append(turning_dol, round(exp(abs(c$beta[5] / (2 * c$beta[6])))/8.07,0))
+}
+```
+
+```sos kernel="python3"
+import os
+decile=['& Output','Output', 'Capital',
+        'Capital','Labour', 'Labour'
+       ]
+try:
+    os.remove("table_8.txt")
+except:
+    pass
+try:
+    os.remove("table_8.tex")
+except:
+    pass
+```
+
+```sos kernel="R"
+fe1 <- list(
+    c('turning point RMB', turning),
+    c('turning point Dollar', turning_dol),
+    c("City fixed effects", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"),
+    c("Industry fixed effects", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"),
+    c("Year fixed effects","Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes")
+             )
+table_1 <- go_latex(test,
+    dep_var = "Dependent variable: \\text { SO2 emission }_{i k t}",
+    title='Deciles employment',
+    addFE=fe1,
+    save=TRUE,
+                    note = FALSE,
+    name="table_8.txt"
+)
+```
+
+```sos kernel="python3"
+tb = """\\footnotesize{
+A decile indicates the rank of the city output share by SOE \\
+More specifically, the low deciles means a low SOE share by city \\
+Deciles close to one, however, implies a stronger share of SO2.
+Due to limited space, only the coefficients of interest are presented 
+for the regressions with city,industry, year fixed effect (i.e. columns 1-3).
+\sym{*} Significance at the 10\%, \sym{**} Significance at the 5\%, \sym{***} Significance at the 1\% \\
+heteroscedasticity-robust standard errors in parentheses are clustered by city 
+}
+"""
+lb.beautify(table_number = 8,
             remove_control= True,
             constraint = True,
             city_industry = False, 
