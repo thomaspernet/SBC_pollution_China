@@ -242,6 +242,8 @@ $$\sum output_{co}/ \sum output_c$$
 We proceed as follow:
 - Step 1: Compute the share [output, capital, employment] by city, ownership (Foreign/Domestic): `Share_X_co`
 - Step 2: Compute dummy when share Foreign above share domestic by city
+- Step 3: Compute decile by city-ownership
+    - Note,  high decile in Foreign means the city has relatively high share of foreign output, but not in absolule value as in step 2. A decile 9 in foreign can be a decile 2 or 3 in Domestic
 
 <!-- #endregion -->
 
@@ -374,6 +376,8 @@ df_share_foreign =  (df_share_foreign
 We proceed as follow:
 - Step 1: Compute the share [output, capital, employment] by city, ownership (SOE/Private): `Share_X_co`
 - Step 2: Compute dummy when share SOE above share Private by city
+- Step 3: Compute decile by city-ownership
+    - Note,  high decile in SOE means the city has relatively high share of SOE output, but not in absolule value as in step 2. A decile 9 in SOE can be a decile 2 or 3 in Private
 <!-- #endregion -->
 
 ```sos kernel="SoS"
@@ -1302,7 +1306,7 @@ table_1 <- go_latex(lb,
     addFE=fe1,
     save=TRUE,
                     note = FALSE,
-    name="table_13.txt"
+    name="table_14.txt"
 )
 ```
 
@@ -1338,4 +1342,15 @@ lb.beautify(table_number = 14,
             table_nte =tb,
             jupyter_preview = True, 
             resolution = 200)
+```
+
+```sos kernel="Python 3"
+import os
+for i in range(1, 19):
+    try:
+        os.remove("table_{}.pdf".format(i))
+        os.remove("table_{}.tex".format(i))
+        os.remove("table_{}.txt".format(i))
+    except:
+        pass
 ```
