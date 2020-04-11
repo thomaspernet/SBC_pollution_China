@@ -68,6 +68,10 @@ remove_control = True,
     r"\s\sdummy\\_SOE\\_c\\_capital5Above\s|" \
     r"\s\sdummy\\_SOE\\_c\\_emp5Above\s"
 
+    r_high_fe = \
+        r"\s\sTCZ\\_cTCZ\:polluted\\_threAbove\s|" \
+        r"\s\sTCZ\\_cTCZ\:PeriodAfter\s"
+
     #r_pop_gdp = \
     #r"\s\slog\(gdp\\_cap\)\s|" \
     #r"\s\slog\(population\)\s"
@@ -151,8 +155,6 @@ remove_control = True,
     r"\s\scap\\_share\\_for\s|" \
     r"\s\slab\\_share\\_SOE\s|" \
     r"\s\slab\\_share\\_for\s|" \
-    r"\s\sTCZ\\_cTCZ\:polluted\\_threAbove\s|" \
-    r"\s\sTCZ\\_cTCZ\:PeriodAfter\s|" \
     r"\s\sTCZ\\_cTCZ\:out\\_share\\_for|" \
     r"\s\sTCZ\\_cTCZ\:out\\_share\\_SOE|" \
     r"\s\sTCZ\\_cTCZ\:out\\_share\\_SOE\\_|" \
@@ -335,6 +337,11 @@ remove_control = True,
 
             test_tfp = bool(re.search(r_tfp, line))
             if test_tfp == True:
+                line_to_remove.append(x + 13)
+                line_to_remove.append((x + 13) + 1)
+        else:
+            test_high_fe = bool(re.search(r_high_fe, line))
+            if test_high_fe == True:
                 line_to_remove.append(x + 13)
                 line_to_remove.append((x + 13) + 1)
 
