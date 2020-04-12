@@ -1,4 +1,5 @@
-import re, tex2pix
+import re, tex2pix, os
+from PyPDF2 import PdfFileMerger
 from wand.image import Image as WImage
 
 # The idea here is to define regex to remove_control
@@ -641,4 +642,39 @@ remove_control = True,
         r.mkpdf('table_{}.pdf'.format(table_number))
         img = WImage(filename='table_{}.pdf'.format(table_number),
          resolution = resolution)
-        return img
+        return display(img)
+
+def append_pdf(new_row, table_nte,resolution,name, remove_control = True,constraint = False,
+city_industry= False,display = True):
+    """
+    """
+
+    x = [a for a in os.listdir() if a.endswith(".txt")]
+
+    #### Create separated PDF
+    for i, val in enumerate(x):
+        lb.beautify(table_number = i+1,
+            remove_control= remove_control,
+            constraint = constraint,
+            city_industry = city_industry,
+            new_row = new_row,
+           table_nte = table_nte,
+           jupyter_preview = False,
+           resolution = resolution)
+
+    ### Concatenate PDF
+    x = [a for a in os.listdir() if a.endswith(".pdf")]
+    merger = PdfFileMerger()
+
+    for pdf in x:
+        merger.append(open(pdf, 'rb'))
+
+    with open("merge_pdf_{}.pdf".format(name), "wb") as fout:
+        merger.write(fout)
+
+    if display:
+        with(WImage(filename='merge_pdf.pdf',resolution=200)) as source:
+            images=source.sequence
+            pages=len(images)
+        for i in range(pages):
+            display(WImage(images[i]))
