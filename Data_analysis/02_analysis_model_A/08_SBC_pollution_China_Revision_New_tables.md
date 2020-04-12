@@ -451,7 +451,7 @@ df_herfhindal_final = (df_final.merge(df_herfhindal,
                            ),
                        third_herfhindal= 
                            lambda x: np.where(
-                               x["Herfindahl_agg"] > 
+                               x["Herfindahl_agg"] >
                                (x["Herfindahl_agg"]
                                 .drop_duplicates()
                                 .quantile([.75])
@@ -463,7 +463,8 @@ df_herfhindal_final = (df_final.merge(df_herfhindal,
 ```
 
 ```sos kernel="SoS"
-#print('Median: {}'.format(df_herfhindal_final['Herfindahl_agg'].median()))
+print('Descriptive statistics:\n {}'.format(
+    df_herfhindal_final['Herfindahl_agg'].describe()))
 #print('Mean: {}'.format(df_herfhindal_final["Herfindahl_agg"].mean()))
 #print('Third decile: {}'.format(
 #    (df_herfhindal_final["Herfindahl_agg"]
@@ -490,6 +491,18 @@ df_herfhindal_r <- df_herfhindal_final %>%
 
 ```sos kernel="SoS"
 %put df_final_SOE --to R
+#### If industry, we need to use out_share_SOE, cap_share_SOE,lab_share_SOE
+##### Output share already computed in the paper's table for industry but not
+##### for city, in the later case, we use the data from ASIF
+if aggregation_param== 'industry':
+    out = "out_share_SOE"
+    cap = "cap_share_SOE"
+    emp = "lab_share_SOE"
+else:
+    out = "share_output_agg_o"
+    cap = "share_fa_net_agg_o"
+    emp = "share_employement_agg_o"
+    
 df_final_SOE = (df_final.merge(
     df_share_soe,
     on = [aggregation_param],
@@ -498,21 +511,21 @@ df_final_SOE = (df_final.merge(
 )
                 .assign(
                        output = lambda x:
-                           pd.qcut(x['share_output_agg_o'],10, labels=False),
+                           pd.qcut(x[out],10, labels=False),
                        capital = lambda x:
-                           pd.qcut(x['share_fa_net_agg_o'],10, labels=False),
+                           pd.qcut(x[cap],10, labels=False),
                        employment = lambda x:
-                           pd.qcut(x['share_employement_agg_o'],10, labels=False),
+                           pd.qcut(x[emp],10, labels=False),
                        mean_output = lambda x:np.where(
-                    x['out_share_SOE'] > x['out_share_SOE'].unique().mean(),
+                    x[out] > x[out].unique().mean(),
                            1,0
                        ),
                     mean_capital = lambda x:np.where(
-                    x['cap_share_SOE'] > x['cap_share_SOE'].unique().mean(),
+                    x[cap] > x[cap].unique().mean(),
                            1,0
                        ),
                     mean_employment = lambda x:np.where(
-                    x['lab_share_SOE'] > x['lab_share_SOE'].unique().mean(),
+                    x[emp] > x[emp].unique().mean(),
                            1,0
                        )
                     )
@@ -520,12 +533,12 @@ df_final_SOE = (df_final.merge(
 )
 for i in ['output', 'capital', 'employment']:
     if i == 'output':
-        v = 'share_output_agg_o'
+        v = out
     elif i =='capital':
-        v = 'share_fa_net_agg_o'
+        v = cap
     else:
-        v = 'share_employement_agg_o'
-    #print('Median: {}'.format(df_final_SOE[v].median()))
+        v = emp
+    print('Descriptive statistics \n: {}'.format(df_final_SOE[v].drop_duplicates().describe()))
     #print(pd.qcut(df_final_SOE[v],
     #    10).drop_duplicates().sort_values().reset_index(drop = True))
 
@@ -625,19 +638,16 @@ change_target <- function(table){
 ### Size
 <!-- #endregion -->
 
-<!-- #region kernel="R" -->
-Median
+<!-- #region kernel="Python 3" -->
+Mean
 <!-- #endregion -->
 
 ```sos kernel="R"
 cat <- 'Size'
-cut <- 'Median'
-threshold <- 5
-var_ <- 'decile_herfhindal'
+cut <- 'Mean'
+threshold <- 0
+var_ <- 'mean_herfhindal'
 df_to_filter <- df_herfhindal_r
-if (aggregation_param == 'geocode4_corr'){
-    aggregation_param = 'city'
-}
 ### Remove text, tex and pdf files
 toremove <- dir(path=getwd(), pattern=".tex|.pdf|.txt")
 file.remove(toremove)
@@ -743,99 +753,122 @@ lb.beautify(table_number = 1,
 ```
 
 <!-- #region kernel="Python 3" -->
-Mean
+Decile 6, 7, 8, 9
 <!-- #endregion -->
 
 ```sos kernel="R"
-df_to_filter %>% filter(decile_herfhindal <= threshold) #%>% summarize(count(TCZ_c))
-```
-
-```sos kernel="R"
 cat <- 'Size'
-cut <- 'Mean'
-threshold <- 0
-var_ <- 'mean_herfhindal'
+cut <- 'Decile'
+#threshold <- 0
+var_ <- 'decile_herfhindal'
 df_to_filter <- df_herfhindal_r
 ### Remove text, tex and pdf files
 toremove <- dir(path=getwd(), pattern=".tex|.pdf|.txt")
 file.remove(toremove)
 
-
-### inferior median
-t1 <- felm(formula=log(tso2_cit) ~ 
-           TCZ_c * Period * polluted_thre 
-           + output_fcit + capital_fcit + labour_fcit
+for (var in list(5, 6, 7, 8)){
+    
+    ### inferior median
+    t1 <- felm(formula=log(tso2_cit) ~ 
+               TCZ_c * Period * polluted_thre 
+               + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
-             industry, data= df_to_filter %>% filter(decile_herfhindal <= threshold),
+             industry, data= df_to_filter %>% filter(get(var_) <= var),
              exactDOF=TRUE)
-t1 <-change_target(t1)
-t2 <- felm(formula=log(tso2_cit) ~ 
+    t1 <-change_target(t1)
+    t2 <- felm(formula=log(tso2_cit) ~ 
            target_c  * Period * polluted_thre 
-           + output_fcit + capital_fcit + labour_fcit
+               + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
-             industry, data= df_to_filter %>% filter(decile_herfhindal <= threshold),
+             industry, data= df_to_filter %>% filter(get(var_) <= var),
              exactDOF=TRUE)
-t2 <-change_target(t2)
-
-t3 <- felm(formula=log(tso2_cit) ~ 
-           TCZ_c * Period * polluted_thre 
-           + target_c  * Period * polluted_thre 
-           + output_fcit + capital_fcit + labour_fcit
-                  |
-             FE_t_c + FE_t_i + FE_c_i  | 0 |
-             industry, data= df_to_filter %>% filter(decile_herfhindal <= threshold),
-             exactDOF=TRUE)
-t3 <-change_target(t3)
-
-### superior median
-t4 <- felm(formula=log(tso2_cit) ~ 
-           TCZ_c * Period * polluted_thre 
-           + output_fcit + capital_fcit + labour_fcit
-                  |
-             FE_t_c + FE_t_i + FE_c_i  | 0 |
-             industry, data= df_to_filter %>% filter(decile_herfhindal > threshold),
-             exactDOF=TRUE)
-t4 <-change_target(t4)
-
-t5 <- felm(formula=log(tso2_cit) ~ 
-           target_c  * Period * polluted_thre 
-           + output_fcit + capital_fcit + labour_fcit
-                  |
-             FE_t_c + FE_t_i + FE_c_i  | 0 |
-             industry, data= df_to_filter %>% filter(decile_herfhindal > threshold),
-             exactDOF=TRUE)
-t5 <-change_target(t5)
-
-t6 <- felm(formula=log(tso2_cit) ~ 
+    t2 <-change_target(t2)
+    t3 <- felm(formula=log(tso2_cit) ~ 
            TCZ_c * Period * polluted_thre 
            + target_c  * Period * polluted_thre 
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
-             industry, data= df_to_filter %>% filter(decile_herfhindal > threshold),
+             industry, data= df_to_filter %>% filter(get(var_) <= var),
              exactDOF=TRUE)
-t6 <-change_target(t6)
+    t3 <-change_target(t3)
 
-tables <- list(t1, t2, t3,t4, t5, t6)
+    ### superior median
+    t4 <- felm(formula=log(tso2_cit) ~ 
+           TCZ_c * Period * polluted_thre 
+                  + output_fcit + capital_fcit + labour_fcit
+                  |
+             FE_t_c + FE_t_i + FE_c_i  | 0 |
+             industry, data= df_to_filter %>% filter(get(var_) > var),
+             exactDOF=TRUE)
+    t4 <-change_target(t4)
+    t5 <- felm(formula=log(tso2_cit) ~ 
+           target_c  * Period * polluted_thre 
+                  + output_fcit + capital_fcit + labour_fcit
+                  |
+             FE_t_c + FE_t_i + FE_c_i  | 0 |
+             industry, data= df_to_filter %>% filter(get(var_) > var),
+             exactDOF=TRUE)
+    t5 <-change_target(t5)
 
-fe1 <- list(
-    c("City fixed effects", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"),
-    c("Industry fixed effects", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"),
-    c("Year fixed effects","Yes", "Yes", "Yes", "Yes", "Yes", "Yes")
-            )
-
-
-table_1 <- go_latex(tables,
+    t6 <- felm(formula=log(tso2_cit) ~ 
+           TCZ_c * Period * polluted_thre 
+           + target_c  * Period * polluted_thre 
+                  + output_fcit + capital_fcit + labour_fcit
+                  |
+             FE_t_c + FE_t_i + FE_c_i  | 0 |
+             industry, data= df_to_filter %>% filter(get(var_) > var),
+             exactDOF=TRUE)
+    t6 <-change_target(t6)
+    
+    if (var == 5){
+        tables_o <- list(t1, t2, t3,t4, t5, t6)
+        table_1 <- go_latex(tables_o,
                 dep_var = "Dependent variable \\text { SO2 emission }_{i k t}",
-                title=paste0("Aggregation level ",aggregation_param, " ",cut ,
-                             " Herfhindal - ", cat),
+                title=paste0("Aggregation level ",aggregation_param, " ",cut,
+                             " ",var,"  - ", cat),
                 addFE=fe1,
                 save=TRUE,
                 note = FALSE,
                 name="table_1.txt"
+                           )
+    }else if ( var == 6){
+        tables_c <- list(t1, t2, t3,t4, t5, t6)
+        table_1 <- go_latex(tables_c,
+                dep_var = "Dependent variable \\text { SO2 emission }_{i k t}",
+                title=paste0("Aggregation level ",aggregation_param, " ",cut,
+                             " ",var,"  - ", cat),
+                addFE=fe1,
+                save=TRUE,
+                note = FALSE,
+                name="table_2.txt"
                             )
+    }else if ( var == 7){
+        tables_c <- list(t1, t2, t3,t4, t5, t6)
+        table_1 <- go_latex(tables_c,
+                dep_var = "Dependent variable \\text { SO2 emission }_{i k t}",
+                title=paste0("Aggregation level ",aggregation_param, " ",cut,
+                             " ",var,"  - ", cat),
+                addFE=fe1,
+                save=TRUE,
+                note = FALSE,
+                name="table_3.txt"
+                            )
+    }else{
+        tables_e <- list(t1, t2, t3,t4, t5, t6)
+        table_1 <- go_latex(tables_e,
+                dep_var = "Dependent variable \\text { SO2 emission }_{i k t}",
+                title=paste0("Aggregation level ",aggregation_param, " ",cut,
+                             " ",var,"  - ", cat),
+                addFE=fe1,
+                save=TRUE,
+                note = FALSE,
+                name="table_4.txt"
+                            )
+    }
+}
 ```
 
 ```sos kernel="Python 3"
@@ -851,6 +884,66 @@ heteroscedasticity-robust standard errors in parentheses are clustered by city
 }
 """
 lb.beautify(table_number = 1,
+            remove_control= True,
+            constraint = False,
+            city_industry = False, 
+            new_row = decile,
+            table_nte =tb,
+           jupyter_preview = True,
+           resolution = 200)
+```
+
+```sos kernel="Python 3"
+import os
+
+tb = """\\footnotesize{
+Due to limited space, only the coefficients of interest are presented 
+for the regressions with city,industry, year fixed effect (i.e. columns 1-3).
+\sym{*} Significance at the 10\%, \sym{**} Significance at the 5\%, \sym{***} Significance at the 1\% \\
+heteroscedasticity-robust standard errors in parentheses are clustered by city 
+}
+"""
+lb.beautify(table_number = 2,
+            remove_control= True,
+            constraint = False,
+            city_industry = False, 
+            new_row = decile,
+            table_nte =tb,
+           jupyter_preview = True,
+           resolution = 200)
+```
+
+```sos kernel="Python 3"
+import os
+
+tb = """\\footnotesize{
+Due to limited space, only the coefficients of interest are presented 
+for the regressions with city,industry, year fixed effect (i.e. columns 1-3).
+\sym{*} Significance at the 10\%, \sym{**} Significance at the 5\%, \sym{***} Significance at the 1\% \\
+heteroscedasticity-robust standard errors in parentheses are clustered by city 
+}
+"""
+lb.beautify(table_number = 3,
+            remove_control= True,
+            constraint = False,
+            city_industry = False, 
+            new_row = decile,
+            table_nte =tb,
+           jupyter_preview = True,
+           resolution = 200)
+```
+
+```sos kernel="Python 3"
+import os
+
+tb = """\\footnotesize{
+Due to limited space, only the coefficients of interest are presented 
+for the regressions with city,industry, year fixed effect (i.e. columns 1-3).
+\sym{*} Significance at the 10\%, \sym{**} Significance at the 5\%, \sym{***} Significance at the 1\% \\
+heteroscedasticity-robust standard errors in parentheses are clustered by city 
+}
+"""
+lb.beautify(table_number = 4,
             remove_control= True,
             constraint = False,
             city_industry = False, 
