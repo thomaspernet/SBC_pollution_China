@@ -1,4 +1,5 @@
-library(stargazer)
+shhh <- suppressPackageStartupMessages
+shhh(library(stargazer))
 
 go_latex <- function(
 results,
