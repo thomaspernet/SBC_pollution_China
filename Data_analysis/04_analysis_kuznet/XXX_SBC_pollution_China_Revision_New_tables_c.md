@@ -14,7 +14,7 @@ jupyter:
 ---
 
 <!-- #region kernel="SoS" -->
-# New Tables: Industry level
+# New Tables: City level
 
 * Faire les tableaux suivants:
   * Tableau 4: Kuznet: benchmark → Revision
@@ -111,7 +111,7 @@ Get the industries available in our dataset, so that we match the firm level tab
 <!-- #endregion -->
 
 ```sos kernel="SoS"
-list_industry = df_final['industry'].to_list()
+list_city = df_final['geocode4_corr'].to_list()
 ```
 
 ```sos kernel="R"
@@ -259,54 +259,46 @@ WITH sum_cit AS (
   SELECT geocode4_corr, cic, sum(output) as sum_o_cit, year
   FROM China.asif_firm_china 
   WHERE year >= 2002 AND year <= 2007
-  AND output > 0 
-    AND fa_net > 0 
-    AND employment > 0 
   GROUP BY geocode4_corr, cic, year
 ) 
 SELECT * 
 FROM 
-  (WITH sum_it AS (
-    SELECT cic, SUM(sum_o_cit) as sum_o_it, year
+  (WITH sum_ct AS (
+    SELECT geocode4_corr, SUM(sum_o_cit) as sum_o_ct, year
     FROM sum_cit
     WHERE year >= 2002 AND year <= 2007
-    GROUP BY year, cic
+    GROUP BY year, geocode4_corr
 )
 SELECT *
 FROM
   (WITH ms_cit AS (
     SELECT  sum_cit.cic, sum_cit.geocode4_corr, sum_cit.year,
-    sum_cit.sum_o_cit/NULLIF(sum_it.sum_o_it, 0) as market_share_cit
+    sum_cit.sum_o_cit/NULLIF(sum_ct.sum_o_ct, 0) as market_share_cit
     FROM sum_cit
-    LEFT JOIN sum_it
+    LEFT JOIN sum_ct
 ON (
-sum_cit.year = sum_it.year AND 
-sum_cit.cic = sum_it.cic
+sum_cit.year = sum_ct.year AND 
+sum_cit.geocode4_corr = sum_ct.geocode4_corr
 )
 )
 SELECT *
 FROM
   (WITH agg_1 AS (
-SELECT cic, SUM(POW(market_share_cit, 2)) as Herfindahl_it,
+SELECT geocode4_corr, SUM(POW(market_share_cit, 2)) as Herfindahl_ct,
 year
 FROM ms_cit
-GROUP BY year, cic
-ORDER BY year, cic 
+GROUP BY year, geocode4_corr
+ORDER BY year, geocode4_corr 
 )
-SELECT *
-FROM (
-SELECT cic as industry,
-AVG(Herfindahl_it) as Herfindahl_i
+SELECT geocode4_corr, AVG(Herfindahl_ct) as Herfindahl_c
 FROM agg_1
-GROUP BY cic
-ORDER BY cic
-)
-
+GROUP BY geocode4_corr
+ORDER BY geocode4_corr
 )))
 """
 df_herfhindal = (gcp.upload_data_from_bigquery(query = query,
                                          location = 'US')
-                 .loc[lambda x: x['industry'].isin(list_industry)]
+                 .loc[lambda x: x['geocode4_corr'].isin(list_city)]
                 )
 df_herfhindal.shape
 ```
@@ -326,77 +318,77 @@ $$\sum output_{io}/ \sum output_i$$
 #### Foreign vs domestic
 
 We proceed as follow:
-- Step 1: Compute the share [output, capital, employment] by industry, ownership (Foreign/Domestic): `Share_X_io`
-- Step 2: Compute dummy when share Foreign above share domestic by industry
-- Step 3: Compute decile by industry-ownership
-    - Note,  high decile in Foreign means the industry has relatively high share of foreign output, but not in absolule value as in step 2. A decile 9 in foreign can be a decile 2 or 3 in Domestic
+- Step 1: Compute the share [output, capital, employment] by city, ownership (Foreign/Domestic): `Share_X_co`
+- Step 2: Compute dummy when share Foreign above share domestic by city
+- Step 3: Compute decile by city-ownership
+    - Note,  high decile in Foreign means the city has relatively high share of foreign output, but not in absolule value as in step 2. A decile 9 in foreign can be a decile 2 or 3 in Domestic
 <!-- #endregion -->
 
 ```sos kernel="SoS"
 query_share_foreign = """ 
-WITH sum_io AS (
+WITH sum_co AS (
   SELECT 
     case WHEN ownership = 'Foreign' THEN 'FOREIGN' ELSE 'DOMESTIC' END AS OWNERSHIP, 
-    SUM(output / 10000000) as output_io, 
-    SUM(fa_net / 10000000) as fa_net_io, 
-    SUM(employment / 100000) as employment_io,
-    cic
+    SUM(output / 10000000) as output_co, 
+    SUM(fa_net / 10000000) as fa_net_co, 
+    SUM(employment / 100000) as employment_co,
+    geocode4_corr
   FROM 
     China.asif_firm_china 
   WHERE 
     year >= 2002 
-    AND year <= 2007 
+    AND year <= 2007
     AND output > 0 
     AND fa_net > 0 
     AND employment > 0 
   GROUP BY 
     OWNERSHIP, 
-    cic
+    geocode4_corr
 ) 
 SELECT 
   * 
 FROM 
   (
-    WITH sum_i AS(
+    WITH sum_c AS(
       SELECT 
-        SUM(output_io) as output_i, 
-        SUM(fa_net_io) as fa_net_i, 
-        SUM(employment_io) as employment_i, 
-        cic AS cic_b
+        SUM(output_co) as output_c, 
+        SUM(fa_net_co) as fa_net_c, 
+        SUM(employment_co) as employment_c, 
+        geocode4_corr AS geocode4_corr_b
       FROM 
-        sum_io 
+        sum_co 
       GROUP BY 
-        cic
+        geocode4_corr
     ) 
     SELECT 
       * 
     FROM 
       (
-        WITH share_io AS(
+        WITH share_co AS(
           SELECT 
             OWNERSHIP, 
-            output_io / output_i AS share_output_io, 
-            fa_net_io / fa_net_i AS share_fa_net_io, 
-            employment_io / employment_i AS share_employement_io, 
-            cic
+            output_co / output_c AS share_output_co, 
+            fa_net_co / fa_net_c AS share_fa_net_co, 
+            employment_co / employment_c AS share_employement_co, 
+            geocode4_corr
           FROM 
-            sum_io 
-            LEFT JOIN sum_i ON sum_io.cic = sum_i.cic_b 
+            sum_co 
+            LEFT JOIN sum_c ON sum_co.geocode4_corr = sum_c.geocode4_corr_b 
         ) 
         SELECT 
-        cic as industry,
+        geocode4_corr,
         OWNERSHIP,  
-        share_output_io,
-        share_fa_net_io,
-        share_employement_io
-        FROM share_io
+          share_output_co,
+          share_fa_net_co,
+          share_employement_co
+        FROM share_co
         WHERE OWNERSHIP = 'FOREIGN'
         )
         )
 """
 df_share_foreign = (gcp.upload_data_from_bigquery(query = query_share_foreign,
                                          location = 'US')
-                    .loc[lambda x: x['industry'].isin(list_industry)]
+                    .loc[lambda x: x['geocode4_corr'].isin(list_city)]
                    )
 df_share_foreign.shape
 #df_share_foreign['rank_share_output_i'].value_counts().sort_index()
@@ -448,81 +440,77 @@ df_share_foreign.shape
 #### SOE
 
 We proceed as follow:
-- Step 1: Compute the share [output, capital, employment] by industry, ownership (SOE/Private): `Share_X_io`
-- Step 2: Compute dummy when share SOE above share Private by industry
-- Step 3: Compute decile by industry-ownership
-    - Note,  high decile in SOE means the industry has relatively high share of SOE output, but not in absolule value as in step 2. A decile 9 in SOE can be a decile 2 or 3 in Private
+- Step 1: Compute the share [output, capital, employment] by city, ownership (SOE/Private): `Share_X_co`
+- Step 2: Compute dummy when share SOE above share Private by city
+- Step 3: Compute decile by city-ownership
+    - Note,  high decile in SOE means the city has relatively high share of SOE output, but not in absolule value as in step 2. A decile 9 in SOE can be a decile 2 or 3 in Private
 <!-- #endregion -->
 
 ```sos kernel="SoS"
 query_share_soe = """ 
-WITH sum_io AS (
+WITH sum_co AS (
   SELECT 
-    case WHEN ownership = 'SOE' THEN 'SOE' ELSE 'DOMESTIC' END AS OWNERSHIP, 
-    SUM(output / 10000000) as output_io, 
-    SUM(fa_net / 10000000) as fa_net_io, 
-    SUM(employment / 100000) as employment_io,
-    cic
+    case WHEN ownership = 'SOE' THEN 'SOE' ELSE 'PRIVATE' END AS OWNERSHIP, 
+    SUM(output / 10000000) as output_co, 
+    SUM(fa_net / 10000000) as fa_net_co, 
+    SUM(employment / 100000) as employment_co,
+    geocode4_corr
   FROM 
     China.asif_firm_china 
   WHERE 
     year >= 2002 
-    AND year <= 2007 
+    AND year <= 2007
     AND output > 0 
     AND fa_net > 0 
     AND employment > 0 
   GROUP BY 
     OWNERSHIP, 
-    cic
+    geocode4_corr
 ) 
 SELECT 
   * 
 FROM 
   (
-    WITH sum_i AS(
+    WITH sum_c AS(
       SELECT 
-        SUM(output_io) as output_i, 
-        SUM(fa_net_io) as fa_net_i, 
-        SUM(employment_io) as employment_i, 
-        cic AS cic_b
+        SUM(output_co) as output_c, 
+        SUM(fa_net_co) as fa_net_c, 
+        SUM(employment_co) as employment_c, 
+        geocode4_corr AS geocode4_corr_b
       FROM 
-        sum_io 
+        sum_co 
       GROUP BY 
-        cic
+        geocode4_corr
     ) 
     SELECT 
       * 
     FROM 
       (
-        WITH share_io AS(
+        WITH share_co AS(
           SELECT 
             OWNERSHIP, 
-            output_io / output_i AS share_output_io, 
-            fa_net_io / fa_net_i AS share_fa_net_io, 
-            employment_io / employment_i AS share_employement_io, 
-            cic
+            output_co / output_c AS share_output_co, 
+            fa_net_co / fa_net_c AS share_fa_net_co, 
+            employment_co / employment_c AS share_employement_co, 
+            geocode4_corr
           FROM 
-            sum_io 
-            LEFT JOIN sum_i ON sum_io.cic = sum_i.cic_b 
+            sum_co 
+            LEFT JOIN sum_c ON sum_co.geocode4_corr = sum_c.geocode4_corr_b 
         ) 
         SELECT 
-        * 
-        FROM(
-        SELECT 
-        cic as industry,
+        geocode4_corr,
         OWNERSHIP,  
-          share_output_io,
-          share_fa_net_io,
-          share_employement_io
-        FROM share_io
+          share_output_co,
+          share_fa_net_co,
+          share_employement_co
+        FROM share_co
         WHERE OWNERSHIP = 'SOE'
-        )
         )
         )
 """
 df_share_soe = (gcp.upload_data_from_bigquery(query = query_share_soe,
                                          location = 'US')
-                .loc[lambda x: x['industry'].isin(list_industry)]
+                .loc[lambda x: x['geocode4_corr'].isin(list_city)]
                    )
 df_share_soe.shape
 #df_share_soe['rank_share_output_i'].value_counts().sort_index()
@@ -607,23 +595,23 @@ left_join(df_final)
 ```sos kernel="SoS"
 %put df_herfhindal_final --to R
 df_herfhindal_final = (df_chinese_city_characteristics.merge(df_herfhindal,
-                                     on=['industry'],
+                                     on=['geocode4_corr'],
                                      how='left',
                                      indicator=True
                                      )
                        .assign(
-                       decile_herfhindal_i = lambda x:
-                           pd.qcut(x['Herfindahl_i'],10, labels=False)
+                       decile_herfhindal_c = lambda x:
+                           pd.qcut(x['Herfindahl_c'],10, labels=False)
                        )
                       )
 ```
 
 ```sos kernel="SoS"
-print('Median: {}'.format(df_herfhindal_final['Herfindahl_i'].median()))
-print(pd.qcut(df_herfhindal_final['Herfindahl_i'],
+print('Median: {}'.format(df_herfhindal_final['Herfindahl_c'].median()))
+print(pd.qcut(df_herfhindal_final['Herfindahl_c'],
         10).drop_duplicates().sort_values().reset_index(drop = True))
 
-df_herfhindal_final['decile_herfhindal_i'].value_counts().sort_index()
+df_herfhindal_final['decile_herfhindal_c'].value_counts().sort_index()
 ```
 
 ```sos kernel="R"
@@ -644,27 +632,27 @@ df_herfhindal_r <- df_herfhindal_final %>%
 %put df_final_SOE --to R
 df_final_SOE = (df_chinese_city_characteristics.merge(
     df_share_soe,
-    on = ['industry'],
+    on = ['geocode4_corr'],
     how = 'left',
     indicator = True
 )
                 .assign(
                        output = lambda x:
-                           pd.qcut(x['share_output_io'],10, labels=False),
+                           pd.qcut(x['share_output_co'],10, labels=False),
                        capital = lambda x:
-                           pd.qcut(x['share_fa_net_io'],10, labels=False),
+                           pd.qcut(x['share_fa_net_co'],10, labels=False),
                        employment = lambda x:
-                           pd.qcut(x['share_employement_io'],10, labels=False),
+                           pd.qcut(x['share_employement_co'],10, labels=False),
                        )
 
 )
 for i in ['output', 'capital', 'employment']:
     if i == 'output':
-        v = 'share_output_io'
+        v = 'share_output_co'
     elif i =='capital':
-        v = 'share_fa_net_io'
+        v = 'share_fa_net_co'
     else:
-        v = 'share_employement_io'
+        v = 'share_employement_co'
     print('Median: {}'.format(df_final_SOE[v].median()))
     print(pd.qcut(df_final_SOE[v],
         10).drop_duplicates().sort_values().reset_index(drop = True))
@@ -690,27 +678,27 @@ df_final_SOE <- df_final_SOE %>%
 %put df_final_FOREIGN --to R
 df_final_FOREIGN = (df_chinese_city_characteristics.merge(
     df_share_foreign,
-    on = ['industry'],
+    on = ['geocode4_corr'],
     how = 'left',
     indicator = True
 )
                 .assign(
                        output = lambda x:
-                           pd.qcut(x['share_output_io'],10, labels=False),
+                           pd.qcut(x['share_output_co'],10, labels=False),
                        capital = lambda x:
-                           pd.qcut(x['share_fa_net_io'],10, labels=False),
+                           pd.qcut(x['share_fa_net_co'],10, labels=False),
                        employment = lambda x:
-                           pd.qcut(x['share_employement_io'],10, labels=False),
+                           pd.qcut(x['share_employement_co'],10, labels=False),
                        )
 
 )
 for i in ['output', 'capital', 'employment']:
     if i == 'output':
-        v = 'share_output_io'
+        v = 'share_output_co'
     elif i =='capital':
-        v = 'share_fa_net_io'
+        v = 'share_fa_net_co'
     else:
-        v = 'share_employement_io'
+        v = 'share_employement_co'
     print('Median: {}'.format(df_final_FOREIGN[v].median()))
     print(pd.qcut(df_final_FOREIGN[v],
         10).drop_duplicates().sort_values().reset_index(drop = True))
@@ -794,8 +782,6 @@ turning_point <- function(tables, currency ='RMB'){
     }
     
 }
-
-turning_point(tables, currency = 'dollars')
 ```
 
 ```sos kernel="R"
@@ -804,38 +790,38 @@ df_to_filter <- df_herfhindal_r
 
 ### inferior median
 t1 <- felm(formula=log(tso2_cit) ~ 
-           + ln_gdp_cap
+           + ln_gdp_cap 
            + ln_gdp_cap_sqred
-           + ln_pop
+           #+ ln_pop
            + TCZ_c * Period * polluted_thre 
            + output_fcit + capital_fcit + labour_fcit
                   |
              cityen +  year + industry  | 0 |
-             industry, data= df_to_filter %>% filter(decile_herfhindal_i <= 5),
+             industry, data= df_to_filter %>% filter(decile_herfhindal_c <= 5),
              exactDOF=TRUE)
 t1 <-change_target(t1)
 t2 <- felm(formula=log(tso2_cit) ~ 
            + ln_gdp_cap
            + ln_gdp_cap_sqred
-           + ln_pop
+           #+ ln_pop
            + target_c  * Period * polluted_thre 
            + output_fcit + capital_fcit + labour_fcit
                   |
              cityen +  year + industry  | 0 |
-             industry, data= df_to_filter %>% filter(decile_herfhindal_i <= 5),
+             industry, data= df_to_filter %>% filter(decile_herfhindal_c <= 5),
              exactDOF=TRUE)
 t2 <-change_target(t2)
 
 t3 <- felm(formula=log(tso2_cit) ~ 
            + ln_gdp_cap
            + ln_gdp_cap_sqred
-           + ln_pop
+           #+ ln_pop
            + TCZ_c * Period * polluted_thre 
            + target_c  * Period * polluted_thre 
            + output_fcit + capital_fcit + labour_fcit
                   |
              cityen +  year + industry  | 0 |
-             industry, data= df_to_filter %>% filter(decile_herfhindal_i <= 5),
+             industry, data= df_to_filter %>% filter(decile_herfhindal_c <= 5),
              exactDOF=TRUE)
 t3 <-change_target(t3)
 
@@ -843,40 +829,161 @@ t3 <-change_target(t3)
 t4 <- felm(formula=log(tso2_cit) ~ 
            + ln_gdp_cap
            + ln_gdp_cap_sqred
-           + ln_pop
+           #+ ln_pop
            + TCZ_c * Period * polluted_thre 
            + output_fcit + capital_fcit + labour_fcit
                   |
              cityen +  year + industry  | 0 |
-             industry, data= df_to_filter %>% filter(decile_herfhindal_i > 5),
+             industry, data= df_to_filter %>% filter(decile_herfhindal_c > 5),
              exactDOF=TRUE)
 t4 <-change_target(t4)
 
 t5 <- felm(formula=log(tso2_cit) ~ 
            + ln_gdp_cap
            + ln_gdp_cap_sqred
-           + ln_pop
+           #+ ln_pop
            + target_c  * Period * polluted_thre 
            + output_fcit + capital_fcit + labour_fcit
                   |
              cityen +  year + industry  | 0 |
-             industry, data= df_to_filter %>% filter(decile_herfhindal_i > 5),
+             industry, data= df_to_filter %>% filter(decile_herfhindal_c > 5),
              exactDOF=TRUE)
 t5 <-change_target(t5)
 
 t6 <- felm(formula=log(tso2_cit) ~ 
            + ln_gdp_cap
            + ln_gdp_cap_sqred
-           + ln_pop
+           #+ ln_pop
            + TCZ_c * Period * polluted_thre 
            + target_c  * Period * polluted_thre 
            + output_fcit + capital_fcit + labour_fcit
                   |
              cityen +  year + industry  | 0 |
-             industry, data= df_to_filter %>% filter(decile_herfhindal_i > 5),
+             industry, data= df_to_filter %>% filter(decile_herfhindal_c > 5),
              exactDOF=TRUE)
 t6 <-change_target(t6)
+
 tables <- list(t1, t2, t3,t4, t5, t6)
+
+turning <- turning_point(tables, currency = 'RMB')
+turning_dol <- turning_point(tables, currency = 'dollars')
+fe1 <- list(
+    c('turning point RMB', turning),
+    c('turning point Dollar', turning_dol),
+    c("City fixed effects", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"),
+    c("Industry fixed effects", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"),
+    c("Year fixed effects","Yes", "Yes", "Yes", "Yes", "Yes", "Yes")
+            )
+
+
+table_1 <- go_latex(tables,
+                dep_var = "Dependent variable \\text { SO2 emission }_{i k t}",
+                title=paste0("Kuznet Median Herfhindal - ", cat),
+                addFE=fe1,
+                save=TRUE,
+                note = FALSE,
+                name="table_1.txt"
+                            )
+```
+
+```sos kernel="Python 3"
+import os
+decile=['& below median (inc.)', 'below median (inc.)', 'below median (inc.)',
+        'above median (exc.)', 'above median (exc.)', 'above median (exc.)']
+
+tb = """\\footnotesize{
+Due to limited space, only the coefficients of interest are presented 
+for the regressions with city,industry, year fixed effect (i.e. columns 1-3).
+\sym{*} Significance at the 10\%, \sym{**} Significance at the 5\%, \sym{***} Significance at the 1\% \\
+heteroscedasticity-robust standard errors in parentheses are clustered by city 
+}
+"""
+lb.beautify(table_number = 1,
+            remove_control= True,
+            constraint = True,
+            city_industry = False, 
+            new_row = decile,
+            table_nte =tb,
+           jupyter_preview = True,
+           resolution = 200)
+```
+
+```sos kernel="R"
+cat <- 'Size'
+df_to_filter <- df_herfhindal_r
+
+### Remove text, tex and pdf files
+toremove <- dir(path=getwd(), pattern=".tex|.pdf|.txt")
+file.remove(toremove)
+
+### inferior median
+t1 <- felm(formula=log(tso2_cit) ~ 
+           + ln_gdp_cap* Period * polluted_thre 
+           + ln_gdp_cap_sqred* Period * polluted_thre 
+           + ln_pop
+           + output_fcit + capital_fcit + labour_fcit
+                  |
+             cityen +  year + industry  | 0 |
+             industry, data= df_to_filter %>% filter(decile_herfhindal_c <= 5),
+             exactDOF=TRUE)
+t1 <-change_target(t1)
+t2 <- felm(formula=log(tso2_cit) ~ 
+           + ln_gdp_cap * Period * polluted_thre 
+           + ln_gdp_cap_sqred * Period * polluted_thre 
+           + ln_pop
+           + output_fcit + capital_fcit + labour_fcit
+                  |
+             cityen +  year + industry  | 0 |
+             industry, data= df_to_filter %>% filter(decile_herfhindal_c <= 5),
+             exactDOF=TRUE)
+t2 <-change_target(t2)
+
+t3 <- felm(formula=log(tso2_cit) ~ 
+           + ln_gdp_cap * Period * polluted_thre 
+           + ln_gdp_cap_sqred * Period * polluted_thre 
+           + ln_pop
+           + output_fcit + capital_fcit + labour_fcit
+                  |
+             cityen +  year + industry  | 0 |
+             industry, data= df_to_filter %>% filter(decile_herfhindal_c <= 5),
+             exactDOF=TRUE)
+t3 <-change_target(t3)
+
+### superior median
+t4 <- felm(formula=log(tso2_cit) ~ 
+           + ln_gdp_cap * Period *  polluted_thre 
+           + ln_gdp_cap_sqred * Period * polluted_thre 
+           + ln_pop
+           + output_fcit + capital_fcit + labour_fcit
+                  |
+             cityen +  year + industry  | 0 |
+             industry, data= df_to_filter %>% filter(decile_herfhindal_c > 5),
+             exactDOF=TRUE)
+t4 <-change_target(t4)
+
+t5 <- felm(formula=log(tso2_cit) ~ 
+           + ln_gdp_cap * Period * polluted_thre 
+           + ln_gdp_cap_sqred * Period * polluted_thre 
+           + ln_pop
+                  |
+             cityen +  year + industry  | 0 |
+             industry, data= df_to_filter %>% filter(decile_herfhindal_c > 5),
+             exactDOF=TRUE)
+t5 <-change_target(t5)
+
+t6 <- felm(formula=log(tso2_cit) ~ 
+           + ln_gdp_cap * Period * polluted_thre 
+           + ln_gdp_cap_sqred * Period * polluted_thre 
+           + ln_pop
+           + output_fcit + capital_fcit + labour_fcit
+                  |
+             cityen +  year + industry  | 0 |
+             industry, data= df_to_filter %>% filter(decile_herfhindal_c > 5),
+             exactDOF=TRUE)
+t6 <-change_target(t6)
+
+tables <- list(t1, t2, t3,t4, t5, t6)
+
 turning <- turning_point(tables, currency = 'RMB')
 turning_dol <- turning_point(tables, currency = 'dollars')
 fe1 <- list(
@@ -1580,7 +1687,7 @@ lb.beautify(table_number = 2,
 import os, time, shutil
 from pathlib import Path
 
-filename = '08_SBC_pollution_China_Revision_New_tables_i'
+filename = '12_SBC_pollution_China_Revision_New_tables_c'
 source = filename + '.ipynb'
 source_to_move = filename + '.html'
 path = os.getcwd()
