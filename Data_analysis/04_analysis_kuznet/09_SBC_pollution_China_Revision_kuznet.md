@@ -14,7 +14,7 @@ jupyter:
 ---
 
 <!-- #region kernel="SoS" -->
-# New Tables: Industry level
+# New Tables: Kuznet
 
 * Faire les tableaux suivants:
   * Tableau 4: Kuznet: benchmark → Revision
@@ -973,7 +973,7 @@ x = [a for a in os.listdir() if a.endswith(".txt")]
 for i, val in enumerate(x):
     lb.beautify(table_number = i+1,
             remove_control= True,
-            constraint = False,
+            constraint = True,
             city_industry = False, 
             new_row = decile,
             table_nte =tb,
@@ -1135,7 +1135,7 @@ x = [a for a in os.listdir() if a.endswith(".txt")]
 for i, val in enumerate(x):
     lb.beautify(table_number = i+1,
             remove_control= True,
-            constraint = False,
+            constraint = True,
             city_industry = False, 
             new_row = decile,
             table_nte =tb,
@@ -1274,7 +1274,7 @@ x = [a for a in os.listdir() if a.endswith(".txt")]
 for i, val in enumerate(x):
     lb.beautify(table_number = i+1,
             remove_control= True,
-            constraint = False,
+            constraint = True,
             city_industry = False, 
             new_row = decile,
             table_nte =tb,
@@ -1325,7 +1325,10 @@ for (var in list('mean_output', 'mean_capital', 'mean_employment')){
              exactDOF=TRUE)
     t1 <-change_target(t1)
     t2 <- felm(formula=log(tso2_cit) ~ 
-           target_c  * Period * polluted_thre 
+               + ln_gdp_cap
+               + ln_gdp_cap_sqred
+               + ln_pop
+               + target_c  * Period * polluted_thre 
                + output_fcit + capital_fcit + labour_fcit
                   |
              cityen +  year + industry  | 0 |
@@ -1421,7 +1424,7 @@ x = [a for a in os.listdir() if a.endswith(".txt")]
 for i, val in enumerate(x):
     lb.beautify(table_number = i+1,
             remove_control= True,
-            constraint = False,
+            constraint = True,
             city_industry = False, 
             new_row = decile,
             table_nte =tb,
@@ -1560,7 +1563,7 @@ x = [a for a in os.listdir() if a.endswith(".txt")]
 for i, val in enumerate(x):
     lb.beautify(table_number = i+1,
             remove_control= True,
-            constraint = False,
+            constraint = True,
             city_industry = False, 
             new_row = decile,
             table_nte =tb,
@@ -1717,8 +1720,8 @@ for (var in range(1,2)){
     
      if (var == 1){
         tables_1 <- list(t1, t2, t3,t4, t5, t6, t7)
-        turning <- turning_point(tables, currency = 'RMB')
-        turning_dol <- turning_point(tables, currency = 'dollars')
+        turning <- turning_point(tables_1, currency = 'RMB')
+        turning_dol <- turning_point(tables_1, currency = 'dollars')
         fe1 <- list(
         c('turning point RMB', turning),
         c('turning point Dollar', turning_dol),
@@ -1738,8 +1741,8 @@ for (var in range(1,2)){
     }else if (var == 2){
         
         tables_2 <- list(t1, t2, t3,t4, t5, t6, t7)
-        turning <- turning_point(tables, currency = 'RMB')
-        turning_dol <- turning_point(tables, currency = 'dollars')
+        turning <- turning_point(tables_2, currency = 'RMB')
+        turning_dol <- turning_point(tables_2, currency = 'dollars')
         fe1 <- list(
         c('turning point RMB', turning),
         c('turning point Dollar', turning_dol),
@@ -1776,7 +1779,7 @@ x = [a for a in os.listdir() if a.endswith(".txt")]
 for i, val in enumerate(x):
     lb.beautify(table_number = i+1,
             remove_control= True,
-            constraint = False,
+            constraint = True,
             city_industry = False, 
             new_row = decile,
             table_nte =tb,
@@ -1792,7 +1795,7 @@ for i, val in enumerate(x):
 import os, time, shutil
 from pathlib import Path
 
-filename = '08_SBC_pollution_China_Revision_New_tables'
+filename = '09_SBC_pollution_China_Revision_kuznet'
 source = filename + '.ipynb'
 source_to_move = filename +'.html'
 path = os.getcwd()
@@ -1801,9 +1804,9 @@ path_report = "{}/Reports".format(parent_path)
 dest = os.path.join(path_report, filename)+'_{}.html'.format(aggregation_param)
 
 os.system('jupyter nbconvert --no-input --to html {}'.format(source))
-shutil.move(source_to_move, dest)
 
-time.sleep(5)
+time.sleep(7)
+shutil.move(source_to_move, dest)
 for i in range(1, 19):
     try:
         os.remove("table_{}.pdf".format(i))

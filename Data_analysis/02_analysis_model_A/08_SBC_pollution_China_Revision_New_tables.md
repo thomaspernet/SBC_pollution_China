@@ -14,7 +14,7 @@ jupyter:
 ---
 
 <!-- #region kernel="SoS" -->
-# New Tables: Industry level
+# New Tables: Improve on table 8
 
 * Faire les tableaux suivants:
   * Tableau 4: Kuznet: benchmark → Revision
@@ -98,12 +98,12 @@ df_final = gcp.upload_data_from_bigquery(query = query, location = 'US')
 ```
 
 <!-- #region kernel="SoS" -->
-### Aggregation Parameter
+Aggregation Parameter
 <!-- #endregion -->
 
 ```sos kernel="SoS"
-#aggregation_param = 'industry'
-aggregation_param = 'geocode4_corr'
+aggregation_param = 'industry'
+#aggregation_param = 'geocode4_corr'
 list_agg = df_final[aggregation_param].to_list()
 ```
 
@@ -141,15 +141,11 @@ df_final <- df_final %>%
 ```
 
 <!-- #region kernel="python3" -->
-# Partie 6
-<!-- #endregion -->
-
-<!-- #region kernel="python3" -->
-## Table 8
+# Table 8
 
 Estimate the following models using different subsamples:
 
-### Models to estimate 
+## Models to estimate 
 
 $$
 Log SO2 emission _{i k t}=\alpha\left(\text { Period } \times \text { TCZ }_{i} \times \text { Polluting sectors }_{k} \right)+\nu_{i}+\lambda_{t}+\phi_{k}+\epsilon_{i k t}
@@ -367,9 +363,7 @@ df_share_foreign = (gcp.upload_data_from_bigquery(query = query_share_foreign,
 ```
 
 <!-- #region kernel="SoS" -->
-#### SOE
-
-#### Foreign vs domestic
+#### SOE vs Private
 
 We proceed as follow:
 - Step 1: Compute the share [output, capital, employment] by industry[city], ownership (SOE/PRIVATE): `Share_X_agg_o`
@@ -430,7 +424,7 @@ left_join(df_final, by = 'geocode4_corr')
 ```
 
 <!-- #region kernel="SoS" -->
-### Add to table
+### Create R tables
 <!-- #endregion -->
 
 ```sos kernel="SoS"
@@ -463,8 +457,8 @@ df_herfhindal_final = (df_final.merge(df_herfhindal,
 ```
 
 ```sos kernel="SoS"
-print('Descriptive statistics:\n {}'.format(
-    df_herfhindal_final['Herfindahl_agg'].describe()))
+#print('Descriptive statistics:\n {}'.format(
+#    df_herfhindal_final['Herfindahl_agg'].describe()))
 #print('Mean: {}'.format(df_herfhindal_final["Herfindahl_agg"].mean()))
 #print('Third decile: {}'.format(
 #    (df_herfhindal_final["Herfindahl_agg"]
@@ -538,7 +532,7 @@ for i in ['output', 'capital', 'employment']:
         v = cap
     else:
         v = emp
-    print('Descriptive statistics \n: {}'.format(df_final_SOE[v].drop_duplicates().describe()))
+    #print('Descriptive statistics \n: {}'.format(df_final_SOE[v].drop_duplicates().describe()))
     #print(pd.qcut(df_final_SOE[v],
     #    10).drop_duplicates().sort_values().reset_index(drop = True))
 
@@ -620,9 +614,7 @@ df_final_FOREIGN <- df_final_FOREIGN %>%
 ```
 
 <!-- #region kernel="SoS" -->
-## Table 8 Model A: Panel A
-
-
+## Table 8 Model 1 and 2 
 <!-- #endregion -->
 
 ```sos kernel="R"
@@ -638,11 +630,11 @@ change_target <- function(table){
 ```
 
 <!-- #region kernel="python3" -->
-### Size
+### Categorie Size
 <!-- #endregion -->
 
 <!-- #region kernel="Python 3" -->
-Mean
+#### Mean
 <!-- #endregion -->
 
 ```sos kernel="R"
@@ -654,6 +646,9 @@ df_to_filter <- df_herfhindal_r
 ### Remove text, tex and pdf files
 toremove <- dir(path=getwd(), pattern=".tex|.pdf|.txt")
 file.remove(toremove)
+if (aggregation_param == 'geocode4_corr'){
+    aggregation_param = 'city'
+}
 
 
 ### inferior median
@@ -756,7 +751,7 @@ lb.beautify(table_number = 1,
 ```
 
 <!-- #region kernel="Python 3" -->
-Decile 6, 7, 8, 9
+#### Decile 6, 7, 8, 9
 <!-- #endregion -->
 
 ```sos kernel="R"
@@ -768,6 +763,9 @@ df_to_filter <- df_herfhindal_r
 ### Remove text, tex and pdf files
 toremove <- dir(path=getwd(), pattern=".tex|.pdf|.txt")
 file.remove(toremove)
+if (aggregation_param == 'geocode4_corr'){
+    aggregation_param = 'city'
+}
 
 i = 1
 for (var in list(5, 6, 7, 8)){
@@ -829,7 +827,7 @@ for (var in list(5, 6, 7, 8)){
     
     name = paste0("table_",i,".txt")
     title = paste0("Aggregation level ",aggregation_param, " ",cut,
-                             " ",v,"  - ", cat)
+                             " ",var,"  - ", cat)
     
     tables <- list(t1, t2, t3,t4, t5, t6)
     table_1 <- go_latex(tables,
@@ -868,12 +866,12 @@ for i, val in enumerate(x):
 ```
 
 <!-- #region kernel="python3" -->
-#### Foreign
+### Categorie Foreign
 
 <!-- #endregion -->
 
 <!-- #region kernel="Python 3" -->
-Mean
+#### Mean
 <!-- #endregion -->
 
 ```sos kernel="R"
@@ -1003,7 +1001,7 @@ for i, val in enumerate(x):
 ```
 
 <!-- #region kernel="Python 3" -->
-Decile 5,6,7,8
+#### Decile 5,6,7,8
 <!-- #endregion -->
 
 ```sos kernel="R"
@@ -1115,11 +1113,11 @@ for i, val in enumerate(x):
 ```
 
 <!-- #region kernel="Python 3" -->
-#### SOE
+### Categorie SOE
 <!-- #endregion -->
 
 <!-- #region kernel="Python 3" -->
-Mean
+#### Mean
 <!-- #endregion -->
 
 ```sos kernel="R"
@@ -1238,7 +1236,7 @@ for i, val in enumerate(x):
 ```
 
 <!-- #region kernel="Python 3" -->
-Decile 
+#### Decile 
 <!-- #endregion -->
 
 ```sos kernel="R"
@@ -1508,16 +1506,16 @@ from pathlib import Path
 
 filename = '08_SBC_pollution_China_Revision_New_tables'
 source = filename + '.ipynb'
-source_to_move = filename + '.html'
+source_to_move = filename +'.html'
 path = os.getcwd()
 parent_path = str(Path(path).parent)
 path_report = "{}/Reports".format(parent_path)
 dest = os.path.join(path_report, filename)+'_{}.html'.format(aggregation_param)
 
 os.system('jupyter nbconvert --no-input --to html {}'.format(source))
-shutil.move(source_to_move, dest)
 
 time.sleep(5)
+shutil.move(source_to_move, dest)
 for i in range(1, 19):
     try:
         os.remove("table_{}.pdf".format(i))
