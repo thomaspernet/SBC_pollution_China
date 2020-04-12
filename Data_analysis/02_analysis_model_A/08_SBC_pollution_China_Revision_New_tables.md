@@ -102,7 +102,8 @@ df_final = gcp.upload_data_from_bigquery(query = query, location = 'US')
 <!-- #endregion -->
 
 ```sos kernel="SoS"
-aggregation_param = 'industry' #'geocode4_corr'
+#aggregation_param = 'industry'
+aggregation_param = 'geocode4_corr'
 list_agg = df_final[aggregation_param].to_list()
 ```
 
@@ -218,7 +219,7 @@ FROM
 SELECT *
 FROM
   (WITH ms_cit AS (
-    SELECT  sum_cit.{0}, sum_cit.geocode4_corr, sum_cit.year,
+    SELECT  sum_cit.industry, sum_cit.geocode4_corr, sum_cit.year,
     sum_cit.sum_o_cit/NULLIF(sum_agg_t.sum_o_agg_t, 0) as market_share_cit
     FROM sum_cit
     LEFT JOIN sum_agg_t
@@ -230,7 +231,7 @@ sum_cit.{0} = sum_agg_t.{0}
 SELECT *
 FROM
   (WITH agg_1 AS (
-SELECT industry, SUM(POW(market_share_cit, 2)) as Herfindahl_agg_t,
+SELECT {0}, SUM(POW(market_share_cit, 2)) as Herfindahl_agg_t,
 year
 FROM ms_cit
 GROUP BY year, {0}
@@ -247,12 +248,12 @@ ORDER BY {0}
 
 )))
 """
-
 df_herfhindal = (gcp.upload_data_from_bigquery(
     query = query.format(aggregation_param),
                                          location = 'US')
                  .loc[lambda x: x[aggregation_param].isin(list_agg)]
                 )
+
 #df_herfhindal.shape
 ```
 
@@ -634,6 +635,9 @@ cut <- 'Median'
 threshold <- 5
 var_ <- 'decile_herfhindal'
 df_to_filter <- df_herfhindal_r
+if (aggregation_param == 'geocode4_corr'){
+    aggregation_param = 'city'
+}
 ### Remove text, tex and pdf files
 toremove <- dir(path=getwd(), pattern=".tex|.pdf|.txt")
 file.remove(toremove)
@@ -741,6 +745,10 @@ lb.beautify(table_number = 1,
 <!-- #region kernel="Python 3" -->
 Mean
 <!-- #endregion -->
+
+```sos kernel="R"
+df_to_filter %>% filter(decile_herfhindal <= threshold) #%>% summarize(count(TCZ_c))
+```
 
 ```sos kernel="R"
 cat <- 'Size'

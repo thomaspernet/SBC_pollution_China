@@ -529,7 +529,7 @@ Feel free to add description about the dataset or any usefull information.
 Profiling will be available soon for this dataset
 <!-- #endregion -->
 
-```sos kernel="python3"
+```sos kernel="Python 3"
 ### Please go here https://docs.google.com/spreadsheets/d/15bMeS2cMfGfYJkjuY6wOMzcAUWZNRGpO03hZ8rpgv0Q
 ### To change the range
 
@@ -602,7 +602,8 @@ df_final_SOE = (df_final.merge(
                        capital = lambda x:
                            pd.qcut(x['share_fa_net_co'],10, labels=False),
                        employment = lambda x:
-                           pd.qcut(x['share_employement_co'],10, labels=False),
+                           pd.qcut(x['share_employement_co'],10, labels=False)                    
+                    
                        )
 
 )
@@ -618,6 +619,18 @@ for i in ['output', 'capital', 'employment']:
         10).drop_duplicates().sort_values().reset_index(drop = True))
 
     print(df_final_SOE[i].value_counts().sort_index())
+```
+
+```sos kernel="SoS"
+df_final['out_share_SOE'].describe()
+```
+
+```sos kernel="SoS"
+df_final['cap_share_SOE'].mean()
+```
+
+```sos kernel="SoS"
+df_final['lab_share_SOE'].mean()
 ```
 
 ```sos kernel="R"
@@ -808,6 +821,111 @@ lb.beautify(table_number = 1,
            resolution = 200)
 ```
 
+```sos kernel="R"
+Herfhindal_option_distinct <- df_herfhindal_r %>%
+select(geocode4_corr, Herfindahl_c) %>%
+distinct() %>%
+summary(mean(share_output_co))
+
+Herfhindal_option_distinct
+```
+
+```sos kernel="R"
+mean <- 0.12958
+df_to_filter <- df_herfhindal_r
+var <- 'Herfhindal'
+cat <- 'Size'
+
+toremove <- dir(path=getwd(), pattern=".tex|.pdf|.txt")
+file.remove(toremove)
+
+t1 <- felm(formula=log(tso2_cit) ~ 
+               TCZ_c * Period * polluted_thre 
+               + output_fcit + capital_fcit + labour_fcit
+                  |
+             FE_t_c + FE_t_i + FE_c_i  | 0 |
+             industry, data= df_to_filter %>% filter(Herfindahl_c < mean),
+             exactDOF=TRUE)
+t1 <-change_target(t1)
+t2 <- felm(formula=log(tso2_cit) ~ 
+           target_c  * Period * polluted_thre 
+               + output_fcit + capital_fcit + labour_fcit
+                  |
+             FE_t_c + FE_t_i + FE_c_i  | 0 |
+             industry, data= df_to_filter %>% filter(Herfindahl_c < mean),
+             exactDOF=TRUE)
+t2 <-change_target(t2)
+t3 <- felm(formula=log(tso2_cit) ~ 
+           TCZ_c * Period * polluted_thre 
+           + target_c  * Period * polluted_thre 
+                  + output_fcit + capital_fcit + labour_fcit
+                  |
+             FE_t_c + FE_t_i + FE_c_i  | 0 |
+             industry, data= df_to_filter %>% filter(Herfindahl_c < mean),
+             exactDOF=TRUE)
+t3 <-change_target(t3)
+
+    ### superior median
+t4 <- felm(formula=log(tso2_cit) ~ 
+           TCZ_c * Period * polluted_thre 
+                  + output_fcit + capital_fcit + labour_fcit
+                  |
+             FE_t_c + FE_t_i + FE_c_i  | 0 |
+             industry, data= df_to_filter %>% filter(Herfindahl_c >= mean),
+             exactDOF=TRUE)
+t4 <-change_target(t4)
+t5 <- felm(formula=log(tso2_cit) ~ 
+           target_c  * Period * polluted_thre 
+                  + output_fcit + capital_fcit + labour_fcit
+                  |
+             FE_t_c + FE_t_i + FE_c_i  | 0 |
+             industry, data= df_to_filter %>% filter(Herfindahl_c >= mean),
+             exactDOF=TRUE)
+t5 <-change_target(t5)
+
+t6 <- felm(formula=log(tso2_cit) ~ 
+           TCZ_c * Period * polluted_thre 
+           + target_c  * Period * polluted_thre 
+                  + output_fcit + capital_fcit + labour_fcit
+                  |
+             FE_t_c + FE_t_i + FE_c_i  | 0 |
+             industry, data= df_to_filter %>% filter(Herfindahl_c >= mean),
+             exactDOF=TRUE)
+t6 <-change_target(t6)
+
+tables_o <- list(t1, t2, t3,t4, t5, t6)
+table_1 <- go_latex(tables_o,
+                dep_var = "Dependent variable \\text { SO2 emission }_{i k t}",
+                title=paste0("Mean ", var, "- ", cat),
+                addFE=fe1,
+                save=TRUE,
+                note = FALSE,
+                name="table_1.txt"
+                           )
+```
+
+```sos kernel="Python 3"
+import os
+decile=['& below mean (exc.)', 'below mean (exc.)', 'below mean (exc.)',
+        'above mean (inc.)', 'above mean (inc.)', 'above mean (inc.)']
+
+tb = """\\footnotesize{
+Due to limited space, only the coefficients of interest are presented 
+for the regressions with city,industry, year fixed effect (i.e. columns 1-3).
+\sym{*} Significance at the 10\%, \sym{**} Significance at the 5\%, \sym{***} Significance at the 1\% \\
+heteroscedasticity-robust standard errors in parentheses are clustered by city 
+}
+"""
+lb.beautify(table_number = 1,
+            remove_control= True,
+            constraint = False,
+            city_industry = False, 
+            new_row = decile,
+            table_nte =tb,
+           jupyter_preview = True,
+           resolution = 200)
+```
+
 <!-- #region kernel="python3" -->
 #### Foreign
 
@@ -963,8 +1081,229 @@ lb.beautify(table_number = 3,
 ```
 
 <!-- #region kernel="Python 3" -->
+Mean
+<!-- #endregion -->
+
+```sos kernel="R"
+Foreign_option_distinct <- df_final_FOREIGN %>%
+select(geocode4_corr, share_output_co) %>%
+distinct() %>%
+summary(mean(share_output_co))
+
+Foreign_option_distinct
+```
+
+```sos kernel="R"
+mean <- 0.104255
+df_to_filter <- df_final_FOREIGN
+var <- 'output'
+cat <- 'Foreign'
+
+toremove <- dir(path=getwd(), pattern=".tex|.pdf|.txt")
+file.remove(toremove)
+
+t1 <- felm(formula=log(tso2_cit) ~ 
+               TCZ_c * Period * polluted_thre 
+               + output_fcit + capital_fcit + labour_fcit
+                  |
+             FE_t_c + FE_t_i + FE_c_i  | 0 |
+             industry, data= df_to_filter %>% filter(share_output_co < mean),
+             exactDOF=TRUE)
+t1 <-change_target(t1)
+t2 <- felm(formula=log(tso2_cit) ~ 
+           target_c  * Period * polluted_thre 
+               + output_fcit + capital_fcit + labour_fcit
+                  |
+             FE_t_c + FE_t_i + FE_c_i  | 0 |
+             industry, data= df_to_filter %>% filter(share_output_co < mean),
+             exactDOF=TRUE)
+t2 <-change_target(t2)
+t3 <- felm(formula=log(tso2_cit) ~ 
+           TCZ_c * Period * polluted_thre 
+           + target_c  * Period * polluted_thre 
+                  + output_fcit + capital_fcit + labour_fcit
+                  |
+             FE_t_c + FE_t_i + FE_c_i  | 0 |
+             industry, data= df_to_filter %>% filter(share_output_co < mean),
+             exactDOF=TRUE)
+t3 <-change_target(t3)
+
+    ### superior median
+t4 <- felm(formula=log(tso2_cit) ~ 
+           TCZ_c * Period * polluted_thre 
+                  + output_fcit + capital_fcit + labour_fcit
+                  |
+             FE_t_c + FE_t_i + FE_c_i  | 0 |
+             industry, data= df_to_filter %>% filter(share_output_co >= mean),
+             exactDOF=TRUE)
+t4 <-change_target(t4)
+t5 <- felm(formula=log(tso2_cit) ~ 
+           target_c  * Period * polluted_thre 
+                  + output_fcit + capital_fcit + labour_fcit
+                  |
+             FE_t_c + FE_t_i + FE_c_i  | 0 |
+             industry, data= df_to_filter %>% filter(share_output_co >= mean),
+             exactDOF=TRUE)
+t5 <-change_target(t5)
+
+t6 <- felm(formula=log(tso2_cit) ~ 
+           TCZ_c * Period * polluted_thre 
+           + target_c  * Period * polluted_thre 
+                  + output_fcit + capital_fcit + labour_fcit
+                  |
+             FE_t_c + FE_t_i + FE_c_i  | 0 |
+             industry, data= df_to_filter %>% filter(share_output_co >= mean),
+             exactDOF=TRUE)
+t6 <-change_target(t6)
+
+tables_o <- list(t1, t2, t3,t4, t5, t6)
+table_1 <- go_latex(tables_o,
+                dep_var = "Dependent variable \\text { SO2 emission }_{i k t}",
+                title=paste0("Mean ", var, "- ", cat),
+                addFE=fe1,
+                save=TRUE,
+                note = FALSE,
+                name="table_1.txt"
+                           )
+```
+
+```sos kernel="Python 3"
+import os
+decile=['& below mean (exc.)', 'below mean (exc.)', 'below mean (exc.)',
+        'above mean (inc.)', 'above mean (inc.)', 'above mean (inc.)']
+
+tb = """\\footnotesize{
+Due to limited space, only the coefficients of interest are presented 
+for the regressions with city,industry, year fixed effect (i.e. columns 1-3).
+\sym{*} Significance at the 10\%, \sym{**} Significance at the 5\%, \sym{***} Significance at the 1\% \\
+heteroscedasticity-robust standard errors in parentheses are clustered by city 
+}
+"""
+lb.beautify(table_number = 1,
+            remove_control= True,
+            constraint = False,
+            city_industry = False, 
+            new_row = decile,
+            table_nte =tb,
+           jupyter_preview = True,
+           resolution = 200)
+```
+
+<!-- #region kernel="Python 3" -->
 #### SOE
 <!-- #endregion -->
+
+<!-- #region kernel="Python 3" -->
+Test mean
+<!-- #endregion -->
+
+```sos kernel="R"
+#head(df_final_SOE)
+```
+
+```sos kernel="R"
+SOE_option_distinct <- df_final_SOE %>%
+select(geocode4_corr, share_output_co) %>%
+distinct() %>%
+summary(mean(share_output_co))
+
+SOE_option_distinct
+```
+
+```sos kernel="R"
+mean <- 0.24950
+df_to_filter <- df_final_SOE
+var <- 'output'
+
+toremove <- dir(path=getwd(), pattern=".tex|.pdf|.txt")
+file.remove(toremove)
+
+t1 <- felm(formula=log(tso2_cit) ~ 
+               TCZ_c * Period * polluted_thre 
+               + output_fcit + capital_fcit + labour_fcit
+                  |
+             FE_t_c + FE_t_i + FE_c_i  | 0 |
+             industry, data= df_to_filter %>% filter(share_output_co < mean),
+             exactDOF=TRUE)
+t1 <-change_target(t1)
+t2 <- felm(formula=log(tso2_cit) ~ 
+           target_c  * Period * polluted_thre 
+               + output_fcit + capital_fcit + labour_fcit
+                  |
+             FE_t_c + FE_t_i + FE_c_i  | 0 |
+             industry, data= df_to_filter %>% filter(share_output_co < mean),
+             exactDOF=TRUE)
+t2 <-change_target(t2)
+t3 <- felm(formula=log(tso2_cit) ~ 
+           TCZ_c * Period * polluted_thre 
+           + target_c  * Period * polluted_thre 
+                  + output_fcit + capital_fcit + labour_fcit
+                  |
+             FE_t_c + FE_t_i + FE_c_i  | 0 |
+             industry, data= df_to_filter %>% filter(share_output_co < mean),
+             exactDOF=TRUE)
+t3 <-change_target(t3)
+
+    ### superior median
+t4 <- felm(formula=log(tso2_cit) ~ 
+           TCZ_c * Period * polluted_thre 
+                  + output_fcit + capital_fcit + labour_fcit
+                  |
+             FE_t_c + FE_t_i + FE_c_i  | 0 |
+             industry, data= df_to_filter %>% filter(share_output_co >= mean),
+             exactDOF=TRUE)
+t4 <-change_target(t4)
+t5 <- felm(formula=log(tso2_cit) ~ 
+           target_c  * Period * polluted_thre 
+                  + output_fcit + capital_fcit + labour_fcit
+                  |
+             FE_t_c + FE_t_i + FE_c_i  | 0 |
+             industry, data= df_to_filter %>% filter(share_output_co >= mean),
+             exactDOF=TRUE)
+t5 <-change_target(t5)
+
+t6 <- felm(formula=log(tso2_cit) ~ 
+           TCZ_c * Period * polluted_thre 
+           + target_c  * Period * polluted_thre 
+                  + output_fcit + capital_fcit + labour_fcit
+                  |
+             FE_t_c + FE_t_i + FE_c_i  | 0 |
+             industry, data= df_to_filter %>% filter(share_output_co >= mean),
+             exactDOF=TRUE)
+t6 <-change_target(t6)
+
+tables_o <- list(t1, t2, t3,t4, t5, t6)
+table_1 <- go_latex(tables_o,
+                dep_var = "Dependent variable \\text { SO2 emission }_{i k t}",
+                title=paste0("Mean ", var, "- ", cat),
+                addFE=fe1,
+                save=TRUE,
+                note = FALSE,
+                name="table_1.txt"
+                           )
+```
+
+```sos kernel="Python 3"
+import os
+decile=['& below mean (exc.)', 'below mean (exc.)', 'below mean (exc.)',
+        'above mean (inc.)', 'above mean (inc.)', 'above mean (inc.)']
+
+tb = """\\footnotesize{
+Due to limited space, only the coefficients of interest are presented 
+for the regressions with city,industry, year fixed effect (i.e. columns 1-3).
+\sym{*} Significance at the 10\%, \sym{**} Significance at the 5\%, \sym{***} Significance at the 1\% \\
+heteroscedasticity-robust standard errors in parentheses are clustered by city 
+}
+"""
+lb.beautify(table_number = 1,
+            remove_control= True,
+            constraint = False,
+            city_industry = False, 
+            new_row = decile,
+            table_nte =tb,
+           jupyter_preview = True,
+           resolution = 200)
+```
 
 ```sos kernel="R"
 cat <- 'SOE'
@@ -976,6 +1315,7 @@ fe1 <- list(
     c("Year fixed effects","Yes", "Yes", "Yes", "Yes", "Yes", "Yes")
              )
 
+decile <- 7
 ### Remove text, tex and pdf files
 toremove <- dir(path=getwd(), pattern=".tex|.pdf|.txt")
 file.remove(toremove)
@@ -988,7 +1328,7 @@ for (var in list('output', 'capital', 'employment')){
                + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
-             industry, data= df_to_filter %>% filter(get(var) <= 5),
+             industry, data= df_to_filter %>% filter(get(var) <= decile),
              exactDOF=TRUE)
     t1 <-change_target(t1)
     t2 <- felm(formula=log(tso2_cit) ~ 
@@ -996,7 +1336,7 @@ for (var in list('output', 'capital', 'employment')){
                + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
-             industry, data= df_to_filter %>% filter(get(var) <= 5),
+             industry, data= df_to_filter %>% filter(get(var) <= decile),
              exactDOF=TRUE)
     t2 <-change_target(t2)
     t3 <- felm(formula=log(tso2_cit) ~ 
@@ -1005,7 +1345,7 @@ for (var in list('output', 'capital', 'employment')){
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
-             industry, data= df_to_filter %>% filter(get(var) <= 5),
+             industry, data= df_to_filter %>% filter(get(var) <= decile),
              exactDOF=TRUE)
     t3 <-change_target(t3)
 
@@ -1015,7 +1355,7 @@ for (var in list('output', 'capital', 'employment')){
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
-             industry, data= df_to_filter %>% filter(get(var) > 5),
+             industry, data= df_to_filter %>% filter(get(var) > decile),
              exactDOF=TRUE)
     t4 <-change_target(t4)
     t5 <- felm(formula=log(tso2_cit) ~ 
@@ -1023,7 +1363,7 @@ for (var in list('output', 'capital', 'employment')){
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
-             industry, data= df_to_filter %>% filter(get(var) > 5),
+             industry, data= df_to_filter %>% filter(get(var) > decile),
              exactDOF=TRUE)
     t5 <-change_target(t5)
 
@@ -1033,7 +1373,7 @@ for (var in list('output', 'capital', 'employment')){
                   + output_fcit + capital_fcit + labour_fcit
                   |
              FE_t_c + FE_t_i + FE_c_i  | 0 |
-             industry, data= df_to_filter %>% filter(get(var) > 5),
+             industry, data= df_to_filter %>% filter(get(var) > decile),
              exactDOF=TRUE)
     t6 <-change_target(t6)
     
@@ -1041,7 +1381,7 @@ for (var in list('output', 'capital', 'employment')){
         tables_o <- list(t1, t2, t3,t4, t5, t6)
         table_1 <- go_latex(tables_o,
                 dep_var = "Dependent variable \\text { SO2 emission }_{i k t}",
-                title=paste0("Median ", var, "- ", cat),
+                title=paste0("Decile ", decile, " & " , var, "- ", cat),
                 addFE=fe1,
                 save=TRUE,
                 note = FALSE,
@@ -1051,7 +1391,7 @@ for (var in list('output', 'capital', 'employment')){
         tables_c <- list(t1, t2, t3,t4, t5, t6)
         table_1 <- go_latex(tables_c,
                 dep_var = "Dependent variable \\text { SO2 emission }_{i k t}",
-                title=paste0("Median ", var, "- ", cat),
+                title=paste0("Decile ", decile, " & " , var, "- ", cat),
                 addFE=fe1,
                 save=TRUE,
                 note = FALSE,
@@ -1061,7 +1401,7 @@ for (var in list('output', 'capital', 'employment')){
         tables_e <- list(t1, t2, t3,t4, t5, t6)
         table_1 <- go_latex(tables_e,
                 dep_var = "Dependent variable \\text { SO2 emission }_{i k t}",
-                title=paste0("Median ", var, "- ", cat),
+                title=paste0("Decile ", decile, " & " , var, "- ", cat),
                 addFE=fe1,
                 save=TRUE,
                 note = FALSE,
