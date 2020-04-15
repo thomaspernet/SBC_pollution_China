@@ -20,7 +20,7 @@ remove_control = True,
     """
     table_in = "table_{}.txt".format(table_number)
     table_out = "table_{}.tex".format(table_number)
-    regex = r"^\s\sas\.factor\(year\)200|^\s\sTCZ\\_cTCZ\:as\.factor\(year\)200"
+    #regex = r"^\s\sas\.factor\(year\)200|^\s\sTCZ\\_cTCZ\:as\.factor\(year\)200"
 
     r_tcz = \
     r"\s\sTCZ\\_cTCZ\:PeriodAfter\:count\\_SOE\s|" \
@@ -256,7 +256,10 @@ remove_control = True,
     r"\s\sPeriodAfter\:decile\\_so2\\_9Above\:cap\\_share\\_SOE\s|" \
     r"\s\sPeriodAfter\:decile\\_so2\\_9Above\:lab\\_share\\_SOE\s"
 
-
+    r_parall = \
+    r"^\s\sas\.factor\(year\)|" \
+    r"^\s\starget\\_c\:as\.factor\(year\)200|" \
+    r"^\s\spolluted\\_threAbove\:as\.factor\(year\)200"
 
 
     with open(table_in, "r") as f:
@@ -276,14 +279,14 @@ remove_control = True,
         max_ =  len(lines) - 9#15
     for x, line in enumerate(lines[13:max_]):
         test = bool(re.search(r'\d', line))
-        test_parallel = bool(re.search(regex, line))
+        #test_parallel = bool(re.search(regex, line))
         if test == False:
             line_to_remove.append(x + 13)
             line_to_remove.append((x + 13) + 1)
         # Remove useless rows in Parallel trend
-        if test_parallel == True:
-            line_to_remove.append(x + 13)
-            line_to_remove.append((x + 13) + 1)
+        #if test_parallel == True:
+        #    line_to_remove.append(x + 13)
+        #    line_to_remove.append((x + 13) + 1)
         # Remove control in Parallel trend
         if remove_control:
             rm_c = bool(re.search(r"output\\_fcit|capital\\_fcit|labour\\_fcit",
@@ -315,6 +318,11 @@ remove_control = True,
 
         test_decile = bool(re.search(r_decile, line))
         if test_decile == True:
+            line_to_remove.append(x + 13)
+            line_to_remove.append((x + 13) + 1)
+
+        test_parallel = bool(re.search(r_parall, line))
+        if test_parallel == True:
             line_to_remove.append(x + 13)
             line_to_remove.append((x + 13) + 1)
 
@@ -416,15 +424,15 @@ remove_control = True,
         lines = file.read()
 
         # Parallel trend
-        lines = lines.replace('polluted\_threAbove:as.factor(year)2003',
+        lines = lines.replace('target\_c:polluted\_threAbove:as.factor(year)2003',
                               '2003')
-        lines = lines.replace('polluted\_threAbove:as.factor(year)2004',
+        lines = lines.replace('target\_c:polluted\_threAbove:as.factor(year)2004',
                               '2004')
-        lines = lines.replace('polluted\_threAbove:as.factor(year)2005',
+        lines = lines.replace('target\_c:polluted\_threAbove:as.factor(year)2005',
                               '2005')
-        lines = lines.replace('polluted\_threAbove:as.factor(year)2006',
+        lines = lines.replace('target\_c:polluted\_threAbove:as.factor(year)2006',
                               '2006')
-        lines = lines.replace('polluted\_threAbove:as.factor(year)2007',
+        lines = lines.replace('target\_c:polluted\_threAbove:as.factor(year)2007',
                               '2007')
 
         # Reorder additional controls
