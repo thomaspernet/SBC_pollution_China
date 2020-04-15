@@ -45,6 +45,11 @@ jupyter:
       * modèle 2 → Target * polluted*Period  
     * Idem tableau 8
     
+* Tableau 4: testing for parallel trend
+    * Whole sample
+    * SOEs
+    * non SOEs
+    
 ## Instruction Notebook
 
 The notebook allows the user to construct to different level of aggregation:
@@ -102,8 +107,8 @@ Aggregation Parameter
 <!-- #endregion -->
 
 ```sos kernel="SoS"
-aggregation_param = 'industry'
-#aggregation_param = 'geocode4_corr'
+#aggregation_param = 'industry'
+aggregation_param = 'geocode4_corr'
 list_agg = df_final[aggregation_param].to_list()
 ```
 
@@ -1222,17 +1227,104 @@ for (var in list('mean_output', 'mean_capital', 'mean_employment')){
 }
 ```
 
+<!-- #region kernel="R" -->
+Parallel trend
+<!-- #endregion -->
+
+```sos kernel="R"
+cat <- 'SOE'
+cut <- 'Mean'
+threshold <- 0
+#var_ <- 'mean_herfhindal'
+df_to_filter <- df_final_SOE
+if (aggregation_param == 'geocode4_corr'){
+    aggregation_param = 'city'
+}
+### Remove text, tex and pdf files
+toremove <- dir(path=getwd(), pattern=".tex|.pdf|.txt")
+file.remove(toremove)
+
+t1 <- felm(formula=log(tso2_cit) ~ 
+               target_c * polluted_thre * as.factor(year) 
+               + output_fcit + capital_fcit + labour_fcit
+                  |
+             FE_t_c + FE_t_i + FE_c_i  | 0 |
+             industry, data= df_to_filter,
+             exactDOF=TRUE)
+t1 <-change_target(t1)
+fe1 <- list(
+    c("City fixed effects", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"),
+    c("Industry fixed effects", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"),
+    c("Year fixed effects","Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes")
+             )
+
+i = 1
+for (var in list('mean_output', 'mean_capital', 'mean_employment')){
+    ### inferior median
+    t2 <- felm(formula=log(tso2_cit) ~ 
+               target_c * polluted_thre * as.factor(year)
+               + output_fcit + capital_fcit + labour_fcit
+                  |
+             FE_t_c + FE_t_i + FE_c_i  | 0 |
+             industry, data= df_to_filter %>% filter(get(var) <= threshold),
+             exactDOF=TRUE)
+    t2 <-change_target(t2)
+    
+    t3 <- felm(formula=log(tso2_cit) ~ 
+               target_c * polluted_thre * as.factor(year)
+               + output_fcit + capital_fcit + labour_fcit
+                  |
+             FE_t_c + FE_t_i + FE_c_i  | 0 |
+             industry, data= df_to_filter %>% filter(get(var) > threshold),
+             exactDOF=TRUE)
+    t3 <-change_target(t3)
+    
+    if (var =='mean_output'){
+        v= 'output'
+    }else if (var =='mean_capital'){
+        v= 'capital'
+    }else{
+        v= 'employment'
+    }
+    
+    name = paste0("table_",i,".txt")
+    title = paste0("Parallel trends Aggregation level ",aggregation_param, " ",cut,
+                             " ",v,"  - ", cat)
+    
+    tables <- list(t1, t2, t3)
+    table_1 <- go_latex(tables,
+                dep_var = "Dependent variable \\text { SO2 emission }_{i k t}",
+                title=title,
+                addFE=fe1,
+                save=TRUE,
+                note = FALSE,
+                name=name)
+    i = i +1
+}
+```
+
 ```sos kernel="Python 3"
+import os
+new_r = ['& Full sample', 'No SOE', 'SOE']
+
+tb = """\\footnotesize{
+Due to limited space, only the coefficients of interest are presented 
+for the regressions with city,industry, year fixed effect (i.e. columns 1-3).
+\sym{*} Significance at the 10\%, \sym{**} Significance at the 5\%, \sym{***} Significance at the 1\% \\
+heteroscedasticity-robust standard errors in parentheses are clustered by city 
+}
+"""
+
 x = [a for a in os.listdir() if a.endswith(".txt")]
 for i, val in enumerate(x):
     lb.beautify(table_number = i+1,
             remove_control= True,
             constraint = False,
             city_industry = False, 
-            new_row = decile,
+            new_row = new_r,
             table_nte =tb,
            jupyter_preview = True,
-           resolution = 200)
+           resolution = 100)
 ```
 
 <!-- #region kernel="Python 3" -->
@@ -1334,6 +1426,72 @@ for (var in list('output', 'capital', 'employment')){
 }
 ```
 
+```sos kernel="R"
+cat <- 'SOE'
+cut <- 'Decile'
+threshold <- 0
+#var_ <- 'mean_herfhindal'
+df_to_filter <- df_final_SOE
+if (aggregation_param == 'geocode4_corr'){
+    aggregation_param = 'city'
+}
+### Remove text, tex and pdf files
+toremove <- dir(path=getwd(), pattern=".tex|.pdf|.txt")
+file.remove(toremove)
+
+t1 <- felm(formula=log(tso2_cit) ~ 
+               target_c * polluted_thre * as.factor(year) 
+               + output_fcit + capital_fcit + labour_fcit
+                  |
+             FE_t_c + FE_t_i + FE_c_i  | 0 |
+             industry, data= df_to_filter,
+             exactDOF=TRUE)
+t1 <-change_target(t1)
+fe1 <- list(
+    c("City fixed effects", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"),
+    c("Industry fixed effects", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"),
+    c("Year fixed effects","Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes")
+             )
+
+i = 1
+for (var in list('output', 'capital', 'employment')){
+    for (threshold in  seq(5,8, 1)){
+    ### inferior median
+    t2 <- felm(formula=log(tso2_cit) ~ 
+               target_c * polluted_thre * as.factor(year)
+               + output_fcit + capital_fcit + labour_fcit
+                  |
+             FE_t_c + FE_t_i + FE_c_i  | 0 |
+             industry, data= df_to_filter %>% filter(get(var) <= threshold),
+             exactDOF=TRUE)
+    t2 <-change_target(t2)
+    
+    t3 <- felm(formula=log(tso2_cit) ~ 
+               target_c * polluted_thre * as.factor(year)
+               + output_fcit + capital_fcit + labour_fcit
+                  |
+             FE_t_c + FE_t_i + FE_c_i  | 0 |
+             industry, data= df_to_filter %>% filter(get(var) > threshold),
+             exactDOF=TRUE)
+    t3 <-change_target(t3)
+    
+    name = paste0("table_",i,".txt")
+    title = paste0("Aggregation level ",aggregation_param, " ",cut,
+                             " ",threshold, " ",var,"  - ", cat)
+    
+    tables <- list(t1, t2, t3)
+    table_1 <- go_latex(tables,
+                dep_var = "Dependent variable \\text { SO2 emission }_{i k t}",
+                title=title,
+                addFE=fe1,
+                save=TRUE,
+                note = FALSE,
+                name=name)
+   i = i +1
+    }      
+}
+```
+
 ```sos kernel="Python 3"
 x = [a for a in os.listdir() if a.endswith(".txt")]
 for i, val in enumerate(x):
@@ -1345,6 +1503,20 @@ for i, val in enumerate(x):
             table_nte =tb,
            jupyter_preview = True,
            resolution = 200)
+```
+
+```sos kernel="Python 3"
+new_r = ['& Full sample', 'No SOE', 'SOE']
+x = [a for a in os.listdir() if a.endswith(".txt")]
+for i, val in enumerate(x):
+    lb.beautify(table_number = i+1,
+            remove_control= True,
+            constraint = False,
+            city_industry = False, 
+            new_row = new_r,
+            table_nte =tb,
+           jupyter_preview = True,
+           resolution = 100)
 ```
 
 <!-- #region kernel="Python 3" -->
