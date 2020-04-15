@@ -25,6 +25,10 @@ jupyter:
   * TCZ
   * SPZ
   * Coastal
+* Table 4: testing for parallel trend
+    * Whole sample
+    * SOEs
+    * non SOEs
 <!-- #endregion -->
 
 ```sos kernel="SoS"
@@ -362,6 +366,22 @@ for i, val in enumerate(x):
             table_nte =tb,
            jupyter_preview = True,
            resolution = 200)
+```
+
+<!-- #region kernel="Python 3" -->
+# table 4
+<!-- #endregion -->
+
+```sos kernel="R"
+t1 <- felm(formula=log(tso2_cit) ~ 
+           target_c * as.factor(year) * polluted_thre 
+           + output_fcit + capital_fcit + labour_fcit
+                  |
+             FE_t_c + FE_t_i + FE_c_i  | 0 |
+             industry, data= df_TCZ_list_china,
+             exactDOF=TRUE)
+t1 <-change_target(t1)
+summary(t1)
 ```
 
 <!-- #region kernel="Python 3" -->
