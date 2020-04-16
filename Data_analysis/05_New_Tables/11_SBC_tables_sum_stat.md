@@ -45,7 +45,7 @@ gcp = connect_cloud_platform.connect_console(project = project,
 <!-- #endregion -->
 
 ```python kernel="Python 3"
-aggregation_param = 'industry'
+aggregation_param = 'geocode4_corr'
 decile = 6
 ```
 
@@ -178,6 +178,118 @@ sheetName = sheetname,
 ```
 
 <!-- #region kernel="Python 3" -->
+## Compute Herfhindal: proxy Size
+
+$$
+H=\sum_{i=1}^{N} s_{i}^{2}
+$$
+
+where $s_i$ is the market share of industry[city] $i$ in a city [industry], and $N$ is the number of firms. 
+
+We proceed as follow:
+- Step 1: Compute the share [output, capital, employment] by city-industry: `market_share_cit`
+- Step 2: compute the sum of squared market share by industry[city]: `Herfindahl_agg_t`
+- Step 3: Compute the average across time: `Herfindahl_agg`
+- Step 4: Compute the deciles of step 3: `decile_herfhindal_agg`
+    - Low decile implies a low concentration within sectors
+    - High decile implies a high concentration within sectors
+<!-- #endregion -->
+
+```python kernel="Python 3"
+query = """
+WITH sum_cit AS (
+  SELECT geocode4_corr, cic as industry, sum(output) as sum_o_cit, year
+  FROM China.asif_firm_china 
+  WHERE year >= 2002 AND year <= 2007
+  AND output > 0 
+    AND fa_net > 0 
+    AND employment > 0 
+  GROUP BY geocode4_corr, cic, year
+) 
+SELECT * 
+FROM 
+  (WITH sum_agg_t AS (
+    SELECT {0}, SUM(sum_o_cit) as sum_o_agg_t, year
+    FROM sum_cit
+    WHERE year >= 2002 AND year <= 2007
+    GROUP BY year, {0}
+)
+SELECT *
+FROM
+  (WITH ms_cit AS (
+    SELECT  sum_cit.industry, sum_cit.geocode4_corr, sum_cit.year,
+    sum_cit.sum_o_cit/NULLIF(sum_agg_t.sum_o_agg_t, 0) as market_share_cit
+    FROM sum_cit
+    LEFT JOIN sum_agg_t
+ON (
+sum_cit.year = sum_agg_t.year AND 
+sum_cit.{0} = sum_agg_t.{0}
+)
+)
+SELECT *
+FROM
+  (WITH agg_1 AS (
+SELECT {0}, SUM(POW(market_share_cit, 2)) as Herfindahl_agg_t,
+year
+FROM ms_cit
+GROUP BY year, {0}
+ORDER BY year, {0} 
+)
+SELECT *
+FROM (
+SELECT {0},
+AVG(Herfindahl_agg_t) as Herfindahl_agg
+FROM agg_1
+GROUP BY {0}
+ORDER BY {0}
+)
+
+)))
+"""
+df_herfhindal = (gcp.upload_data_from_bigquery(
+    query = query.format(aggregation_param),
+                                         location = 'US')
+                 .loc[lambda x: x[aggregation_param].isin(list_agg)]
+                )
+```
+
+```python kernel="Python 3"
+df_herfhindal_final = (df_final.merge(df_herfhindal,
+                                     on=[aggregation_param],
+                                     how='left',
+                                     indicator=True
+                                     )
+                       .assign(
+                       decile_herfhindal = lambda x:
+                           pd.qcut(x['Herfindahl_agg'],10, labels=False),
+                       mean_herfhindal= 
+                           lambda x: np.where(
+                               x["Herfindahl_agg"] > 
+                               x["Herfindahl_agg"].drop_duplicates().mean(),
+                               1,0
+                           ),
+                       third_herfhindal= 
+                           lambda x: np.where(
+                               x["Herfindahl_agg"] >
+                               (x["Herfindahl_agg"]
+                                .drop_duplicates()
+                                .quantile([.75])
+                                .values[0]),
+                               1,0
+                           ),
+                    concentrated_city = lambda x:np.where(
+                    x['decile_herfhindal'] > decile,
+                           'Concentrated city',"No Concentrated city"
+                    )
+                       )[['geocode4_corr',
+                                           'concentrated_city']].drop_duplicates(
+    subset = 'geocode4_corr')
+                .assign(geocode4_corr = lambda x: 
+                        x['geocode4_corr'].astype('str'))
+                      )
+```
+
+<!-- #region kernel="Python 3" -->
 ## SOE vs Private
 
 We proceed as follow:
@@ -253,7 +365,7 @@ OWNERSHIP = 'SOE'
 counterpart = 'PRIVATE'
 
 df_share_soe= query_share_.format(aggregation_param,
-                                             'cic',
+                                             aggregation_param,
                                              OWNERSHIP,
                                             counterpart)
     
@@ -261,7 +373,7 @@ df_share_soe = (gcp.upload_data_from_bigquery(query = df_share_soe,
                                          location = 'US')
                     .loc[lambda x: x[aggregation_param].isin(list_agg)]
                    )
-#df_share_soe.shape 
+df_share_soe.shape 
 ```
 
 <!-- #region kernel="Python 3" -->
@@ -324,12 +436,56 @@ df_final_SOE = (df_final.merge(
                                           'soe_city',
                                           'target_c']].drop_duplicates(
     subset = 'geocode4_corr')
-                .assign(geocode4_corr = lambda x: 
+            .assign(geocode4_corr = lambda x: 
                         x['geocode4_corr'].astype('str'))
                 
 
 )
 df_final_SOE['soe_city'].value_counts()
+```
+
+```python kernel="Python 3"
+df_final_SOE_table2 = (df_final.merge(
+    df_share_soe,
+    on = [aggregation_param],
+    how = 'left',
+    indicator = True
+)
+                .assign(
+                       output = lambda x:
+                           pd.qcut(x[out],10, labels=False),
+                       capital = lambda x:
+                           pd.qcut(x[cap],10, labels=False),
+                       employment = lambda x:
+                           pd.qcut(x[emp],10, labels=False),
+                       mean_output = lambda x:np.where(
+                    x[out] > x[out].drop_duplicates().mean(),
+                           1,0
+                       ),
+                    mean_capital = lambda x:np.where(
+                    x[cap] > x[cap].drop_duplicates().mean(),
+                           1,0
+                       ),
+                    mean_employment = lambda x:np.where(
+                    x[emp] > x[emp].drop_duplicates().mean(),
+                           1,0
+                       ),
+                    soe_city = lambda x:np.where(
+                    x['output'] > decile,
+                           'SOE dominated',"No SOE dominated"
+                    )
+                )[['geocode4_corr',
+                   'Lower_location',
+                   'Larger_location',
+                   'TCZ_c',
+     'share_output_agg_o',
+     'share_fa_net_agg_o',
+     'share_employement_agg_o']]
+                       .drop_duplicates(subset = 'geocode4_corr')
+                       .assign(geocode4_corr = lambda x: 
+                        x['geocode4_corr'].astype('str'))
+                      )
+df_final_SOE_table2.shape
 ```
 
 <!-- #region kernel="Python 3" -->
@@ -581,12 +737,6 @@ dic_['Target'].append(-.1)
 ```
 
 ```python kernel="Python 3"
-import re, tex2pix, os
-from PyPDF2 import PdfFileMerger
-from wand.image import Image as WImage
-```
-
-```python kernel="Python 3"
 for i in range(1, 19):
     try:
         os.remove("table_{}.pdf".format(i))
@@ -607,7 +757,16 @@ pd.DataFrame(dic_, index= ['No TCZ','TCZ',
 ```
 
 ```python kernel="Python 3"
-jupyter_preview = True
+import sys, os
+sys.path.insert(0,'..')
+import functions.latex_beautify as lb
+
+%load_ext autoreload
+%autoreload 2
+```
+
+```python kernel="Python 3"
+
 table_nte = """
 Sources: Author's own computation \\
       The list of TCZ is provided by the State Council, 1998.
@@ -618,83 +777,80 @@ Sources: Author's own computation \\
       We compute the reduction of SO2 emission using the same methodology
       as Chen and al.(2018).
 """
+lb.beautify_table(table_nte = table_nte,
+                  name = 'table_1',
+                  jupyter_preview  = True,
+                  resolution = 150)
+```
 
-with open('table_1.tex', 'r') as f:
-    lines = f.readlines()
-len_line = len(lines)    
-for x, line in enumerate(lines):
-    if x ==0:
-        if jupyter_preview:
-            header= "\documentclass[preview]{standalone} \n\\usepackage[utf8]{inputenc}\n" \
-            "\\usepackage{booktabs,caption,threeparttable, siunitx, adjustbox}\n\n" \
-            "\\begin{document}\n"
-        else:
-            header= "\documentclass[12pt]{article} \n\\usepackage[utf8]{inputenc}\n" \
-            "\\usepackage{booktabs,caption,threeparttable, siunitx, adjustbox}\n\n" \
-            "\\begin{document}"
-    
+<!-- #region kernel="Python 3" -->
+# Table 2
+<!-- #endregion -->
 
-        lines[x] =   header + lines[x].strip()
-    if x == len_line- 1:
-        footer = "\n\n\\end{document}"
-        lines[x]  =  lines[x].strip() + footer
-        
-    label = bool(re.search(r"label",
-                              line))
-    tabluar = bool(re.search(r"end{tabular}",
-                              line))
-    #print(label)
-    if label:
-        lines[x] = lines[x].strip() + '\n\\begin{adjustbox}{width=\\textwidth, totalheight=\\textheight-2\\baselineskip,keepaspectratio}\n'
-
-    if tabluar:
-        lines[x] = lines[x].strip() + '\n\\end{adjustbox}\n'
-        
-    
-        
-with open('table_1.tex', "w") as f:
-        for line in lines:
-            f.write(line)
-            
-#### Replace
-with open('table_1.tex', 'r') as file:
-    lines = file.read()
-    lines = lines.replace('nan\%', ' ')
-
-with open('table_1.tex', 'w') as file:
-        file.write(lines)
-            
-### add table note
-if table_nte != None:
-    with open('table_1.tex', 'r') as f:
-        lines = f.readlines()
-
-
-    for x, line in enumerate(lines):
-        adjusted = bool(re.search(r"end{adjustbox}",
-                              line))
-
-        if adjusted:
-            lines[x] = lines[x].strip() + "\n\\begin{0} \n \\small \n \\item \\\\ \n{1} \n\\end{2}\n".format(
-            "{tablenotes}",
-            table_nte,
-            "{tablenotes}")
-    with open('table_1.tex', "w") as f:
-            for line in lines:
-                f.write(line)
+```python kernel="Python 3"
+t0 = (df_final_SOE_table2[['share_output_agg_o', 'share_fa_net_agg_o',
+       'share_employement_agg_o']]
+      .mean()
+      .reset_index()
+      .set_index('index')
+      .T
+      .rename(index={0: 'Full sample'}))
 ```
 
 ```python kernel="Python 3"
-table_number = 1
-resolution = 150
+t1 = df_final_SOE_table2.groupby('Lower_location')[['share_output_agg_o', 'share_fa_net_agg_o',
+       'share_employement_agg_o']].mean()
+```
 
-f = open('table_{}.tex'.format(table_number))
-r = tex2pix.Renderer(f, runbibtex=False)
-r.mkpdf('table_{}.pdf'.format(table_number))
-r.mkpdf('table_{}.pdf'.format(table_number))
-img = WImage(filename='table_{}.pdf'.format(table_number),
-resolution = resolution)
-display(img)
+```python kernel="Python 3"
+t2 = df_final_SOE_table2.groupby('Larger_location')[['share_output_agg_o', 'share_fa_net_agg_o',
+       'share_employement_agg_o']].mean()
+```
+
+```python kernel="Python 3"
+t3 = df_final_SOE_table2.groupby('TCZ_c')[['share_output_agg_o', 'share_fa_net_agg_o',
+       'share_employement_agg_o']].mean().rename(index={'No_TCZ': 'No TCZ'})
+```
+
+```python kernel="Python 3"
+t4 = (df_final_SOE_table2
+ .merge(df_herfhindal_final)
+ .groupby('concentrated_city')[['share_output_agg_o', 'share_fa_net_agg_o',
+       'share_employement_agg_o']]
+ .mean()
+)
+```
+
+```python kernel="Python 3"
+for i in range(1, 19):
+    try:
+        os.remove("table_{}.pdf".format(i))
+        os.remove("table_{}.tex".format(i))
+        os.remove("table_{}.txt".format(i))
+    except:
+        pass
+
+title = "Summary statistics by city characteristics"
+header = ["Output share SOE_c", "Capital share SOE_c","Employment share SOE_c"]
+pd.concat([t0, t1, t2, t3, t4], axis = 0).to_latex(
+    'table_1.tex',
+    caption = title,
+    index=True,
+    label = "table_1",
+    header = header,
+    float_format="{:,.2%}".format)
+
+table_nte = """
+Sources: Author's own computation \\
+      The list of TCZ is provided by the State Council, 1998.
+      Output share SOE, Capital share SOE, Employment share SOE is computed 
+      using the average output, capital or employment share by city over 2002-2005
+      
+"""
+lb.beautify_table(table_nte = table_nte,
+                  name = 'table_1',
+                  jupyter_preview  = True,
+                  resolution = 150)
 ```
 
 <!-- #region kernel="Python 3" -->
@@ -705,15 +861,14 @@ display(img)
 import os, time, shutil
 from pathlib import Path
 
-filename = '10_SBC_final'
+filename = '11_SBC_tables_sum_stat'
 source = filename + '.ipynb'
 source_to_move = filename +'.html'
 path = os.getcwd()
 parent_path = str(Path(path).parent)
 path_report = "{}/Reports".format(parent_path)
-dest = os.path.join(path_report, filename)+'_{}_{}_.html'.format(
-    aggregation_param,
-    threshold_full)
+dest = os.path.join(path_report, filename)+'_{}_.html'.format(
+    aggregation_param)
 
 os.system('jupyter nbconvert --no-input --to html {}'.format(source))
 
