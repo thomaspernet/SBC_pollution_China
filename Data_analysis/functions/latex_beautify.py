@@ -677,6 +677,81 @@ remove_control = True,
          resolution = resolution)
         return display(img)
 
+def beautify_table(table_nte, name = 'table_1',  jupyter_preview  = True,
+                   resolution = 150):
+    with open('{}.tex'.format(name), 'r') as f:
+        lines = f.readlines()
+    len_line = len(lines)
+    for x, line in enumerate(lines):
+        if x ==0:
+            if jupyter_preview:
+                header= "\documentclass[preview]{standalone} \n\\usepackage[utf8]{inputenc}\n" \
+                "\\usepackage{booktabs,caption,threeparttable, siunitx, adjustbox}\n\n" \
+                "\\begin{document}\n"
+            else:
+                header= "\documentclass[12pt]{article} \n\\usepackage[utf8]{inputenc}\n" \
+                "\\usepackage{booktabs,caption,threeparttable, siunitx, adjustbox}\n\n" \
+                "\\begin{document}"
+
+
+            lines[x] =   header + lines[x].strip()
+        if x == len_line- 1:
+            footer = "\n\n\\end{document}"
+            lines[x]  =  lines[x].strip() + footer
+
+        label = bool(re.search(r"label",
+                                  line))
+        tabluar = bool(re.search(r"end{tabular}",
+                                  line))
+        #print(label)
+        if label:
+            lines[x] = lines[x].strip() + '\n\\begin{adjustbox}{width=\\textwidth, totalheight=\\textheight-2\\baselineskip,keepaspectratio}\n'
+
+        if tabluar:
+            lines[x] = lines[x].strip() + '\n\\end{adjustbox}\n'
+
+
+
+    with open('{}.tex'.format(name), "w") as f:
+            for line in lines:
+                f.write(line)
+
+    #### Replace
+    with open('{}.tex'.format(name), 'r') as file:
+        lines = file.read()
+        lines = lines.replace('nan\%', ' ')
+
+    with open('{}.tex'.format(name), 'w') as file:
+            file.write(lines)
+
+    ### add table note
+    if table_nte != None:
+        with open('{}.tex'.format(name), 'r') as f:
+            lines = f.readlines()
+
+
+        for x, line in enumerate(lines):
+            adjusted = bool(re.search(r"end{adjustbox}",
+                                  line))
+
+            if adjusted:
+                lines[x] = lines[x].strip() + "\n\\begin{0} \n \\small \n \\item \\\\ \n{1} \n\\end{2}\n".format(
+                "{tablenotes}",
+                table_nte,
+                "{tablenotes}")
+        with open('table_1.tex', "w") as f:
+                for line in lines:
+                    f.write(line)
+
+    if jupyter_preview:
+        f = open('{}.tex'.format(name))
+        r = tex2pix.Renderer(f, runbibtex=False)
+        r.mkpdf('{}.pdf'.format(name))
+        r.mkpdf('{}.pdf'.format(name))
+        img = WImage(filename='{}.pdf'.format(name),
+        resolution = resolution)
+        display(img)
+
 def append_pdf(new_row, table_nte,resolution,name, remove_control = True,constraint = False,
 city_industry= False,display = True):
     """
