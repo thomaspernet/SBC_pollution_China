@@ -11,6 +11,7 @@ remove_control = True,
   city_industry = False,
  new_row= False, table_nte = None,
  test_city_industry = False,
+ multicolumn = None,
  jupyter_preview = True,
  resolution = 150):
     """
@@ -389,11 +390,36 @@ remove_control = True,
         if tabluar:
             lines[x] = lines[x].strip() + '\n\\end{adjustbox}\n'
 
-    if new_row != False:
+    if new_row != False and multicolumn == None:
         for x, line in enumerate(lines):
             if x == 11:
                 lines[x] = lines[x].strip() + new_row_[0]
 
+    if new_row == False and multicolumn != None:
+        for x, line in enumerate(lines):
+            multi = """
+            \n\\\[-1.8ex]
+            """
+            for key, value in multicolumn.items():
+                to_add = "&\multicolumn{%s}{c}{%s}" %(value, key)
+                multi+= to_add
+            multi+="\\\\\n"
+            if x == 10:
+                lines[x] = lines[x].strip() + multi
+
+    if new_row != False and multicolumn != None:
+        for x, line in enumerate(lines):
+            multi = """
+            \n\\\[-1.8ex]
+            """
+            for key, value in multicolumn.items():
+                to_add = "&\multicolumn{%s}{c}{%s}" %(value, key)
+                multi+= to_add
+            multi+="\\\\\n"
+            if x == 10:
+                lines[x] = lines[x].strip() + multi
+            if x == 11:
+                lines[x] = lines[x].strip() + new_row_[0]
     ### Add header
     len_line = len(lines)
     for x, line in enumerate(lines):
@@ -412,8 +438,6 @@ remove_control = True,
         if x == len_line- 1:
             footer = "\n\n\\end{document}"
             lines[x]  =  lines[x].strip() + footer
-
-
 
     with open(table_out, "w") as f:
         for line in lines:
@@ -615,7 +639,8 @@ remove_control = True,
         lines = lines.replace(' : ', ' \\times ')
         lines = lines.replace(': ', ' \\times ')
 
-
+        #### remove (0.000)
+        lines = lines.replace('(0.000)', ' ')
 
 
     # Write the file out again
