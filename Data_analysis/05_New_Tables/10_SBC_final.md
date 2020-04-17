@@ -129,6 +129,22 @@ df_final <- df_final %>%
 ```
 
 ```sos kernel="SoS"
+%put df_final_tfp --to R
+
+from GoogleDrivePy.google_platform import connect_cloud_platform
+project = 'valid-pagoda-132423'
+gcp = connect_cloud_platform.connect_console(project = project, 
+                                             service_account = service['GoogleCloudP'])    
+query = (
+          "SELECT * "
+            "FROM China.SBC_TFP_china "
+
+        )
+
+df_final_tfp = gcp.upload_data_from_bigquery(query = query, location = 'US')
+```
+
+```sos kernel="SoS"
 #aggregation_param = 'industry'
 aggregation_param = 'geocode4_corr'
 list_agg = df_final[aggregation_param].to_list()
@@ -377,16 +393,16 @@ Profiling will be available soon for this dataset
 <!-- #endregion -->
 
 ```sos kernel="R"
-#df_TCZ_list_china = read_csv('../df_TCZ_list_china.csv',
-#                            col_types = cols(
-#  Province = col_character(),
-#  City = col_character(),
-#  geocode4_corr = col_double(),
-#  TCZ = col_double(),
-#  SPZ = col_double()
-#)) %>% 
-#select(-c(TCZ, Province)) %>% 
-#right_join(df_final, by = 'geocode4_corr') 
+df_TCZ_list_china_tfp = read_csv('../df_TCZ_list_china.csv',
+                            col_types = cols(
+  Province = col_character(),
+  City = col_character(),
+  geocode4_corr = col_double(),
+  TCZ = col_double(),
+  SPZ = col_double()
+)) %>% 
+select(-c(TCZ, Province)) %>% 
+right_join(df_final_tfp, by = 'geocode4_corr') 
 ```
 
 <!-- #region kernel="R" -->
@@ -634,22 +650,38 @@ $$
 
 ```sos kernel="R"
 df_to_filter <- df_final_SOE
-if (aggregation_param == 'geocode4_corr'){
-    aggregation_param = 'city'
-}
+
 ### Remove text, tex and pdf files
 toremove <- dir(path=getwd(), pattern=".tex|.pdf|.txt")
 file.remove(toremove)
 
-fe1 <- list(
-    c("City fixed effects", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"),
-    c("Industry fixed effects", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"),
-    c("Year fixed effects","Yes", "Yes", "Yes", "Yes", "Yes", "Yes")
+fe1 <- list(c("City fixed effects", "Yes", "No", "Yes", "No", "Yes",
+              "No", "Yes", "No"),
+             c("Industry fixed effects", "Yes", "No", "Yes", "No",
+               "Yes", "No", "Yes", "No"),
+             c("Year fixed effects","Yes", "No", "Yes", "No", "Yes",
+               "No", "Yes", "No"),
+             c("City-year fixed effects", "No", "Yes","No", "Yes",
+               "No", "Yes","No", "Yes"),
+             c("Industry-year fixed effects", "No", "Yes","No", "Yes",
+               "No", "Yes","No", "Yes"),
+             c("City-industry fixed effects", "No", "Yes","No", "Yes",
+               "No", "Yes","No", "Yes")
              )
 
-#'output', 'capital', 'employment'
-
-t1 <- felm(formula=log(tso2_cit) ~ 
+t <- 1
+for (own in c('SOE', 'No SOE')){
+    tables <- list()
+    i <- 1
+    for (var in list('output', 'capital', 'employment')){
+        if (own == 'SOE'){
+           data <- df_to_filter %>% filter(get(var) > threshold_full)
+        }else{
+           data <- df_to_filter %>% filter(get(var) <= threshold_full)
+        }
+        
+        ### Tables
+        t1 <- felm(formula=log(tso2_cit) ~ 
            target_c  * Period * polluted_thre 
                + output_fcit + capital_fcit + labour_fcit
                   |
@@ -657,58 +689,69 @@ t1 <- felm(formula=log(tso2_cit) ~
              industry, data= df_to_filter,
              exactDOF=TRUE)
 
-t2 <- felm(formula=log(tso2_cit) ~ 
-           target_c  * Period * polluted_thre 
-               + output_fcit + capital_fcit + labour_fcit
-                  |
-             FE_t_c + FE_t_i + FE_c_i  | 0 |
-             industry, data= df_to_filter,
-             exactDOF=TRUE)
+        t2 <- felm(formula=log(tso2_cit) ~ 
+                   target_c  * Period * polluted_thre 
+                       + output_fcit + capital_fcit + labour_fcit
+                          |
+                     FE_t_c + FE_t_i + FE_c_i  | 0 |
+                     industry, data= df_to_filter,
+                     exactDOF=TRUE)
 
-### decile Output
-t3 <- felm(formula=log(tso2_cit) ~ 
-               target_c * Period * polluted_thre 
-               + output_fcit + capital_fcit + labour_fcit
-                  |
-             FE_t_c + FE_t_i + FE_c_i  | 0 |
-             industry, data= df_to_filter %>% filter(output > 6),
-             exactDOF=TRUE)
+        ### decile Output
+        t3 <- felm(formula=log(tso2_cit) ~ 
+                       target_c * Period * polluted_thre 
+                       + output_fcit + capital_fcit + labour_fcit
+                          |
+                     cityen +  year + industry  | 0 |
+                     industry, data= data,
+                     exactDOF=TRUE)
 
-t4 <- felm(formula=log(tso2_cit) ~ 
-               target_c * Period * polluted_thre 
-               + output_fcit + capital_fcit + labour_fcit
-                  |
-             FE_t_c + FE_t_i + FE_c_i  | 0 |
-             industry, data= df_to_filter %>% filter(output > 7),
-             exactDOF=TRUE)
-
-t5 <- felm(formula=log(tso2_cit) ~ 
-               target_c * Period * polluted_thre 
-               + output_fcit + capital_fcit + labour_fcit
-                  |
-             FE_t_c + FE_t_i + FE_c_i  | 0 |
-             industry, data= df_to_filter %>% filter(output > 8),
-             exactDOF=TRUE)
-
-name = paste0("table_",1,".txt")
-title = paste0("Table Baseline")
+        t4 <- felm(formula=log(tso2_cit) ~ 
+                       target_c * Period * polluted_thre 
+                       + output_fcit + capital_fcit + labour_fcit
+                          |
+                     FE_t_c + FE_t_i + FE_c_i  | 0 |
+                     industry, data= data,
+                     exactDOF=TRUE)
+        
+        if (i ==1){
+            tables[[i]] <- t1
+            i <- i +1
+            tables[[i]] <- t2
+            i <- i +1 
+        }
+        
+        tables[[i]] <- t3
+        i <- i +1
+        tables[[i]] <- t4
+        i <- i +1
+    }
     
-tables <- list(t1, t2, t3,t4, t5)
-table_1 <- go_latex(tables,
+    name = paste0("table_",t,".txt")
+    title = paste0("Table Baseline Panel ", t, " - ",  own)
+    
+    #tables <- list(t1, t2, t3,t4, t5)
+    table_1 <- go_latex(tables,
                 dep_var = "Dependent variable \\text { SO2 emission }_{i k t}",
                 title=title,
                 addFE=fe1,
                 save=TRUE,
                 note = FALSE,
                 name=name)
-
-### decile Capital
-
-### decile Employment
+    
+    t <- t + 1
+}
 ```
 
 ```sos kernel="Python 3"
-new_r = ['& Full sample', 'No SOE', 'SOE']
+multicolumn ={
+    'Full sample': 2,
+    'Output': 2,
+    'Capital': 2,
+    'Employment': 2,
+}
+
+#new_r = ['& Full sample', 'No SOE', 'SOE']
 
 tb = """\\footnotesize{
 Due to limited space, only the coefficients of interest are presented 
@@ -721,13 +764,14 @@ heteroscedasticity-robust standard errors in parentheses are clustered by city
 x = [a for a in os.listdir() if a.endswith(".txt")]
 for i, val in enumerate(x):
     lb.beautify(table_number = i+1,
-            remove_control= True,
-            constraint = False,
+            remove_control= False,
+            constraint = True,
             city_industry = False, 
-            new_row = new_r,
+            new_row = False,
+            multicolumn = multicolumn,
             table_nte =tb,
            jupyter_preview = True,
-           resolution = 100)
+           resolution = 150)
 ```
 
 <!-- #region kernel="Python 3" -->
@@ -761,9 +805,9 @@ toremove <- dir(path=getwd(), pattern=".tex|.pdf|.txt")
 file.remove(toremove)
 
 fe1 <- list(
-    c("City fixed effects", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"),
-    c("Industry fixed effects", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"),
-    c("Year fixed effects","Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes")
+    c("City-year fixed effects", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"),
+    c("Industry-year fixed effects", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"),
+    c("City-industry fixed effects","Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes")
              )
 
 t1 <- felm(formula=log(tso2_cit) ~ 
@@ -1043,7 +1087,8 @@ t4 <- felm(formula=log(tso2_cit) ~
 t4 <-change_target(t4)
 
 name = paste0("table_",1,".txt")
-    title = paste0("Diffusion Chanel Concentrated VS non concentrated")
+    title = paste0("Diffusion Chanel Concentrated VS non concentrated Decile ",
+                   threshold_full)
     
 tables <- list(t1, t2, t3, t4)
 table_1 <- go_latex(tables,
@@ -1169,7 +1214,7 @@ t1 <- felm(formula=log(tso2_cit) ~
                + ln_gdp_cap
                + ln_gdp_cap_sqred
                + ln_pop
-               + target_c * Period * polluted_thre 
+               #+ target_c * Period * polluted_thre 
                + output_fcit + capital_fcit + labour_fcit
                   |
              cityen +  year + industry  | 0 |
@@ -1182,7 +1227,7 @@ t2 <- felm(formula=log(tso2_cit) ~
                + ln_gdp_cap
                + ln_gdp_cap_sqred
                + ln_pop
-               + target_c * Period * polluted_thre 
+               #+ target_c * Period * polluted_thre 
                + output_fcit + capital_fcit + labour_fcit
                   |
              cityen +  year + industry  | 0 |
@@ -1196,7 +1241,7 @@ t3 <- felm(formula=log(tso2_cit) ~
            + ln_gdp_cap
            + ln_gdp_cap_sqred
            + ln_pop
-           + target_c  * Period * polluted_thre 
+           #+ target_c  * Period * polluted_thre 
            + output_fcit + capital_fcit + labour_fcit
                   |
              cityen +  year + industry  | 0 |
@@ -1210,7 +1255,7 @@ t4 <- felm(formula=log(tso2_cit) ~
            + ln_gdp_cap
            + ln_gdp_cap_sqred
            + ln_pop
-           + target_c  * Period * polluted_thre 
+           #+ target_c  * Period * polluted_thre 
            + output_fcit + capital_fcit + labour_fcit
                   |
              cityen +  year + industry  | 0 |
@@ -1226,7 +1271,7 @@ t5 <- felm(formula=log(tso2_cit) ~
            + ln_gdp_cap
            + ln_gdp_cap_sqred
            + ln_pop
-           + target_c  * Period * polluted_thre 
+           #+ target_c  * Period * polluted_thre 
            + output_fcit + capital_fcit + labour_fcit
                   |
              cityen +  year + industry  | 0 |
@@ -1238,7 +1283,7 @@ t6 <- felm(formula=log(tso2_cit) ~
            + ln_gdp_cap
            + ln_gdp_cap_sqred
            + ln_pop
-           + target_c  * Period * polluted_thre 
+           #+ target_c  * Period * polluted_thre 
            + output_fcit + capital_fcit + labour_fcit
                   |
              cityen +  year + industry  | 0 |
@@ -1251,7 +1296,7 @@ t7 <- felm(formula=log(tso2_cit) ~
            + ln_gdp_cap
            + ln_gdp_cap_sqred
            + ln_pop
-           + target_c  * Period * polluted_thre 
+           #+ target_c  * Period * polluted_thre 
            + output_fcit + capital_fcit + labour_fcit
                   |
              cityen +  year + industry  | 0 |
@@ -1263,7 +1308,7 @@ t8 <- felm(formula=log(tso2_cit) ~
            + ln_gdp_cap
            + ln_gdp_cap_sqred
            + ln_pop
-           + target_c  * Period * polluted_thre 
+           #+ target_c  * Period * polluted_thre 
            + output_fcit + capital_fcit + labour_fcit
                   |
              cityen +  year + industry  | 0 |
@@ -1276,7 +1321,7 @@ t9 <- felm(formula=log(tso2_cit) ~
            + ln_gdp_cap
            + ln_gdp_cap_sqred
            + ln_pop
-           + target_c  * Period * polluted_thre 
+          #+ target_c  * Period * polluted_thre 
            + output_fcit + capital_fcit + labour_fcit
                   |
              cityen +  year + industry  | 0 |
@@ -1288,7 +1333,7 @@ t10 <- felm(formula=log(tso2_cit) ~
            + ln_gdp_cap
            + ln_gdp_cap_sqred
            + ln_pop
-           + target_c  * Period * polluted_thre 
+           #+ target_c  * Period * polluted_thre 
            + output_fcit + capital_fcit + labour_fcit
                   |
              cityen +  year + industry  | 0 |
@@ -1297,7 +1342,7 @@ t10 <- felm(formula=log(tso2_cit) ~
 t10 <-change_target(t10)
 
 name = paste0("table_",1,".txt")
-    title = paste0("Diffusion Chanel Kuznet")
+    title = paste0("Diffusion Chanel Kuznet Decile ", threshold_full)
     
 tables <- list(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10)
 turning <- turning_point(tables, currency = 'RMB')
@@ -1360,6 +1405,19 @@ for i, val in enumerate(x):
 ```
 
 <!-- #region kernel="Python 3" -->
+## TFP
+
+$$ TFP _{i k t}=\alpha\left(\text { Period } \times \text { Target }{i} \times \text { Polluting sectors }{k} \right)+\nu{i}+\lambda_{t}+\phi_{k}+\epsilon_{i k t} $$
+
+$$ TFP _{i k t}=\alpha\left(\text { Period } \times \text { Target }{i} \times \text { Polluting sectors }{k} \right)+\nu_{ct}+\lambda_{kt}+\phi_{ck}+\epsilon_{i k t} $$
+
+1. SOE/No SOE
+2. TCZ/No TCZ
+3. Coastal/no Coastal
+4. Turning point
+<!-- #endregion -->
+
+<!-- #region kernel="Python 3" -->
 # Create Report
 <!-- #endregion -->
 
@@ -1377,10 +1435,6 @@ dest = os.path.join(path_report, filename)+'_{}_{}_.html'.format(
     aggregation_param,
     threshold_full)
 
-dest
-```
-
-```sos kernel="SoS"
 os.system('jupyter nbconvert --no-input --to html {}'.format(source))
 
 time.sleep(5)
@@ -1392,4 +1446,8 @@ for i in range(1, 19):
         os.remove("table_{}.txt".format(i))
     except:
         pass
+```
+
+```sos kernel="SoS"
+
 ```
