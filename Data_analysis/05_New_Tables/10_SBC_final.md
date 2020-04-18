@@ -771,7 +771,7 @@ for i, val in enumerate(x):
             multicolumn = multicolumn,
             table_nte =tb,
            jupyter_preview = True,
-           resolution = 150)
+           resolution = 700)
 ```
 
 <!-- #region kernel="Python 3" -->
@@ -918,7 +918,7 @@ for i, val in enumerate(x):
             multicolumn = multicolumn,
             table_nte =tb,
            jupyter_preview = True,
-           resolution = 150)
+           resolution = 700)
 ```
 
 <!-- #region kernel="Python 3" -->
@@ -1030,7 +1030,7 @@ for i, val in enumerate(x):
             multicolumn = multicolumn,
             table_nte =tb,
            jupyter_preview = True,
-           resolution = 150)
+           resolution = 500)
 ```
 
 <!-- #region kernel="Python 3" -->
@@ -1127,7 +1127,7 @@ for i, val in enumerate(x):
             multicolumn = multicolumn,
             table_nte =tb,
            jupyter_preview = True,
-           resolution = 150)
+           resolution = 300)
 ```
 
 <!-- #region kernel="Python 3" -->
@@ -1425,17 +1425,21 @@ $$ TFP _{i k t}=\alpha\left(\text { Period } \times \text { Target }{i} \times \
 import os, time, shutil
 from pathlib import Path
 
+export = 'pdf' #'html'
+
 filename = '10_SBC_final'
 source = filename + '.ipynb'
-source_to_move = filename +'.html'
+source_to_move = filename +'.{}'.format(export)
 path = os.getcwd()
 parent_path = str(Path(path).parent)
 path_report = "{}/Reports".format(parent_path)
-dest = os.path.join(path_report, filename)+'_{}_{}_.html'.format(
+dest = os.path.join(path_report, filename)+'_{}_{}_.{}'.format(
     aggregation_param,
-    threshold_full)
+    threshold_full,
+    export
+)
 
-os.system('jupyter nbconvert --no-input --to html {}'.format(source))
+os.system('jupyter nbconvert --no-input --to {} {}'.format(export, source))
 
 time.sleep(5)
 shutil.move(source_to_move, dest)
@@ -1446,8 +1450,4 @@ for i in range(1, 19):
         os.remove("table_{}.txt".format(i))
     except:
         pass
-```
-
-```sos kernel="SoS"
-
 ```

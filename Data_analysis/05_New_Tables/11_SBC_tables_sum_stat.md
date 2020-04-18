@@ -780,7 +780,7 @@ Sources: Author's own computation \\
 lb.beautify_table(table_nte = table_nte,
                   name = 'table_1',
                   jupyter_preview  = True,
-                  resolution = 150)
+                  resolution = 500)
 ```
 
 <!-- #region kernel="Python 3" -->
@@ -850,7 +850,7 @@ Sources: Author's own computation \\
 lb.beautify_table(table_nte = table_nte,
                   name = 'table_1',
                   jupyter_preview  = True,
-                  resolution = 150)
+                  resolution = 500)
 ```
 
 <!-- #region kernel="Python 3" -->
@@ -861,16 +861,19 @@ lb.beautify_table(table_nte = table_nte,
 import os, time, shutil
 from pathlib import Path
 
+export = 'pdf' #'html'
+
 filename = '11_SBC_tables_sum_stat'
 source = filename + '.ipynb'
-source_to_move = filename +'.html'
+source_to_move = filename +'.{}'.format(export)
 path = os.getcwd()
 parent_path = str(Path(path).parent)
 path_report = "{}/Reports".format(parent_path)
-dest = os.path.join(path_report, filename)+'_{}_.html'.format(
-    aggregation_param)
+dest = os.path.join(path_report, filename)+'_{}_.{}'.format(
+    aggregation_param, export
+)
 
-os.system('jupyter nbconvert --no-input --to html {}'.format(source))
+os.system('jupyter nbconvert --no-input --to {} {}'.format(export, source))
 
 time.sleep(5)
 shutil.move(source_to_move, dest)
