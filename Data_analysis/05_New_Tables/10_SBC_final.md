@@ -129,22 +129,6 @@ df_final <- df_final %>%
 ```
 
 ```sos kernel="SoS"
-%put df_final_tfp --to R
-
-from GoogleDrivePy.google_platform import connect_cloud_platform
-project = 'valid-pagoda-132423'
-gcp = connect_cloud_platform.connect_console(project = project, 
-                                             service_account = service['GoogleCloudP'])    
-query = (
-          "SELECT * "
-            "FROM China.SBC_TFP_china "
-
-        )
-
-df_final_tfp = gcp.upload_data_from_bigquery(query = query, location = 'US')
-```
-
-```sos kernel="SoS"
 #aggregation_param = 'industry'
 aggregation_param = 'geocode4_corr'
 list_agg = df_final[aggregation_param].to_list()
@@ -393,7 +377,7 @@ Profiling will be available soon for this dataset
 <!-- #endregion -->
 
 ```sos kernel="R"
-df_TCZ_list_china_tfp = read_csv('../df_TCZ_list_china.csv',
+df_TCZ_list_china = read_csv('../df_TCZ_list_china.csv',
                             col_types = cols(
   Province = col_character(),
   City = col_character(),
@@ -402,7 +386,7 @@ df_TCZ_list_china_tfp = read_csv('../df_TCZ_list_china.csv',
   SPZ = col_double()
 )) %>% 
 select(-c(TCZ, Province)) %>% 
-right_join(df_final_tfp, by = 'geocode4_corr') 
+right_join(df_final, by = 'geocode4_corr')
 ```
 
 <!-- #region kernel="R" -->
@@ -934,7 +918,7 @@ for i, val in enumerate(x):
 <!-- #endregion -->
 
 <!-- #region kernel="Python 3" -->
-## TCZ VS non TCZ
+## TCZ, Coastal and SPZ
 <!-- #endregion -->
 
 ```sos kernel="R"
@@ -943,12 +927,18 @@ file.remove(toremove)
 
 df_to_filter <- df_final
 
-fe1 <- list(c("City fixed effects", "Yes", "No", "Yes", "No"),
-             c("Industry fixed effects", "Yes", "No", "Yes", "No"),
-             c("Year fixed effects","Yes", "No", "Yes", "No"),
-             c("City-year fixed effects", "No", "Yes","No", "Yes"),
-             c("Industry-year fixed effects", "No", "Yes","No", "Yes"),
-             c("City-industry fixed effects", "No", "Yes","No", "Yes")
+fe1 <- list(c("City fixed effects", "Yes", "No", "Yes", "No", "Yes", "No",
+              "Yes", "No", "Yes", "No", "Yes", "No"),
+             c("Industry fixed effects", "Yes", "No", "Yes", "No", "Yes", "No",
+               "Yes", "No", "Yes", "No", "Yes", "No"),
+             c("Year fixed effects","Yes", "No", "Yes", "No", "Yes", "No",
+               "Yes", "No", "Yes", "No", "Yes", "No"),
+             c("City-year fixed effects", "No", "Yes","No", "Yes", "No", "Yes",
+               "No", "Yes", "No", "Yes","No", "Yes"),
+             c("Industry-year fixed effects", "No", "Yes","No", "Yes", "No",
+               "Yes","No", "Yes", "No", "Yes","No", "Yes"),
+             c("City-industry fixed effects", "No", "Yes","No", "Yes", "No",
+               "Yes","No", "Yes", "No", "Yes","No", "Yes")
              )
 
 
@@ -989,11 +979,88 @@ t4 <- felm(formula=log(tso2_cit) ~
              industry, data= df_to_filter %>% filter(TCZ_c != 'TCZ'),
              exactDOF=TRUE)
 t4 <-change_target(t4)
+#### Coastal
+t5 <- felm(formula=log(tso2_cit) ~ 
+           target_c * Period * polluted_thre 
+           + output_fcit + capital_fcit + labour_fcit
+                  |
+             cityen +  year + industry  | 0 |
+             industry, data= df_to_filter %>% filter(Coastal == TRUE),
+             exactDOF=TRUE)
+t5 <-change_target(t5)
+
+t6 <- felm(formula=log(tso2_cit) ~ 
+           target_c * Period * polluted_thre 
+           + output_fcit + capital_fcit + labour_fcit
+                  |
+             FE_t_c + FE_t_i + FE_c_i  | 0 |
+             industry, data= df_to_filter %>% filter(Coastal == TRUE),
+             exactDOF=TRUE)
+t6 <-change_target(t6)
+
+#### No Coastal
+t7 <- felm(formula=log(tso2_cit) ~ 
+           target_c * Period * polluted_thre 
+           + output_fcit + capital_fcit + labour_fcit
+                  |
+             cityen +  year + industry  | 0 |
+             industry, data= df_to_filter %>% filter(Coastal == FALSE),
+             exactDOF=TRUE)
+t7 <-change_target(t7)
+
+t8 <- felm(formula=log(tso2_cit) ~ 
+           target_c * Period * polluted_thre 
+           + output_fcit + capital_fcit + labour_fcit
+                  |
+             FE_t_c + FE_t_i + FE_c_i  | 0 |
+             industry, data= df_to_filter %>% filter(Coastal == FALSE),
+             exactDOF=TRUE)
+t8 <-change_target(t8)
+
+### SPZ
+df_to_filter <- df_TCZ_list_china
+t9 <- felm(formula=log(tso2_cit) ~ 
+           target_c * Period * polluted_thre 
+           + output_fcit + capital_fcit + labour_fcit
+                  |
+             cityen +  year + industry  | 0 |
+             industry, data= df_to_filter %>% filter(SPZ == 1),
+             exactDOF=TRUE)
+t9 <-change_target(t9)
+
+t10 <- felm(formula=log(tso2_cit) ~ 
+           target_c * Period * polluted_thre 
+           + output_fcit + capital_fcit + labour_fcit
+                  |
+             FE_t_c + FE_t_i + FE_c_i  | 0 |
+             industry, data= df_to_filter %>% filter(SPZ == 1),
+             exactDOF=TRUE)
+t10 <-change_target(t10)
+
+#### No SPZ
+t11 <- felm(formula=log(tso2_cit) ~ 
+           target_c * Period * polluted_thre 
+           + output_fcit + capital_fcit + labour_fcit
+                  |
+             cityen +  year + industry  | 0 |
+             industry, data= df_to_filter %>% filter(SPZ == 0),
+             exactDOF=TRUE)
+t11 <-change_target(t11)
+
+t12 <- felm(formula=log(tso2_cit) ~ 
+           target_c * Period * polluted_thre 
+           + output_fcit + capital_fcit + labour_fcit
+                  |
+             FE_t_c + FE_t_i + FE_c_i  | 0 |
+             industry, data= df_to_filter %>% filter(SPZ == 0),
+             exactDOF=TRUE)
+t12 <-change_target(t12)
+
 
 name = paste0("table_",1,".txt")
     title = paste0("Diffusion Chanel TCZ VS No TCZ ")
     
-tables <- list(t1, t2, t3, t4)
+tables <- list(t1, t2, t3, t4,t5, t6, t7,t8, t9, t10, t11, t12)
 table_1 <- go_latex(tables,
                 dep_var = "Dependent variable \\text { SO2 emission }_{i k t}",
                 title=title,
@@ -1007,6 +1074,10 @@ table_1 <- go_latex(tables,
 multicolumn ={
     'TCZ': 2,
     'No TCZ': 2,
+    'Coastal': 2,
+    'No Coastal': 2,
+    'SPZ': 2,
+    'No SPZ': 2,
 }
 
 new_r = ['& TCZ', 'TCZ', 'No TCZ', 'No TCZ']
@@ -1030,7 +1101,7 @@ for i, val in enumerate(x):
             multicolumn = multicolumn,
             table_nte =tb,
            jupyter_preview = True,
-           resolution = 500)
+           resolution = 300)
 ```
 
 <!-- #region kernel="Python 3" -->
