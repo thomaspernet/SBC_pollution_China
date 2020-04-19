@@ -634,6 +634,7 @@ remove_control = True,
         lines = lines.replace('target\_c', ' target_c ')
 
         # TFP
+        lines = lines.replace('OWNERSHIPSOE', ' SOE ')
         lines = lines.replace('SOESOE', ' SOE ')
         lines = lines.replace('Coastal_c TRUE', ' Coastal_c ')
         lines = lines.replace(' : ', ' \\times ')
