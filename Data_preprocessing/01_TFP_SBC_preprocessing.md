@@ -73,7 +73,7 @@ from pathlib import Path
 import os, re,  requests, json 
 
 from dask.distributed import Client
-from dask import dataframe as dd 
+#from dask import dataframe as dd 
 client = Client()  # set up local cluster on your laptop
 client
 ```
@@ -107,14 +107,16 @@ query = (
 
         )
 
-df_SBC_pollution_China = gcp.upload_data_from_bigquery(query = query, location = 'US')
-df_SBC_pollution_China.head()
+df_SBC_pollution_China = gcp.upload_data_from_bigquery(query = query,
+                                                       location = 'US',
+                                                      to_dask = True)
+df_SBC_pollution_China
     
 ```
 
 
 ```python
-df_SBC_pollution_China = dd.from_pandas(df_SBC_pollution_China, npartitions=3)
+#df_SBC_pollution_China = dd.from_pandas(df_SBC_pollution_China, npartitions=3)
 ```
 
 ## Load asif_firm_china from Google Big Query
@@ -183,7 +185,9 @@ ORDER BY
 
 """
 
-df_asif_firm_china = gcp.upload_data_from_bigquery(query = query, location = 'US')
+df_asif_firm_china = gcp.upload_data_from_bigquery(query = query,
+                                                   location = 'US',
+                                                  to_dask =True)
 df_asif_firm_china.head()
     
 ```
@@ -206,10 +210,21 @@ Please use the following format for the documentation:
     - (optional) Underlying process description
 - Step 3: Remove firm with different:
     - (optional) ownership, cities and industries over time
+- Step 4: Compute TFP
+    - Done with R in EC2
+- Step 5: AddT TFP to dataset
+    - Subset city characteristics
+        - Coastal
+        - TCZ
+        - Target
+    - Subset industry characteristic
+        - Polluted
 
 
 Note: **You need to rename the last dataframe `df_final`**
 <!-- #endregion -->
+
+## Step 1 to 3
 
 ```python
 cities = df_SBC_pollution_China['geocode4_corr'].unique().compute()
@@ -378,6 +393,139 @@ df_final.to_csv(
 	encoding='utf-8')
 ```
 
+## Step 4: TFP computation
+
+There is an issue with the latest version of R and Mac. It makes it impossible to install library not available in Conda. So, we computed the TFP using an EC2 instance. 
+
+Here are the related source files:
+
+- [Program](https://github.com/thomaspernet/SBC_pollution_China/blob/master/Data_preprocessing/program_tfp/tfp.R)
+- [Models](https://console.cloud.google.com/storage/browser/chinese_data/Panel_china/Asif_panel_china/TFP_computation)
+- [Data](https://storage.cloud.google.com/chinese_data/Panel_china/Asif_panel_china/TFP_computation/TFP_computed_ASIF_china_final.csv)
+
+Note, in R, need to concert `NaN` to `None`. BigQuery does not support `NaN`
+
+```
+(df.where(pd.notnull(df), None)
+ .to_csv("program_tfp/TFP_computed_ASIF_china_final.csv", index = False))
+```
+
+Three models:
+
+**Full sample**
+
+![](https://drive.google.com/uc?export=view&id=1m9XCI9oXDbSZnKZfhj1rRbBNRyfmYfmF)
+
+**SOE sample**
+
+![](https://drive.google.com/uc?export=view&id=1CUepeIMZINDoN63MX8LVORIZiNd5Sop6)
+
+**Private sample**
+
+![](https://drive.google.com/uc?export=view&id=10-QRGYUNOttZxtUucXfMttADOTay15Gt)
+
+
+
+```python
+query = (
+          "SELECT * "
+            "FROM China.TFP_ASIF_china "
+
+        )
+
+TFP_ASIF_china = gcp.upload_data_from_bigquery(query = query,
+                                                       location = 'US',
+                                                      to_dask = True)
+TFP_ASIF_china
+```
+
+```python
+TFP_ASIF_china[['tfp_OP', 'tfp_OWNERSHIP']].corr().compute()
+```
+
+```python
+(TFP_ASIF_china
+.groupby(['year','OWNERSHIP'])['tfp_OP']
+.mean() 
+.compute() 
+.unstack(-1) 
+.plot
+.bar()
+)
+```
+
+## Step 5
+
+```python
+TFP_ASIF_china.compute().shape
+```
+
+```python
+import dask.array as da
+```
+
+```python
+SBC_TFP_ASIF_china = (TFP_ASIF_china
+.merge(
+    (df_SBC_pollution_China[[
+        'industry',
+        'polluted_thre'
+    ]]
+     .drop_duplicates(subset = 'industry')
+    ), on =  ['industry'])
+.merge(
+    (df_SBC_pollution_China[[
+    'geocode4_corr',
+    'cityen',    
+    'Coastal',
+    'TCZ_c',
+    'target_c'
+    ]]
+ .drop_duplicates(subset = 'geocode4_corr')
+), on = ['geocode4_corr']
+)
+                      .drop(columns = 
+                           ['output_agg_o',
+       'fa_net_agg_o', 'employment_agg_o', 'input_agg_o',
+                           'tfp_OP_soe', 'tfp_OP_pri', 'id_1',
+                           'switch_ownership',
+                            'switch_cities', 'switch_industry'])
+.assign(
+    #Period=lambda x: da.where(
+    #x["year"] > 2005, "Before", "After"),
+        year=lambda x: x['year'].astype('str'),
+        industry=lambda x: x['industry'].astype('str')
+    )
+).compute().assign(
+    Period=lambda x: np.where(
+    x["year"].isin(['2006', '2007']), "After", "Before")
+)
+```
+
+```python
+df_final = SBC_TFP_ASIF_china.copy()
+df_final["FE_c_i"] = pd.factorize(df_final["cityen"] +
+                                      df_final['industry'])[0]
+
+df_final["FE_t_i"] = pd.factorize(df_final["year"] +
+                                      df_final['industry'])[0]
+
+df_final["FE_t_c"] = pd.factorize(df_final["year"] + df_final["cityen"])[0]
+
+df_final["FE_c_i_o"] = pd.factorize(df_final["cityen"] + df_final["industry"] +
+                                        df_final["OWNERSHIP"])[0]
+df_final["FE_t_o"] = pd.factorize(
+        df_final["year"] + df_final["OWNERSHIP"])[0]
+```
+
+```python
+df_final.head()
+```
+
+```python
+
+```
+
 # Profiling
 
 In order to get a quick summary statistic of the data, we generate an HTML file with the profiling of the dataset we've just created. 
@@ -429,7 +577,7 @@ to GCS
 
 ### First save locally
 df_final.to_csv(
-	'01_TFP_SBC.gz',
+	'01_TFP_SBC_firm.gz',
 	sep=',',
 	header=True,
 	index=False,
@@ -438,21 +586,18 @@ df_final.to_csv(
 	encoding='utf-8')
 
 ### Then upload to GCS
-bucket_name = 'NEED TO DEFINE'
-destination_blob_name = 'XXXXX/Processed_'
-source_file_name = '01_TFP_SBC.gz'
+bucket_name = 'chinese_data'
+destination_blob_name = 'paper_project/Processed_'
+source_file_name = '01_TFP_SBC_firm.gz'
 gcp.upload_blob(bucket_name, destination_blob_name, source_file_name)
-
 
 ```
 
 ```python
-
-
 ### Move to bigquery
-bucket_gcs ='NEED TO DEFINE/XXXXX/Processed_/01_TFP_SBC.gz'
+bucket_gcs ='chinese_data/paper_project/Processed/01_TFP_SBC_firm.gz'
 gcp.move_to_bq_autodetect(dataset_name= 'China',
-							 name_table= '01_TFP_SBC',
+							 name_table= 'TFP_SBC_firm',
 							 bucket_gcs=bucket_gcs)
 
 ```
@@ -492,7 +637,7 @@ path_credential = '/Users/Thomas/Google Drive/Projects/Data_science/Google_code_
 dic_ = {
     
           'project_name' : github_repo,
-          'input_datasets' : 'SBC_pollution_China',
+          'input_datasets' : 'TFP_SBC_firm',
           'sheetnames' : '',
           'bigquery_dataset' : 'China',
           'destination_engine' : 'GCP',
@@ -549,13 +694,13 @@ Remember to commit in GitHub to activate the URL link for the profiling and Stud
 Storage = 'GBQ'
 Theme = 'Trade' 
 Database = 'China'
-Description = "The table is related to"
-Filename = 'SBC_pollution_China'
+Description = "The table is related to the paper about FTP and SBC"
+Filename = 'TFP_SBC_firm'
 Status = 'Active'
 ```
 
 ```python
-Source_data = ['SBC_pollution_China', 'asif_firm_china']
+Source_data = ['SBC_pollution_China', 'asif_firm_china', 'TFP_ASIF_china']
 ```
 
 The next cell pushes the information to [Coda](https://coda.io/d/MasterFile-Database_dvfMWDBnHh8/Test-API_suDBp#API_tuDK4)
