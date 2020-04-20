@@ -654,7 +654,7 @@ lb.beautify(table_number = 4,
 df_to_filter <- df_final
 t1 <- felm(formula= tfp_OP ~ 
            target_c  * Period * polluted_thre * OWNERSHIP|
-              id + FE_t_c + FE_t_i + FE_c_i     
+              id + FE_c_i_o + FE_t_o  + FE_t_c    
               | 0 |
              industry, data= df_to_filter,
              exactDOF=TRUE)
@@ -675,9 +675,9 @@ t3 <- felm(formula= tfp_OP ~
 
 fe1 <- list(
     c("Firm", "Yes", "Yes", "Yes"),
-    c("City-industry", "Yes", "Yes", "Yes"),
+    c("City-industry-ownership", "Yes", "Yes", "Yes"),
     c("City-time", "Yes", "Yes", "Yes"),
-    c("time-industry", "Yes", "Yes", "Yes")
+    c("time-ownership", "Yes", "Yes", "Yes")
              )
 
 name = paste0("table_",5,".txt")
@@ -724,14 +724,14 @@ lb.beautify(table_number = 5,
 df_to_filter <- df_final
 t1 <- felm(formula= tfp_OP ~ 
            target_c  * Period * polluted_thre * OWNERSHIP|
-              id + FE_t_c + FE_t_i + FE_c_i    
+              id + FE_c_i_o + FE_t_o  + FE_t_c    
               | 0 |
              industry, data= df_to_filter %>% filter(TCZ_c == 'TCZ'),
              exactDOF=TRUE)
            
 t2 <- felm(formula= tfp_OP ~ 
            target_c  * Period * polluted_thre * OWNERSHIP|
-              id + FE_t_c + FE_t_i + FE_c_i    
+              id + FE_c_i_o + FE_t_o  + FE_t_c    
               | 0 |
              industry, data= df_to_filter %>% filter(TCZ_c != 'TCZ'),
              exactDOF=TRUE)
@@ -829,7 +829,7 @@ lb.beautify(table_number = 2,
 #file.remove(toremove)
 t1 <- felm(formula= tfp_OP ~ 
            target_c  * Period * OWNERSHIP|
-              id + FE_t_c + FE_t_i + FE_c_i
+              id +FE_c_i_o + FE_t_o  + FE_t_c
               | 0 |
              industry, data=df_to_filter)
 
@@ -891,14 +891,14 @@ lb.beautify(table_number = 7,
 df_to_filter <- df_final
 t1 <- felm(formula= tfp_OP ~ 
            target_c  * Period  * OWNERSHIP|
-              id + FE_t_c + FE_t_i + FE_c_i   
+              id + FE_c_i_o + FE_t_o  + FE_t_c
               | 0 |
              industry, data= df_to_filter %>% filter(TCZ_c == 'TCZ'),
              exactDOF=TRUE)
            
 t2 <- felm(formula= tfp_OP ~ 
            target_c  * Period  * OWNERSHIP|
-              id + FE_t_c + FE_t_i + FE_c_i    
+              id + FE_c_i_o + FE_t_o  + FE_t_c   
               | 0 |
              industry, data= df_to_filter %>% filter(TCZ_c != 'TCZ'),
              exactDOF=TRUE)
@@ -992,4 +992,35 @@ lb.beautify(table_number = 8,
             table_nte =False,
             jupyter_preview = True,
             resolution = 150)
+```
+
+```sos kernel="Python 3"
+#shutil.move(os.path.join(path, source_to_move), dest)
+source
+```
+
+```sos kernel="Python 3"
+import os, time, shutil
+from pathlib import Path
+
+export = 'html' #'pdf'
+
+filename = '01_TFP_analysis'
+source = filename + '.ipynb'
+source_to_move = filename +'.{}'.format(export)
+path = os.getcwd()
+parent_path = str(Path(path).parent)
+path_report = "{}/Reports".format(parent_path)
+dest = os.path.join(path_report, filename)+'.{}'.format(
+    export
+)
+
+os.system('jupyter nbconvert --no-input --to {} {}'.format(export, source))
+
+#time.sleep(5)
+#shutil.move(os.path.join(path, source_to_move), dest)
+```
+
+```sos kernel="Python 3"
+shutil.move(os.path.join(path, source_to_move), dest)
 ```
