@@ -299,6 +299,11 @@ df_chinese_city_characteristics = (df_final.merge(
                            lambda x: np.where(
                                x["gdp_cap"] > 35190,
                                1,0
+                           ),
+    threshold_full= 
+                           lambda x: np.where(
+                               x["gdp_cap"] > 41247,
+                               1,0
                            )
 )
                                   )
@@ -668,7 +673,9 @@ for ( var in c("Coastal", "TCZ_c", var_,
                "threshold_concentrated",
                "threshold_soe_output",
                "threshold_soe_capital",
-               "threshold_soe_employment")){
+               "threshold_soe_employment",
+               "threshold_soe_full"
+              )){
     
     if (var == "Coastal"){
         filters <- TRUE  
@@ -685,7 +692,9 @@ for ( var in c("Coastal", "TCZ_c", var_,
               var == "threshold_concentrated"|
               var ==  "threshold_soe_output"|
               var ==  "threshold_soe_capital"|
-              var ==  "threshold_soe_employment"){
+              var ==  "threshold_soe_employment"|
+              var == "threshold_soe_full"
+    ){
         filters <- 1
         df_to_filter <- df_chinese_city_characteristics
         title_name <- str_extract(var, regex("[^_]+$"))
@@ -808,6 +817,9 @@ new_row = [
      'Right', 'Left'],
 ['& Right', 'Left',
      'Right', 'Left',
+     'Right', 'Left'],
+['& Right', 'Left',
+     'Right', 'Left',
      'Right', 'Left']
           ]
            
@@ -818,6 +830,126 @@ for i, val in enumerate(x):
             constraint = True,
             city_industry = False, 
             new_row = new_row[i],
+            multicolumn = multicolumn,
+            table_nte =False,
+            jupyter_preview = True,
+            resolution = 150)
+```
+
+```sos kernel="R"
+var <- 'decile_herfhindal'
+df_to_filter <- df_herfhindal_final
+toremove <- dir(path=getwd(), pattern=".tex|.pdf|.txt")
+file.remove(toremove)
+
+i= 1
+for (decile in list(5, 6, 7, 8)){
+    filters <- decile
+    
+    t1 <- felm(formula= tfp_OP ~ 
+           target_c  * Period * polluted_thre * OWNERSHIP|
+              FE_c_i_o + FE_t_c + FE_t_i +FE_t_o    
+              | 0 |
+             industry, data= df_to_filter %>% filter(get(var) <= filters
+                                                    #&occurence != 1
+                                                    ),
+             exactDOF=TRUE)
+           
+    t2 <- felm(formula= tfp_OP ~ 
+               target_c  * Period * polluted_thre * OWNERSHIP|
+                  FE_c_i_o + FE_t_c + FE_t_i +FE_t_o    
+                  | 0 |
+                 industry, data= df_to_filter %>% filter(get(var) > filters
+                                                        #&occurence != 1
+                                                        ),
+                 exactDOF=TRUE)
+
+    t3 <- felm(formula= tfp_OP ~ 
+               target_c  * Period * polluted_thre |
+                  FE_c_i + FE_t_c + FE_t_i
+                  | 0 |
+                 industry, data= df_to_filter %>% filter(
+                     get(var) <= filters & 
+                     OWNERSHIP == 'SOE'
+                 #&occurence != 1
+                 ),
+                 exactDOF=TRUE)
+
+    t4 <- felm(formula= tfp_OP ~ 
+               target_c  * Period * polluted_thre |
+                  FE_c_i + FE_t_c + FE_t_i
+                  | 0 |
+                 industry, data= df_to_filter %>% filter(
+                     get(var) > filters&
+                     OWNERSHIP == 'SOE'
+                 #&occurence != 1
+                 ),
+                 exactDOF=TRUE)
+
+    t5 <- felm(formula= tfp_OP ~ 
+               target_c  * Period * polluted_thre |
+                  FE_c_i + FE_t_c + FE_t_i
+                  | 0 |
+                 industry, data= df_to_filter %>% filter(
+                     get(var) <= filters & 
+                     OWNERSHIP != 'SOE'
+                     #&occurence != 1
+                 ),
+                 exactDOF=TRUE)
+
+    t6 <- felm(formula= tfp_OP ~ 
+               target_c  * Period * polluted_thre |
+                  FE_c_i + FE_t_c + FE_t_i
+                  | 0 |
+                 industry, data= df_to_filter %>% filter(
+                     get(var) > filters & 
+                     OWNERSHIP != 'SOE'
+                 #&occurence != 1
+                 ),
+                 exactDOF=TRUE)
+
+    name = paste0("table_",i,".txt")
+    title = paste0("TFP subsample - ", title_name, " decile ", decile)
+    tables <- list(t1, t2, t3, t4, t5, t6)
+    table_1 <- go_latex(tables,
+                dep_var = "Dependent variable \\text { TFP }_{fi k t}",
+                title=title,
+                addFE=fe1,
+                save=TRUE,
+                note = FALSE,
+                name=name)
+    i = i+1
+    print(title)
+    
+}
+```
+
+```sos kernel="Python 3"
+tb = """\\footnotesize{
+Due to limited space, only the coefficients of interest are presented 
+for the regressions with city,industry, year fixed effect (i.e. columns 1-3).
+\sym{*} Significance at the 10\%, \sym{**} Significance at the 5\%, \sym{***} Significance at the 1\% \\
+heteroscedasticity-robust standard errors in parentheses are clustered by city 
+}
+"""
+
+multicolumn = {
+    'Dummy': 2,
+    'SOE': 2,
+    'PRIVATE': 2,
+}
+
+new_row =['& Concentrated', 'NO Concentrated',
+     'Concentrated', 'NO Concentrated',
+     'Concentrated', 'NO Concentrated']
+           
+x = [a for a in os.listdir() if a.endswith(".txt")]
+for i, val in enumerate(x):
+    lb.beautify(table_number = i+1,
+            remove_control= False,
+            constraint = True,
+            city_industry = False, 
+            new_row = new_row,
             multicolumn = multicolumn,
             table_nte =False,
             jupyter_preview = True,
@@ -1011,8 +1143,8 @@ for i, val in enumerate(x):
 <!-- #endregion -->
 
 ```sos kernel="R"
-#toremove <- dir(path=getwd(), pattern=".tex|.pdf|.txt")
-#file.remove(toremove)
+toremove <- dir(path=getwd(), pattern=".tex|.pdf|.txt")
+file.remove(toremove)
 
 df_to_filter <- df_final
 t1 <- felm(formula= tfp_OP ~ 
@@ -1051,7 +1183,7 @@ fe1 <- list(
     c("time-industry", "No", "Yes", "Yes")
              )
 
-name = paste0("table_",5,".txt")
+name = paste0("table_",1,".txt")
 title = paste0("TFP ")
     
 tables <- list(t1, t2, t3)
@@ -1062,152 +1194,6 @@ table_1 <- go_latex(tables,
                 save=TRUE,
                 note = FALSE,
                 name=name)
-```
-
-```sos kernel="Python 3"
-tb = """\\footnotesize{
-Due to limited space, only the coefficients of interest are presented 
-for the regressions with city,industry, year fixed effect (i.e. columns 1-3).
-\sym{*} Significance at the 10\%, \sym{**} Significance at the 5\%, \sym{***} Significance at the 1\% \\
-heteroscedasticity-robust standard errors in parentheses are clustered by city 
-}
-"""
-
-new_row = ['& Dummy', 'SOE', 'PRIVATE']
-
-#x = [a for a in os.listdir() if a.endswith(".txt")]
-#for i, val in enumerate(x):
-lb.beautify(table_number = 5,
-            remove_control= False,
-            constraint = True,
-            city_industry = False, 
-            new_row = new_row,
-            multicolumn = None,
-            table_nte =False,
-            jupyter_preview = True,
-            resolution = 150)
-```
-
-```sos kernel="R"
-#toremove <- dir(path=getwd(), pattern=".tex|.pdf|.txt")
-#file.remove(toremove)
-
-df_to_filter <- df_final
-t1 <- felm(formula= tfp_OP ~ 
-           target_c  * Period * polluted_thre * OWNERSHIP|
-              id + FE_c_i_o + FE_t_o  + FE_t_c    
-              | 0 |
-             industry, data= df_to_filter %>% filter(TCZ_c == 'TCZ'
-                                                    &occurence != 1
-                                                    ),
-             exactDOF=TRUE)
-           
-t2 <- felm(formula= tfp_OP ~ 
-           target_c  * Period * polluted_thre * OWNERSHIP|
-              id + FE_c_i_o + FE_t_o  + FE_t_c    
-              | 0 |
-             industry, data= df_to_filter %>% filter(TCZ_c != 'TCZ'
-                                                    &occurence != 1
-                                                    ),
-             exactDOF=TRUE)
-
-t3 <- felm(formula= tfp_OP ~ 
-           target_c  * Period * polluted_thre |
-              id + FE_t_c + FE_t_i + FE_c_i
-              | 0 |
-             industry, data= df_to_filter %>% filter(
-                 TCZ_c == 'TCZ' & 
-                 OWNERSHIP == 'SOE'
-             &occurence != 1
-             ),
-             exactDOF=TRUE)
-           
-t4 <- felm(formula= tfp_OP ~ 
-           target_c  * Period * polluted_thre |
-              id + FE_t_c + FE_t_i + FE_c_i
-              | 0 |
-             industry, data= df_to_filter %>% filter(
-                 TCZ_c != 'TCZ'&
-                 OWNERSHIP == 'SOE'
-             &occurence != 1
-             ),
-             exactDOF=TRUE)
-
-t5 <- felm(formula= tfp_OP ~ 
-           target_c  * Period * polluted_thre |
-              id + FE_t_c + FE_t_i + FE_c_i
-              | 0 |
-             industry, data= df_to_filter %>% filter(
-                 TCZ_c == 'TCZ'& 
-                 OWNERSHIP != 'SOE'
-             &occurence != 1
-             ),
-             exactDOF=TRUE)
-           
-t6 <- felm(formula= tfp_OP ~ 
-           target_c  * Period * polluted_thre |
-              id + FE_t_c + FE_t_i + FE_c_i
-              | 0 |
-             industry, data= df_to_filter %>% filter(
-                 TCZ_c != 'TCZ'& 
-                 OWNERSHIP != 'SOE'
-             &occurence != 1
-             ),
-             exactDOF=TRUE)
-
-fe1 <- list(
-    c("Firm", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"),
-    c("City-industry-ownership", "Yes", "Yes", "Yes", "No", "No", "No"),
-    c("time-ownership", "Yes", "Yes", "Yes", "No", "No", "No"),
-    c("City-industry", "No", "No", "No", "Yes", "Yes", "Yes"),
-    c("City-time", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"),
-    c("time-industry", "No", "No", "No", "Yes", "Yes", "Yes")
-             )
-
-
-name = paste0("table_",6,".txt")
-title = paste0("TFP ")
-    
-tables <- list(t1, t2, t3, t4, t5, t6)
-table_1 <- go_latex(tables,
-                dep_var = "Dependent variable \\text { TFP }_{fi k t}",
-                title=title,
-                addFE=fe1,
-                save=TRUE,
-                note = FALSE,
-                name=name)
-```
-
-```sos kernel="Python 3"
-tb = """\\footnotesize{
-Due to limited space, only the coefficients of interest are presented 
-for the regressions with city,industry, year fixed effect (i.e. columns 1-3).
-\sym{*} Significance at the 10\%, \sym{**} Significance at the 5\%, \sym{***} Significance at the 1\% \\
-heteroscedasticity-robust standard errors in parentheses are clustered by city 
-}
-"""
-
-multicolumn = {
-    'Dummy': 2,
-    'SOE': 2,
-    'PRIVATE': 2,
-}
-
-new_row = ['& TCZ', 'NO TCZ',
-          'TCZ', 'NO TCZ',
-          'TCZ', 'NO TCZ']
-
-#x = [a for a in os.listdir() if a.endswith(".txt")]
-#for i, val in enumerate(x):
-lb.beautify(table_number = 2,
-            remove_control= False,
-            constraint = True,
-            city_industry = False, 
-            new_row = new_row,
-            multicolumn = multicolumn,
-            table_nte =False,
-            jupyter_preview = True,
-            resolution = 150)
 ```
 
 ```sos kernel="R"
@@ -1226,7 +1212,7 @@ t2 <- felm(formula= tfp_OP ~
               id + cityen +  year + industry      
               | 0 |
              industry, data= df_to_filter %>% filter(OWNERSHIP == 'SOE'
-                                                    &occurence != 1
+                                                    #&occurence != 1
                                                     ))
 
 t3 <- felm(formula= tfp_OP ~ 
@@ -1234,20 +1220,20 @@ t3 <- felm(formula= tfp_OP ~
               id+ cityen +  year + industry      
               | 0 |
              industry, data= df_to_filter %>% filter(OWNERSHIP != 'SOE'
-                                                    &occurence != 1
+                                                    #&occurence != 1
                                                     ))
 
 fe1 <- list( #FE_c_i_o + FE_t_o  + FE_t_c
     c("Firm", "Yes", "Yes", "Yes"),
-    c("City-industry", "Yes", "No", "No"),
+    c("City-industry-ownership", "Yes", "No", "No"),
     c("City-time", "Yes", "No", "No"),
-    c("time-industry", "Yes", "No", "No"),
+    c("time-ownership", "Yes", "No", "No"),
     c("City", "No", "Yes", "Yes"),
     c("Industry", "No", "Yes", "Yes"),
     c("time", "No", "Yes", "Yes")
              )
 
-name = paste0("table_",7,".txt")
+name = paste0("table_",2,".txt")
 title = paste0("TFP ")
     
 tables <- list(t1, t2, t3)
@@ -1261,11 +1247,19 @@ table_1 <- go_latex(tables,
 ```
 
 ```sos kernel="Python 3"
+tb = """\\footnotesize{
+Due to limited space, only the coefficients of interest are presented 
+for the regressions with city,industry, year fixed effect (i.e. columns 1-3).
+\sym{*} Significance at the 10\%, \sym{**} Significance at the 5\%, \sym{***} Significance at the 1\% \\
+heteroscedasticity-robust standard errors in parentheses are clustered by city 
+}
+"""
+
 new_row = ['& Dummy', 'SOE', 'PRIVATE']
 
-#x = [a for a in os.listdir() if a.endswith(".txt")]
-#for i, val in enumerate(x):
-lb.beautify(table_number = 7,
+x = [a for a in os.listdir() if a.endswith(".txt")]
+for i, val in enumerate(x):
+    lb.beautify(table_number = i+1,
             remove_control= False,
             constraint = True,
             city_industry = False, 
@@ -1276,94 +1270,133 @@ lb.beautify(table_number = 7,
             resolution = 150)
 ```
 
+<!-- #region kernel="Python 3" -->
+Split
+<!-- #endregion -->
+
 ```sos kernel="R"
-#toremove <- dir(path=getwd(), pattern=".tex|.pdf|.txt")
-#file.remove(toremove)
+toremove <- dir(path=getwd(), pattern=".tex|.pdf|.txt")
+file.remove(toremove)
 
+var_ <- 'threshold_herfhindal'
 df_to_filter <- df_final
-t1 <- felm(formula= tfp_OP ~ 
-           target_c  * Period  * OWNERSHIP|
-              id + FE_c_i_o + FE_t_o  + FE_t_c
-              | 0 |
-             industry, data= df_to_filter %>% filter(TCZ_c == 'TCZ'
-                                                    &occurence != 1
-                                                    ),
-             exactDOF=TRUE)
-           
-t2 <- felm(formula= tfp_OP ~ 
-           target_c  * Period  * OWNERSHIP|
-              id + FE_c_i_o + FE_t_o  + FE_t_c   
-              | 0 |
-             industry, data= df_to_filter %>% filter(TCZ_c != 'TCZ'
-                                                    &occurence != 1
-                                                    ),
-             exactDOF=TRUE)
 
-t3 <- felm(formula= tfp_OP ~ 
-           target_c  * Period  |
-              id+ cityen +  year + industry
-              | 0 |
-             industry, data= df_to_filter %>% filter(
-                 TCZ_c == 'TCZ' & 
-                 OWNERSHIP == 'SOE'
-             &occurence != 1
-             ),
-             exactDOF=TRUE)
-           
-t4 <- felm(formula= tfp_OP ~ 
-           target_c  * Period  |
-              id+ cityen +  year + industry
-              | 0 |
-             industry, data= df_to_filter %>% filter(
-                 TCZ_c != 'TCZ'&
-                 OWNERSHIP == 'SOE'
-             &occurence != 1
-             ),
-             exactDOF=TRUE)
-
-t5 <- felm(formula= tfp_OP ~ 
-           target_c  * Period  |
-              id+ cityen +  year + industry
-              | 0 |
-             industry, data= df_to_filter %>% filter(
-                 TCZ_c == 'TCZ'& 
-                 OWNERSHIP != 'SOE'
-             &occurence != 1
-             ),
-             exactDOF=TRUE)
-           
-t6 <- felm(formula= tfp_OP ~ 
-           target_c  * Period  |
-             id+ cityen +  year + industry
-              | 0 |
-             industry, data= df_to_filter %>% filter(
-                 TCZ_c != 'TCZ'& 
-                 OWNERSHIP != 'SOE'
-             &occurence != 1
-             ),
-             exactDOF=TRUE)
-
-fe1 <- list( #FE_c_i_o + FE_t_o  + FE_t_c
-    c("Firm", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"),
-    c("City-industry", "Yes", "Yes", "No", "No", "No", "No"),
-    c("City-time", "Yes", "Yes","No", "No", "No", "No"),
-    c("time-industry", "Yes","Yes", "No", "No", "No", "No"),
-    c("City", "No","No", "Yes", "Yes", "Yes", "Yes"),
-    c("Industry", "No","No", "Yes", "Yes", "Yes", "Yes"),
-    c("time", "No","No", "Yes", "Yes", "Yes", "Yes")
+i = 1
+fe1 <- list(
+    c("Firm", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"),
+    c("City-industry-ownership", "Yes", "Yes", "No", "No", "No", "No"),
+    c("time-ownership", "Yes", "Yes", "No", "No", "No", "No"),
+    c("City-industry", "No", "No", "Yes", "Yes", "Yes", "Yes"),
+    c("City-time", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"),
+    c("time-industry", "No", "No", "Yes", "Yes", "Yes", "Yes")
              )
 
-name = paste0("table_",8,".txt")
-title = paste0("TFP ")
+for ( var in c("Coastal", "TCZ_c", var_,
+               "threshold_tcz",
+               "threshold_concentrated",
+               "threshold_soe_output",
+               "threshold_soe_capital",
+               "threshold_soe_employment",
+              "threshold_full")){
     
-tables <- list(t1, t2, t3, t4, t5, t6)
-table_1 <- go_latex(tables,
-                dep_var = "Dependent variable \\text { SO2 emission }_{i k t}",
+    if (var == "Coastal"){
+        filters <- TRUE  
+        title_name = "Coastal"
+    }else if (var == "TCZ_c"){
+        filters <- "TCZ"   
+        title_name = "TCZ"
+    }else if (var == var_) {
+        filters <- 1
+        df_to_filter <- df_herfhindal_final
+        title_name = "Herfhindhal"
+    }else if ( 
+              var == "threshold_tcz"|
+              var == "threshold_concentrated"|
+              var ==  "threshold_soe_output"|
+              var ==  "threshold_soe_capital"|
+              var ==  "threshold_soe_employment"|
+              var ==  "threshold_full"
+    ){
+        filters <- 1
+        df_to_filter <- df_chinese_city_characteristics
+        title_name <- str_extract(var, regex("[^_]+$"))
+    }
+    
+    t1 <- felm(formula= tfp_OP ~ 
+           target_c  * Period * polluted_thre * OWNERSHIP|
+              id + FE_c_i_o + FE_t_o  + FE_t_c    
+              | 0 |
+             industry, data= df_to_filter %>% filter(get(var) == filters
+                                                    #&occurence != 1
+                                                    ),
+             exactDOF=TRUE)
+           
+    t2 <- felm(formula= tfp_OP ~ 
+               target_c  * Period * polluted_thre * OWNERSHIP|
+                  id + FE_c_i_o + FE_t_o  + FE_t_c    
+                  | 0 |
+                 industry, data= df_to_filter %>% filter(get(var) != filters
+                                                        #&occurence != 1
+                                                        ),
+                 exactDOF=TRUE)
+
+    t3 <- felm(formula= tfp_OP ~ 
+               target_c  * Period * polluted_thre |
+                  id + FE_t_c + FE_t_i + FE_c_i
+                  | 0 |
+                 industry, data= df_to_filter %>% filter(
+                     get(var) == filters & 
+                     OWNERSHIP == 'SOE'
+                 #&occurence != 1
+                 ),
+                 exactDOF=TRUE)
+
+    t4 <- felm(formula= tfp_OP ~ 
+               target_c  * Period * polluted_thre |
+                  id + FE_t_c + FE_t_i + FE_c_i
+                  | 0 |
+                 industry, data= df_to_filter %>% filter(
+                     get(var) != filters&
+                     OWNERSHIP == 'SOE'
+                 #&occurence != 1
+                 ),
+                 exactDOF=TRUE)
+
+    t5 <- felm(formula= tfp_OP ~ 
+               target_c  * Period * polluted_thre |
+                  id + FE_t_c + FE_t_i + FE_c_i
+                  | 0 |
+                 industry, data= df_to_filter %>% filter(
+                     get(var) == filters & 
+                     OWNERSHIP != 'SOE'
+                     #&occurence != 1
+                 ),
+                 exactDOF=TRUE)
+
+    t6 <- felm(formula= tfp_OP ~ 
+               target_c  * Period * polluted_thre |
+                  id + FE_t_c + FE_t_i + FE_c_i
+                  | 0 |
+                 industry, data= df_to_filter %>% filter(
+                     get(var) != filters & 
+                     OWNERSHIP != 'SOE'
+                 #&occurence != 1
+                 ),
+                 exactDOF=TRUE)
+
+    name = paste0("table_",i,".txt")
+    title = paste0("TFP subsample - ", title_name)
+    tables <- list(t1, t2, t3, t4, t5, t6)
+    table_1 <- go_latex(tables,
+                dep_var = "Dependent variable \\text { TFP }_{fi k t}",
                 title=title,
                 addFE=fe1,
                 save=TRUE,
                 note = FALSE,
                 name=name)
+    i = i+1
+    print(title)
+}
 ```
 
 ```sos kernel="Python 3"
@@ -1381,13 +1414,167 @@ multicolumn = {
     'PRIVATE': 2,
 }
 
-new_row = ['& TCZ', 'NO TCZ',
-          'TCZ', 'NO TCZ',
-          'TCZ', 'NO TCZ']
+new_row = [
+    ['& Coastal', 'NO Coastal',
+     'Coastal', 'NO Coastal',
+     'Coastal', 'NO Coastal']
+          ,
+    ['& TCZ', 'NO TCZ',
+     'TCZ', 'NO TCZ',
+     'TCZ', 'NO TCZ'],
+    ['& Concentrated', 'NO Concentrated',
+     'Concentrated', 'NO Concentrated',
+     'Concentrated', 'NO Concentrated'],
+['& Right', 'Left',
+     'Right', 'Left',
+     'Right', 'Left'],
+['& Right', 'Left',
+     'Right', 'Left',
+     'Right', 'Left'],
+['& Right', 'Left',
+     'Right', 'Left',
+     'Right', 'Left'],
+['& Right', 'Left',
+     'Right', 'Left',
+     'Right', 'Left'],
+['& Right', 'Left',
+     'Right', 'Left',
+     'Right', 'Left']
+          ]
+           
+x = [a for a in os.listdir() if a.endswith(".txt")]
+for i, val in enumerate(x):
+    lb.beautify(table_number = i+1,
+            remove_control= False,
+            constraint = True,
+            city_industry = False, 
+            new_row = new_row[i],
+            multicolumn = multicolumn,
+            table_nte =False,
+            jupyter_preview = True,
+            resolution = 150)
+```
 
-#x = [a for a in os.listdir() if a.endswith(".txt")]
-#for i, val in enumerate(x):
-lb.beautify(table_number = 8,
+```sos kernel="R"
+var <- 'decile_herfhindal'
+df_to_filter <- df_herfhindal_final
+toremove <- dir(path=getwd(), pattern=".tex|.pdf|.txt")
+file.remove(toremove)
+
+i = 1
+fe1 <- list(
+    c("Firm", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"),
+    c("City-industry-ownership", "Yes", "Yes", "No", "No", "No", "No"),
+    c("time-ownership", "Yes", "Yes", "No", "No", "No", "No"),
+    c("City-industry", "No", "No", "Yes", "Yes", "Yes", "Yes"),
+    c("City-time", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"),
+    c("time-industry", "No", "No", "Yes", "Yes", "Yes", "Yes")
+             )
+
+i= 1
+for (decile in list(5, 6, 7, 8)){
+    filters <- decile
+    
+    t1 <- felm(formula= tfp_OP ~ 
+           target_c  * Period * polluted_thre * OWNERSHIP|
+              id + FE_c_i_o + FE_t_o  + FE_t_c    
+              | 0 |
+             industry, data= df_to_filter %>% filter(get(var) <= filters
+                                                    #&occurence != 1
+                                                    ),
+             exactDOF=TRUE)
+           
+    t2 <- felm(formula= tfp_OP ~ 
+               target_c  * Period * polluted_thre * OWNERSHIP|
+                  id + FE_c_i_o + FE_t_o  + FE_t_c     
+                  | 0 |
+                 industry, data= df_to_filter %>% filter(get(var) > filters
+                                                        #&occurence != 1
+                                                        ),
+                 exactDOF=TRUE)
+
+    t3 <- felm(formula= tfp_OP ~ 
+               target_c  * Period * polluted_thre |
+                  id + FE_t_c + FE_t_i + FE_c_i
+                  | 0 |
+                 industry, data= df_to_filter %>% filter(
+                     get(var) <= filters & 
+                     OWNERSHIP == 'SOE'
+                 #&occurence != 1
+                 ),
+                 exactDOF=TRUE)
+
+    t4 <- felm(formula= tfp_OP ~ 
+               target_c  * Period * polluted_thre |
+                  id + FE_t_c + FE_t_i + FE_c_i
+                  | 0 |
+                 industry, data= df_to_filter %>% filter(
+                     get(var) > filters&
+                     OWNERSHIP == 'SOE'
+                 #&occurence != 1
+                 ),
+                 exactDOF=TRUE)
+
+    t5 <- felm(formula= tfp_OP ~ 
+               target_c  * Period * polluted_thre |
+                  id + FE_t_c + FE_t_i + FE_c_i
+                  | 0 |
+                 industry, data= df_to_filter %>% filter(
+                     get(var) <= filters & 
+                     OWNERSHIP != 'SOE'
+                     #&occurence != 1
+                 ),
+                 exactDOF=TRUE)
+
+    t6 <- felm(formula= tfp_OP ~ 
+               target_c  * Period * polluted_thre |
+                  id + FE_t_c + FE_t_i + FE_c_i
+                  | 0 |
+                 industry, data= df_to_filter %>% filter(
+                     get(var) > filters & 
+                     OWNERSHIP != 'SOE'
+                 #&occurence != 1
+                 ),
+                 exactDOF=TRUE)
+
+    name = paste0("table_",i,".txt")
+    title = paste0("TFP subsample - ", title_name, " decile ", decile)
+    tables <- list(t1, t2, t3, t4, t5, t6)
+    table_1 <- go_latex(tables,
+                dep_var = "Dependent variable \\text { TFP }_{fi k t}",
+                title=title,
+                addFE=fe1,
+                save=TRUE,
+                note = FALSE,
+                name=name)
+    i = i+1
+    print(title)
+    
+}
+```
+
+```sos kernel="Python 3"
+tb = """\\footnotesize{
+Due to limited space, only the coefficients of interest are presented 
+for the regressions with city,industry, year fixed effect (i.e. columns 1-3).
+\sym{*} Significance at the 10\%, \sym{**} Significance at the 5\%, \sym{***} Significance at the 1\% \\
+heteroscedasticity-robust standard errors in parentheses are clustered by city 
+}
+"""
+
+multicolumn = {
+    'Dummy': 2,
+    'SOE': 2,
+    'PRIVATE': 2,
+}
+
+new_row =['& NO Concentrated', 'Concentrated',
+     'NO Concentrated', 'Concentrated',
+     'NO Concentrated', 'Concentrated']
+           
+x = [a for a in os.listdir() if a.endswith(".txt")]
+for i, val in enumerate(x):
+    lb.beautify(table_number = i+1,
             remove_control= False,
             constraint = True,
             city_industry = False, 
@@ -1399,7 +1586,190 @@ lb.beautify(table_number = 8,
 ```
 
 <!-- #region kernel="Python 3" -->
-# Create Report
+Without polluted
+<!-- #endregion -->
+
+```sos kernel="R"
+var_ <- 'threshold_herfhindal'
+df_to_filter <- df_final
+
+toremove <- dir(path=getwd(), pattern=".tex|.pdf|.txt")
+file.remove(toremove)
+
+i = 1
+fe1 <- list(
+    c("Firm", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"),
+    c("City-industry-ownership", "Yes", "Yes", "No", "No", "No", "No"),
+    c("City-time", "Yes", "Yes", "No", "No", "No", "No"),
+    c("time-ownership", "Yes", "Yes", "No", "No", "No", "No"),
+    c("City", "No", "No", "Yes", "Yes", "Yes", "Yes"),
+    c("industry", "No", "No", "Yes", "Yes", "Yes", "Yes"),
+    c("time", "No", "No", "Yes", "Yes", "Yes", "Yes")
+             )
+
+for ( var in c("Coastal", "TCZ_c", var_,
+               "threshold_tcz",
+               "threshold_concentrated",
+               "threshold_soe_output",
+               "threshold_soe_capital",
+               "threshold_soe_employment")){
+    
+    if (var == "Coastal"){
+        filters <- TRUE  
+        title_name = "Coastal"
+    }else if (var == "TCZ_c"){
+        filters <- "TCZ"   
+        title_name = "TCZ"
+    }else if (var == var_) {
+        filters <- 1
+        df_to_filter <- df_herfhindal_final
+        title_name = "Herfhindhal"
+    }else if ( 
+              var == "threshold_tcz"|
+              var == "threshold_concentrated"|
+              var ==  "threshold_soe_output"|
+              var ==  "threshold_soe_capital"|
+              var ==  "threshold_soe_employment"){
+        filters <- 1
+        df_to_filter <- df_chinese_city_characteristics
+        title_name <- str_extract(var, regex("[^_]+$"))
+    }
+    
+    t1 <- felm(formula= tfp_OP ~ 
+           target_c  * Period  * OWNERSHIP |
+              id + FE_c_i_o + FE_t_o  + FE_t_c    
+              | 0 |
+             industry, data= df_to_filter %>% filter(get(var) == filters
+                                                    #&occurence != 1
+                                                    ),
+             exactDOF=TRUE)
+           
+    t2 <- felm(formula= tfp_OP ~ 
+               target_c  * Period  * OWNERSHIP|
+              id + FE_c_i_o + FE_t_o  + FE_t_c    
+                  | 0 |
+                 industry, data= df_to_filter %>% filter(get(var) != filters
+                                                        #&occurence != 1
+                                                        ),
+                 exactDOF=TRUE)
+
+    t3 <- felm(formula= tfp_OP ~ 
+               target_c  * Period  |
+              id+ cityen +  year + industry
+                  | 0 |
+                 industry, data= df_to_filter %>% filter(
+                     get(var) == filters & 
+                     OWNERSHIP == 'SOE'
+                 #&occurence != 1
+                 ),
+                 exactDOF=TRUE)
+
+    t4 <- felm(formula= tfp_OP ~ 
+               target_c  * Period  |
+              id+ cityen +  year + industry
+                  | 0 |
+                 industry, data= df_to_filter %>% filter(
+                     get(var) != filters&
+                     OWNERSHIP == 'SOE'
+                 #&occurence != 1
+                 ),
+                 exactDOF=TRUE)
+
+    t5 <- felm(formula= tfp_OP ~ 
+               target_c  * Period  |
+              id+ cityen +  year + industry
+                  | 0 |
+                 industry, data= df_to_filter %>% filter(
+                     get(var) == filters & 
+                     OWNERSHIP != 'SOE'
+                     #&occurence != 1
+                 ),
+                 exactDOF=TRUE)
+
+    t6 <- felm(formula= tfp_OP ~ 
+               target_c  * Period  |
+              id+ cityen +  year + industry
+                  | 0 |
+                 industry, data= df_to_filter %>% filter(
+                     get(var) != filters & 
+                     OWNERSHIP != 'SOE'
+                 #&occurence != 1
+                 ),
+                 exactDOF=TRUE)
+
+    name = paste0("table_",i,".txt")
+    title = paste0("TFP subsample - ", title_name)
+    tables <- list(t1, t2, t3, t4, t5, t6)
+    table_1 <- go_latex(tables,
+                dep_var = "Dependent variable \\text { TFP }_{fi k t}",
+                title=title,
+                addFE=fe1,
+                save=TRUE,
+                note = FALSE,
+                name=name)
+    i = i+1
+    print(title)
+}
+```
+
+```sos kernel="Python 3"
+tb = """\\footnotesize{
+Due to limited space, only the coefficients of interest are presented 
+for the regressions with city,industry, year fixed effect (i.e. columns 1-3).
+\sym{*} Significance at the 10\%, \sym{**} Significance at the 5\%, \sym{***} Significance at the 1\% \\
+heteroscedasticity-robust standard errors in parentheses are clustered by city 
+}
+"""
+
+multicolumn = {
+    'Dummy': 2,
+    'SOE': 2,
+    'PRIVATE': 2,
+}
+
+new_row = [
+    ['& Coastal', 'NO Coastal',
+     'Coastal', 'NO Coastal',
+     'Coastal', 'NO Coastal']
+          ,
+    ['& TCZ', 'NO TCZ',
+     'TCZ', 'NO TCZ',
+     'TCZ', 'NO TCZ'],
+    ['& Concentrated', 'NO Concentrated',
+     'Concentrated', 'NO Concentrated',
+     'Concentrated', 'NO Concentrated'],
+['& Right', 'Left',
+     'Right', 'Left',
+     'Right', 'Left'],
+['& Right', 'Left',
+     'Right', 'Left',
+     'Right', 'Left'],
+['& Right', 'Left',
+     'Right', 'Left',
+     'Right', 'Left'],
+['& Right', 'Left',
+     'Right', 'Left',
+     'Right', 'Left'],
+['& Right', 'Left',
+     'Right', 'Left',
+     'Right', 'Left']
+          ]
+           
+x = [a for a in os.listdir() if a.endswith(".txt")]
+for i, val in enumerate(x):
+    lb.beautify(table_number = i+1,
+            remove_control= False,
+            constraint = True,
+            city_industry = False, 
+            new_row = new_row[i],
+            multicolumn = multicolumn,
+            table_nte =False,
+            jupyter_preview = True,
+            resolution = 150)
+```
+
+<!-- #region kernel="R" -->
+# Create reports
 <!-- #endregion -->
 
 ```sos kernel="Python 3"
@@ -1407,6 +1777,7 @@ import os, time, shutil
 from pathlib import Path
 
 export = 'html' #'pdf'
+#export = 'pdf' #'pdf'
 
 filename = '01_TFP_analysis'
 source = filename + '.ipynb'
@@ -1420,6 +1791,6 @@ dest = os.path.join(path_report, filename)+'.{}'.format(
 
 os.system('jupyter nbconvert --no-input --to {} {}'.format(export, source))
 
-time.sleep(5)
+#time.sleep(5)
 #shutil.move(source_to_move, dest)
 ```
