@@ -35,6 +35,42 @@ In the paper, we define a threshold to distinguish cities or industries. Choose 
 
 By default, the `threshold_full` parameter is set to `6`. To switch to another threshold, change the threshold `threshold_full`. Then launch the notebook for new results
 
+## Table 1 - 6
+
+## Tables TFP
+
+Note, we load the TFP data in the subsection
+
+* Steps: Les titres sont en gras
+  * Reduction mandate and TFP: TCZ versus non-TCZ
+    * Sub-Samples: 
+      * Private-TCZ, 
+      * Private-nonTCZ 
+      *  SOEs-TCZ,
+      *  SOEs-TCZ (colonnes trois à six)
+  * Reduction mandate and TFP: industrial concentration (6-ème décile)
+    * Sub-Samples: 
+      * Private-Conc, 
+      * Private-non,
+      *  Conc et SOEs-Conc, 
+      * SOEs-nonConc (colonnes trois à six)
+      * Si vous pouvez reporter d'autres déciles, c'est bien car = test de robustesse
+  * Reduction mandate and TFP: below (above) Kuznets' turning points
+    * Sub-Samples:
+      *  Private-above,
+      *  Private-below 
+      *  SOEs-above, 
+      * SOEs-below (colonnes trois à six)
+    * Ici quatre colonnes, et autant de lignes qu'à y a de turning points
+      * Lignes
+        * ligne 1: estimateur et son écart type entre ()
+        * ligne 2: nbre d'observations
+        * ligne 3: R2
+      * Une colonne supplémentaire: 
+        *  cellule A1: turning point estimated from:
+        * cellule A2: Table xx, sub-sample of firms below the 60th decile in terms of firms' concentration
+        * cellule A3, Table xx, sub-sample of TCZ cities 
+
 <!-- #endregion -->
 
 ```sos kernel="SoS"
@@ -126,6 +162,7 @@ df_final <- df_final %>%
          polluted_thre = relevel(polluted_thre, ref='Below'),
   )
 #head(df_final)
+
 ```
 
 ```sos kernel="SoS"
@@ -1555,10 +1592,314 @@ $$ TFP _{i k t}=\alpha\left(\text { Period } \times \text { Target }{i} \times \
 
 $$ TFP _{i k t}=\alpha\left(\text { Period } \times \text { Target }{i} \times \text { Polluting sectors }{k} \right)+\nu_{ct}+\lambda_{kt}+\phi_{ck}+\epsilon_{i k t} $$
 
-1. SOE/No SOE
-2. TCZ/No TCZ
-3. Coastal/no Coastal
-4. Turning point
+# Table TFP
+
+$$
+TFP _{fi k t}=\alpha\left(\text { Period } \times \text { Target }_{i} \times \text { Polluting sectors }_{k} \right)+\nu_{i}+\lambda_{t}+\phi_{k}+\epsilon_{i k t}
+$$
+
+1. Full sample
+2. SOE dominated
+3. TCZ vs No TCZ
+4. Coastal vs No Coastal
+3. Kuznet threshold
+    - TCZ: 28795
+    - Concentrated: 45396
+    - SOE output: 30264
+    - SOE Capital: 24867
+    - SPE employment: 35190
+<!-- #endregion -->
+
+```sos kernel="SoS"
+%put df_final --to R
+#query = (
+#          "SELECT * "
+#            "FROM China.TFP_SBC_firm "
+
+#        )
+
+#df_final = gcp.upload_data_from_bigquery(query = query, location = 'US')
+#df_final.head()
+df_final = pd.read_csv('../01_TFP_SBC_firm.gz')  
+```
+
+<!-- #region kernel="SoS" -->
+### Load chinese_city_characteristics from Google Spreadsheet
+
+Feel free to add description about the dataset or any usefull information.
+
+Profiling will be available soon for this dataset
+<!-- #endregion -->
+
+```sos kernel="SoS"
+#from Fast_connectCloud import connector
+#from GoogleDrivePy.google_drive import connect_drive
+#import pandas as pd
+#import numpy as np
+
+#gs = connector.open_connection(online_connection = False, 
+#	path_credential = '/Users/thomas/Google Drive/Projects/Client_Oauth/Google_auth/')
+
+#service_gd = gs.connect_remote(engine = 'GS')
+
+#gdr = connect_drive.connect_drive(service_gd['GoogleDrive'])
+```
+
+```sos kernel="SoS"
+%put df_herfhindal_final --to R
+df_herfhindal_final = (df_final.merge(df_herfhindal,
+                                     on=[aggregation_param],
+                                     how='left',
+                                     indicator=True
+                                     )
+                       .assign(
+                       decile_herfhindal = lambda x:
+                           pd.qcut(x['Herfindahl_agg'],10, labels=False),
+                       mean_herfhindal= 
+                           lambda x: np.where(
+                               x["Herfindahl_agg"] > 
+                               x["Herfindahl_agg"].drop_duplicates().mean(),
+                               1,0
+                           ),
+                       third_herfhindal= 
+                           lambda x: np.where(
+                               x["Herfindahl_agg"] >
+                               (x["Herfindahl_agg"]
+                                .drop_duplicates()
+                                .quantile([.75])
+                                .values[0]),
+                               1,0
+                           ),
+                     threshold_herfhindal= 
+                           lambda x: np.where(
+                               x["decile_herfhindal"] > threshold_full,
+                               1,0
+                           )
+                           
+                       )
+                      )
+```
+
+```sos kernel="SoS"
+%put df_chinese_city_characteristics --to R
+df_chinese_city_characteristics = (df_final.merge(
+    pd.read_csv('../df_chinese_city_characteristics.csv'),
+    on = ['year','geocode4_corr']
+).assign(
+    threshold_tcz= 
+                           lambda x: np.where(
+                               x["gdp_cap"] > 28795,
+                               1,0
+                           ),
+    threshold_concentrated= 
+                           lambda x: np.where(
+                               x["gdp_cap"] > 45396,
+                               1,0
+                           ),
+    threshold_soe_output= 
+                           lambda x: np.where(
+                               x["gdp_cap"] > 30264,
+                               1,0
+                           ),
+    threshold_soe_capital= 
+                           lambda x: np.where(
+                               x["gdp_cap"] > 24867,
+                               1,0
+                           ),
+    threshold_soe_employment= 
+                           lambda x: np.where(
+                               x["gdp_cap"] > 35190,
+                               1,0
+                           ),
+    threshold_full= 
+                           lambda x: np.where(
+                               x["gdp_cap"] > 41247,
+                               1,0
+                           )
+)
+                                  )
+df_chinese_city_characteristics.shape
+```
+
+```sos kernel="R"
+df_final <- df_final %>% 
+    mutate_if(is.character, as.factor) %>%
+    mutate_at(vars(starts_with("FE")), as.factor) %>%
+    mutate(
+         Period = relevel(Period, ref='Before'),
+         TCZ_c = relevel(TCZ_c, ref='No_TCZ'),
+         polluted_thre = relevel(polluted_thre, ref='Below'),
+  )
+```
+
+```sos kernel="R"
+df_herfhindal_final <- df_herfhindal_final %>% 
+    mutate_if(is.character, as.factor) %>%
+    mutate_at(vars(starts_with("FE")), as.factor) %>%
+    mutate(
+         Period = relevel(Period, ref='Before'),
+         TCZ_c = relevel(TCZ_c, ref='No_TCZ'),
+         polluted_thre = relevel(polluted_thre, ref='Below'),
+  )
+```
+
+```sos kernel="R"
+df_chinese_city_characteristics <- df_chinese_city_characteristics %>% 
+    mutate_if(is.character, as.factor) %>%
+    mutate_at(vars(starts_with("FE")), as.factor) %>%
+    mutate(
+         Period = relevel(Period, ref='Before'),
+         TCZ_c = relevel(TCZ_c, ref='No_TCZ'),
+         polluted_thre = relevel(polluted_thre, ref='Below'),
+  )
+```
+
+<!-- #region kernel="R" -->
+## TCZ and concentration
+<!-- #endregion -->
+
+```sos kernel="R"
+head(df_herfhindal_final)
+```
+
+```sos kernel="R"
+#toremove <- dir(path=getwd(), pattern=".tex|.pdf|.txt")
+#file.remove(toremove)
+
+var_ <- 'threshold_herfhindal'
+df_to_filter <- df_final
+
+i = 3
+fe1 <- list(
+    c("Firm", "Yes", "Yes", "Yes", "Yes"),
+    c("City-industry", "No", "No", "Yes", "Yes", "Yes", "Yes"),
+    c("City-time", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"),
+    c("time-industry", "No", "No", "Yes", "Yes", "Yes", "Yes")
+             )
+
+for ( var in c(#"Coastal", "TCZ_c", 
+               var_)){
+    
+    if (var == "Coastal"){
+        filters <- TRUE  
+        title_name = "Reduction mandate and TFP: Coastal versus non-Coastal"
+    }else if (var == "TCZ_c"){
+        filters <- "TCZ"   
+        title_name = "Reduction mandate and TFP: TCZ versus non-TCZ"
+    }else if (var == var_) {
+        filters <- 1
+        df_to_filter <- df_herfhindal_final
+        title_name = "Reduction mandate and TFP: industrial concentration"
+    }
+    
+    t1 <- felm(formula= tfp_OP ~ 
+               target_c  * Period * polluted_thre |
+                  id + FE_t_c + FE_t_i + FE_c_i
+                  | 0 |
+                 industry, data= df_to_filter %>% filter(
+                     get(var) == filters & 
+                     OWNERSHIP == 'SOE'
+                 ),
+                 exactDOF=TRUE)
+
+    t2 <- felm(formula= tfp_OP ~ 
+               target_c  * Period * polluted_thre |
+                  id + FE_t_c + FE_t_i + FE_c_i
+                  | 0 |
+                 industry, data= df_to_filter %>% filter(
+                     get(var) != filters&
+                     OWNERSHIP == 'SOE'
+                 ),
+                 exactDOF=TRUE)
+
+    t3 <- felm(formula= tfp_OP ~ 
+               target_c  * Period * polluted_thre |
+                  id + FE_t_c + FE_t_i + FE_c_i
+                  | 0 |
+                 industry, data= df_to_filter %>% filter(
+                     get(var) == filters & 
+                     OWNERSHIP != 'SOE'
+                 ),
+                 exactDOF=TRUE)
+
+    t4 <- felm(formula= tfp_OP ~ 
+               target_c  * Period * polluted_thre |
+                  id + FE_t_c + FE_t_i + FE_c_i
+                  | 0 |
+                 industry, data= df_to_filter %>% filter(
+                     get(var) != filters & 
+                     OWNERSHIP != 'SOE'
+                 ),
+                 exactDOF=TRUE)
+
+    name = paste0("table_",i,".txt")
+    title = title_name
+    tables <- list(t1, t2, t3, t4)
+    table_1 <- go_latex(tables,
+                dep_var = "Dependent variable \\text { TFP }_{fikt}",
+                title=title,
+                addFE=fe1,
+                save=TRUE,
+                note = FALSE,
+                name=name)
+    i = i+1
+    print(title)
+}
+    
+    
+    
+    
+    
+```
+
+```sos kernel="Python 3"
+tb = """\\footnotesize{
+Due to limited space, only the coefficients of interest are presented 
+\sym{*} Significance at the 10\%, \sym{**} Significance at the 5\%, \sym{***} Significance at the 1\% \\
+heteroscedasticity-robust standard errors in parentheses are clustered by city 
+}
+"""
+
+multicolumn = {
+    'SOE': 2,
+    'PRIVATE': 2,
+}
+
+new_row = [
+    ['& Coastal', 'NO Coastal',
+     'Coastal', 'NO Coastal'],
+    ['& TCZ', 'NO TCZ',
+     'TCZ', 'NO TCZ'],
+    ['& Concentrated', 'NO Concentrated',
+     'Concentrated', 'NO Concentrated']
+]
+```
+
+```sos kernel="Python 3"
+x = [a for a in os.listdir() if a.endswith(".txt")]
+for i, val in enumerate(x):
+    lb.beautify(table_number = i+1,
+            remove_control= False,
+            constraint = True,
+            city_industry = False, 
+            new_row = new_row[i],
+            multicolumn = multicolumn,
+            table_nte =tb,
+            jupyter_preview = True,
+            resolution = 150)
+```
+
+<!-- #region kernel="R" -->
+## Kuznet
+
+cf: https://github.com/thomaspernet/SBC_pollution_China/blob/master/Data_analysis/06_TFP/01_TFP_analysis.md#with-firms-fixed-effect
+
+Too long to reestimate
+- overleaf table: 
+
+Google Drive
+
+![Kuznet](https://drive.google.com/uc?export=view&id=108G-uRs074klH_bIG7EQ0_PfsAxHj45L)
 <!-- #endregion -->
 
 <!-- #region kernel="Python 3" -->
