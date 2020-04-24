@@ -459,7 +459,7 @@ left_join(df_final, by = 'geocode4_corr')
 
 ```sos kernel="SoS"
 %put df_herfhindal_final --to R
-df_herfhindal_final = (df_chinese_city_characteristics.merge(df_herfhindal,
+df_herfhindal_final = (df_final.merge(df_herfhindal,
                                      on=[aggregation_param],
                                      how='left',
                                      indicator=True
@@ -482,6 +482,11 @@ df_herfhindal_final = (df_chinese_city_characteristics.merge(df_herfhindal,
                                 .values[0]),
                                1,0
                            )
+                       )
+                       .merge(
+                           pd.read_csv('../df_chinese_city_characteristics.csv'),
+                       on = ['year', 'geocode4_corr'],
+                       how = 'left'
                        )
                       )
 ```
@@ -509,7 +514,8 @@ df_herfhindal_r <- df_herfhindal_final %>%
          effort_c = relevel(effort_c, ref='Below'),
          polluted_di = relevel(polluted_di, ref='Below'),
          polluted_mi = relevel(polluted_mi, ref='Below'),
-         polluted_thre = relevel(polluted_thre, ref='Below'),
+         polluted_thre = 
+        relevel(polluted_thre, ref='Below'),
   )
 ```
 
@@ -839,6 +845,75 @@ lb.beautify(table_number = 1,
            resolution = 200)
 ```
 
+```sos kernel="R"
+toremove <- dir(path=getwd(), pattern=".tex|.pdf|.txt")
+file.remove(toremove)
+
+#### TCZ
+df_to_filter <- df_herfhindal_r
+t1 <- felm(formula=log(tso2_cit) ~ 
+               + ln_gdp_cap
+               + ln_gdp_cap_sqred
+               + ln_pop
+               #+ target_c * Period * polluted_thre 
+               + output_fcit + capital_fcit + labour_fcit
+                  |
+             cityen +  year + industry  | 0 |
+             industry, data= df_to_filter #%>% filter(TCZ_c == 'TCZ')
+           ,
+             exactDOF=TRUE)
+t1 <-change_target(t1)
+name = paste0("table_",1,".txt")
+    title = paste0("Diffusion Chanel Kuznet Decile ")
+    
+tables <- list(t1)
+turning <- turning_point(tables, currency = 'RMB')
+turning_dol <- turning_point(tables, currency = 'dollars')
+fe1 <- list(
+    c('turning point RMB', turning),
+    c('turning point Dollar', turning_dol),
+    c("City fixed effects", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes",
+      "Yes", "Yes", "Yes", "Yes"),
+    c("Industry fixed effects", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes",
+      "Yes", "Yes", "Yes", "Yes"),
+    c("Year fixed effects","Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes",
+      "Yes", "Yes", "Yes")
+)
+
+table_1 <- go_latex(tables,
+                dep_var = "Dependent variable \\text { SO2 emission }_{i k t}",
+                title=title,
+                addFE=fe1,
+                save=TRUE,
+                note = FALSE,
+                name=name)
+```
+
+```sos kernel="Python 3"
+
+
+tb = """\\footnotesize{
+Due to limited space, only the coefficients of interest are presented 
+for the regressions with city,industry, year fixed effect (i.e. columns 1-3).
+\sym{*} Significance at the 10\%, \sym{**} Significance at the 5\%, \sym{***} Significance at the 1\% \\
+heteroscedasticity-robust standard errors in parentheses are clustered by city 
+}
+"""
+
+#os.remove('table_1.tex')
+x = [a for a in os.listdir() if a.endswith(".txt")]
+for i, val in enumerate(x):
+    lb.beautify(table_number = i+1,
+            remove_control= True,
+            constraint = True,
+            city_industry = False, 
+            new_row = False,
+            multicolumn = None,
+            table_nte =tb,
+           jupyter_preview = True,
+           resolution = 150)
+```
+
 <!-- #region kernel="Python 3" -->
 #### Decile 6, 7, 8, 9
 <!-- #endregion -->
@@ -864,7 +939,7 @@ for (var in list(5, 6, 7, 8)){
                + ln_gdp_cap
                + ln_gdp_cap_sqred
                + ln_pop
-               + TCZ_c * Period * polluted_thre 
+               #+ TCZ_c * Period * polluted_thre 
                + output_fcit + capital_fcit + labour_fcit
                   |
              cityen +  year + industry  | 0 |
@@ -875,7 +950,7 @@ for (var in list(5, 6, 7, 8)){
                + ln_gdp_cap
                + ln_gdp_cap_sqred
                + ln_pop
-               + target_c  * Period * polluted_thre 
+               #+ target_c  * Period * polluted_thre 
                + output_fcit + capital_fcit + labour_fcit
                   |
              cityen +  year + industry  | 0 |
@@ -886,8 +961,8 @@ for (var in list(5, 6, 7, 8)){
                + ln_gdp_cap
                + ln_gdp_cap_sqred
                + ln_pop
-               + TCZ_c * Period * polluted_thre 
-               + target_c  * Period * polluted_thre 
+               #+ TCZ_c * Period * polluted_thre 
+               #+ target_c  * Period * polluted_thre 
                + output_fcit + capital_fcit + labour_fcit
                   |
              cityen +  year + industry  | 0 |
@@ -900,7 +975,7 @@ for (var in list(5, 6, 7, 8)){
                + ln_gdp_cap
                + ln_gdp_cap_sqred
                + ln_pop
-               + TCZ_c * Period * polluted_thre 
+               #+ TCZ_c * Period * polluted_thre 
                + output_fcit + capital_fcit + labour_fcit
                   |
              cityen +  year + industry  | 0 |
@@ -911,7 +986,7 @@ for (var in list(5, 6, 7, 8)){
                + ln_gdp_cap
                + ln_gdp_cap_sqred
                + ln_pop
-               + target_c  * Period * polluted_thre 
+              #+ target_c  * Period * polluted_thre 
                + output_fcit + capital_fcit + labour_fcit
                   |
              cityen +  year + industry  | 0 |
@@ -923,8 +998,8 @@ for (var in list(5, 6, 7, 8)){
                + ln_gdp_cap
                + ln_gdp_cap_sqred
                + ln_pop
-               + TCZ_c * Period * polluted_thre 
-               + target_c  * Period * polluted_thre 
+               #+ TCZ_c * Period * polluted_thre 
+               #+ target_c  * Period * polluted_thre 
                + output_fcit + capital_fcit + labour_fcit
                   |
              cityen +  year + industry  | 0 |
