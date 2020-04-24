@@ -275,7 +275,6 @@ def metafunctionTFP(df_original,
                                                  'cityen',
                                                  'industry']].assign(
         year=lambda x: x['year'].astype('str'),
-        #geocode4_corr=lambda x: x['geocode4_corr'].astype('int'),
         industry=lambda x: x['industry'].astype('str')
     ).drop_duplicates())
 
