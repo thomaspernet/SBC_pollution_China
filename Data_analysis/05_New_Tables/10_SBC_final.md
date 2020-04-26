@@ -80,7 +80,7 @@ import numpy as np
 ```
 
 ```sos kernel="Python 3"
-import sys, os
+import sys, os, shutil
 sys.path.insert(0,'..')
 ```
 
@@ -654,6 +654,18 @@ df_final_FOREIGN <- df_final_FOREIGN %>%
 <!-- #region kernel="SoS" -->
 # Table 3
 
+Ouput: 
+
+- Overleaf
+    - Temp_tables/Tables_paper/02_paper_version_2/00_baseline_SOE
+    - Temp_tables/Tables_paper/02_paper_version_2/01_baseline__No_SOE
+    - Temp_tables/Tables_paper/02_paper_version_2/02_Panel_Baseline_SOE_No_SOE -> combined
+- Google Drive
+    - [00_baseline_SOE](https://drive.google.com/open?id=1kOzCGjD4AdHoAuXOnIk7V_6-BYXxICpK)
+![](https://drive.google.com/uc?export=view&id=1kOzCGjD4AdHoAuXOnIk7V_6-BYXxICpK)
+    - [01_baseline__No_SOE](https://drive.google.com/open?id=13TT6MSDSPHo_EqEJ8yrcxOWEk8ZRT_ej)
+![](https://drive.google.com/uc?export=view&id=13TT6MSDSPHo_EqEJ8yrcxOWEk8ZRT_ej)
+
 1. Full sample
 
 $$
@@ -665,7 +677,7 @@ Log SO2 emission _{i k t}=\alpha\left(\text { Period } \times \text { Target }_{
 $$
 
 2. SOE dominated
-3. Foreign dominated
+3. No dominated
 
 <!-- #endregion -->
 
@@ -765,6 +777,7 @@ for (own in c('SOE', 'No SOE')){
 ```
 
 ```sos kernel="Python 3"
+jupyter_preview = False
 multicolumn ={
     'Full sample': 2,
     'Output': 2,
@@ -776,7 +789,7 @@ multicolumn ={
 
 tb = """\\footnotesize{
 Due to limited space, only the coefficients of interest are presented 
-for the regressions with city,industry, year fixed effect (i.e. columns 1-3).
+for the regressions with city,industry, year fixed effect (i.e. columns 1, 3, 5, 7).
 \sym{*} Significance at the 10\%, \sym{**} Significance at the 5\%, \sym{***} Significance at the 1\% \\
 heteroscedasticity-robust standard errors in parentheses are clustered by city 
 }
@@ -791,12 +804,31 @@ for i, val in enumerate(x):
             new_row = False,
             multicolumn = multicolumn,
             table_nte =tb,
-           jupyter_preview = True,
+           jupyter_preview = jupyter_preview,
            resolution = 700)
+    
+if jupyter_preview == False:
+    source_to_move = ['table_1.tex', 'table_2.tex']
+    dest = ['Overleaf/00_baseline_SOE.tex', 
+            'Overleaf/01_baseline_No_SOE.tex'
+           ]
+    for i, v in enumerate(source_to_move):
+        shutil.move(
+            v,
+            dest[i])
+    
 ```
 
 <!-- #region kernel="Python 3" -->
 # Table 4 parallel trend
+
+Ouput: 
+
+- Overleaf
+    - Temp_tables/Tables_paper/02_paper_version_2/03_parallel_trend
+- Google Drive
+    - [03_parallel_trend](https://drive.google.com/open?id=19FVCL2kX0Z4KKLYsZcx-4RNJFv-1ha6O)
+![](https://drive.google.com/uc?export=view&id=19FVCL2kX0Z4KKLYsZcx-4RNJFv-1ha6O)
 
 $$
 \begin{aligned}
@@ -898,7 +930,8 @@ t7 <- felm(formula=log(tso2_cit) ~
 t7 <-change_target(t7)
     
 name = paste0("table_",1,".txt")
-    title = paste0("Parallel trend threshold used decile ", threshold_full)
+#title = paste0("Parallel trend threshold used decile ", threshold_full)
+title = paste0("Parallel trend")
     
 tables <- list(t1, t2, t3, t4, t5, t6,t7)
 table_1 <- go_latex(tables,
@@ -911,12 +944,11 @@ table_1 <- go_latex(tables,
 ```
 
 ```sos kernel="Python 3"
-import os
+jupyter_preview = False
 new_r = ['& Full sample', 'No SOE', 'SOE', 'No SOE', 'SOE', 'No SOE', 'SOE']
 
 tb = """\\footnotesize{
 Due to limited space, only the coefficients of interest are presented 
-for the regressions with city,industry, year fixed effect (i.e. columns 1-3).
 \sym{*} Significance at the 10\%, \sym{**} Significance at the 5\%, \sym{***} Significance at the 1\% \\
 heteroscedasticity-robust standard errors in parentheses are clustered by city 
 }
@@ -938,24 +970,51 @@ for i, val in enumerate(x):
             new_row = new_r,
             multicolumn = multicolumn,
             table_nte =tb,
-           jupyter_preview = True,
+           jupyter_preview = jupyter_preview,
            resolution = 700)
+    
+if jupyter_preview == False:
+    source_to_move = ['table_1.tex'
+                      #, 'table_2.tex'
+                     ]
+    dest = ['Overleaf/03_parallel_trend.tex', 
+            #'Overleaf/01_baseline_No_SOE.tex'
+           ]
+    for i, v in enumerate(source_to_move):
+        shutil.move(
+            v,
+            dest[i])
 ```
 
 <!-- #region kernel="Python 3" -->
 # Diffusion chanels
 
-- TCZ VS non TCZ
+- Overleaf
+    - Temp_tables/Tables_paper/02_paper_version_2/04_DC_TCZ_C_SPZ
+    - Temp_tables/Tables_paper/02_paper_version_2/05_DC_concentrated
+    - Temp_tables/Tables_paper/02_paper_version_2/06_DC_kuznet
+
+- Google Drive
+    - [04_DC_TCZ_C_SPZ](https://drive.google.com/open?id=1B0-5-5OankMGPBmTMcC8_bsNiTK7KeX2)
+![](https://drive.google.com/uc?export=view&id=1B0-5-5OankMGPBmTMcC8_bsNiTK7KeX2)
+    - [05_DC_concentrated](https://drive.google.com/open?id=1YVK31L6NXcwE5pN3LhdQ2aqBgiuJGF2S)
+![](https://drive.google.com/uc?export=view&id=1YVK31L6NXcwE5pN3LhdQ2aqBgiuJGF2S)
+    - [06_DC_kuznet](https://drive.google.com/open?id=1LSUMaIL3Nw-WfkQWMQn7RO8xaBzzGhw-)
+![](https://drive.google.com/uc?export=view&id=1LSUMaIL3Nw-WfkQWMQn7RO8xaBzzGhw-)
+
+## Details
+- TCZ, Coastal, SPZ
 - Concentrated VS non concentrated
 - Kuznet
     - TCZ
     - Concentration
     - SOE
-- TFP
+- TFP: In this notebook. Too long time compute
 <!-- #endregion -->
 
 <!-- #region kernel="Python 3" -->
 ## TCZ, Coastal and SPZ
+
 <!-- #endregion -->
 
 ```sos kernel="R"
@@ -1095,7 +1154,7 @@ t12 <-change_target(t12)
 
 
 name = paste0("table_",1,".txt")
-    title = paste0("Diffusion Chanel TCZ VS No TCZ ")
+    title = paste0("Diffusion Chanel TCZ, Coastal & SPZ ")
     
 tables <- list(t1, t2, t3, t4,t5, t6, t7,t8, t9, t10, t11, t12)
 table_1 <- go_latex(tables,
@@ -1108,6 +1167,7 @@ table_1 <- go_latex(tables,
 ```
 
 ```sos kernel="Python 3"
+jupyter_preview = False
 multicolumn ={
     'TCZ': 2,
     'No TCZ': 2,
@@ -1121,7 +1181,7 @@ new_r = ['& TCZ', 'TCZ', 'No TCZ', 'No TCZ']
 
 tb = """\\footnotesize{
 Due to limited space, only the coefficients of interest are presented 
-for the regressions with city,industry, year fixed effect (i.e. columns 1-3).
+for the regressions with city,industry, year fixed effect (i.e. columns 1, 3, 5, 7, 9, 11).
 \sym{*} Significance at the 10\%, \sym{**} Significance at the 5\%, \sym{***} Significance at the 1\% \\
 heteroscedasticity-robust standard errors in parentheses are clustered by city 
 }
@@ -1137,8 +1197,20 @@ for i, val in enumerate(x):
             new_row = False,
             multicolumn = multicolumn,
             table_nte =tb,
-           jupyter_preview = True,
-           resolution = 300)
+           jupyter_preview = jupyter_preview,
+           resolution = 700)
+    
+if jupyter_preview == False:
+    source_to_move = ['table_1.tex'
+                      #, 'table_2.tex'
+                     ]
+    dest = ['Overleaf/04_DC_TCZ_C_SPZ.tex', 
+            #'Overleaf/01_baseline_No_SOE.tex'
+           ]
+    for i, v in enumerate(source_to_move):
+        shutil.move(
+            v,
+            dest[i])
 ```
 
 <!-- #region kernel="Python 3" -->
@@ -1195,8 +1267,10 @@ t4 <- felm(formula=log(tso2_cit) ~
 t4 <-change_target(t4)
 
 name = paste0("table_",1,".txt")
-    title = paste0("Diffusion Chanel Concentrated VS non concentrated Decile ",
-                   threshold_full)
+#title = paste0("Diffusion Chanel Concentrated VS non concentrated Decile ",
+#                  threshold_full)
+title = paste0("Diffusion Chanel Concentrated VS non concentrated"
+                  )
     
 tables <- list(t1, t2, t3, t4)
 table_1 <- go_latex(tables,
@@ -1209,6 +1283,7 @@ table_1 <- go_latex(tables,
 ```
 
 ```sos kernel="Python 3"
+jupyter_preview = False
 multicolumn ={
     'Concentrated': 2,
     'No Concentrated': 2,
@@ -1218,7 +1293,7 @@ new_r = ['& TCZ', 'TCZ', 'No TCZ', 'No TCZ']
 
 tb = """\\footnotesize{
 Due to limited space, only the coefficients of interest are presented 
-for the regressions with city,industry, year fixed effect (i.e. columns 1-3).
+for the regressions with city,industry, year fixed effect (i.e. columns 1 and 3).
 \sym{*} Significance at the 10\%, \sym{**} Significance at the 5\%, \sym{***} Significance at the 1\% \\
 heteroscedasticity-robust standard errors in parentheses are clustered by city 
 }
@@ -1234,8 +1309,20 @@ for i, val in enumerate(x):
             new_row = False,
             multicolumn = multicolumn,
             table_nte =tb,
-           jupyter_preview = True,
-           resolution = 300)
+           jupyter_preview = jupyter_preview,
+           resolution = 700)
+    
+if jupyter_preview == False:
+    source_to_move = ['table_1.tex'
+                      #, 'table_2.tex'
+                     ]
+    dest = ['Overleaf/05_DC_concentrated.tex', 
+            #'Overleaf/01_baseline_No_SOE.tex'
+           ]
+    for i, v in enumerate(source_to_move):
+        shutil.move(
+            v,
+            dest[i])
 ```
 
 <!-- #region kernel="Python 3" -->
@@ -1310,10 +1397,6 @@ turning_point <- function(tables, currency ='RMB'){
         return(turning_dol)
     }
 }
-```
-
-```sos kernel="R"
-head(df_kuznet)
 ```
 
 ```sos kernel="R"
@@ -1523,8 +1606,8 @@ t10 <- felm(formula=log(tso2_cit) ~
 t10 <-change_target(t10)
 
 name = paste0("table_",1,".txt")
-    title = paste0("Diffusion Chanel Kuznet Decile ", threshold_full)
-    
+#title = paste0("Diffusion Chanel Kuznet Decile ", threshold_full)
+title = paste0("Diffusion Chanel Kuznet")    
 tables <- list(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10)
 turning <- turning_point(tables, currency = 'RMB')
 turning_dol <- turning_point(tables, currency = 'dollars')
@@ -1549,6 +1632,7 @@ table_1 <- go_latex(tables,
 ```
 
 ```sos kernel="Python 3"
+jupyter_preview = False
 multicolumn ={
     'City': 2,
     'Concentration': 2,
@@ -1565,7 +1649,6 @@ new_r = ['& TCZ', 'No TCZ', 'Concentrated', 'No Concentrated',
 
 tb = """\\footnotesize{
 Due to limited space, only the coefficients of interest are presented 
-for the regressions with city,industry, year fixed effect (i.e. columns 1-3).
 \sym{*} Significance at the 10\%, \sym{**} Significance at the 5\%, \sym{***} Significance at the 1\% \\
 heteroscedasticity-robust standard errors in parentheses are clustered by city 
 }
@@ -1581,326 +1664,21 @@ for i, val in enumerate(x):
             new_row = new_r,
             multicolumn = multicolumn,
             table_nte =tb,
-           jupyter_preview = True,
-           resolution = 200)
-```
-
-<!-- #region kernel="Python 3" -->
-## TFP
-
-$$ TFP _{i k t}=\alpha\left(\text { Period } \times \text { Target }{i} \times \text { Polluting sectors }{k} \right)+\nu{i}+\lambda_{t}+\phi_{k}+\epsilon_{i k t} $$
-
-$$ TFP _{i k t}=\alpha\left(\text { Period } \times \text { Target }{i} \times \text { Polluting sectors }{k} \right)+\nu_{ct}+\lambda_{kt}+\phi_{ck}+\epsilon_{i k t} $$
-
-# Table TFP
-
-$$
-TFP _{fi k t}=\alpha\left(\text { Period } \times \text { Target }_{i} \times \text { Polluting sectors }_{k} \right)+\nu_{i}+\lambda_{t}+\phi_{k}+\epsilon_{i k t}
-$$
-
-1. Full sample
-2. SOE dominated
-3. TCZ vs No TCZ
-4. Coastal vs No Coastal
-3. Kuznet threshold
-    - TCZ: 28795
-    - Concentrated: 45396
-    - SOE output: 30264
-    - SOE Capital: 24867
-    - SPE employment: 35190
-<!-- #endregion -->
-
-```sos kernel="SoS"
-%put df_final --to R
-#query = (
-#          "SELECT * "
-#            "FROM China.TFP_SBC_firm "
-
-#        )
-
-#df_final = gcp.upload_data_from_bigquery(query = query, location = 'US')
-#df_final.head()
-df_final = pd.read_csv('../01_TFP_SBC_firm.gz')  
-```
-
-<!-- #region kernel="SoS" -->
-### Load chinese_city_characteristics from Google Spreadsheet
-
-Feel free to add description about the dataset or any usefull information.
-
-Profiling will be available soon for this dataset
-<!-- #endregion -->
-
-```sos kernel="SoS"
-#from Fast_connectCloud import connector
-#from GoogleDrivePy.google_drive import connect_drive
-#import pandas as pd
-#import numpy as np
-
-#gs = connector.open_connection(online_connection = False, 
-#	path_credential = '/Users/thomas/Google Drive/Projects/Client_Oauth/Google_auth/')
-
-#service_gd = gs.connect_remote(engine = 'GS')
-
-#gdr = connect_drive.connect_drive(service_gd['GoogleDrive'])
-```
-
-```sos kernel="SoS"
-%put df_herfhindal_final --to R
-df_herfhindal_final = (df_final.merge(df_herfhindal,
-                                     on=[aggregation_param],
-                                     how='left',
-                                     indicator=True
-                                     )
-                       .assign(
-                       decile_herfhindal = lambda x:
-                           pd.qcut(x['Herfindahl_agg'],10, labels=False),
-                       mean_herfhindal= 
-                           lambda x: np.where(
-                               x["Herfindahl_agg"] > 
-                               x["Herfindahl_agg"].drop_duplicates().mean(),
-                               1,0
-                           ),
-                       third_herfhindal= 
-                           lambda x: np.where(
-                               x["Herfindahl_agg"] >
-                               (x["Herfindahl_agg"]
-                                .drop_duplicates()
-                                .quantile([.75])
-                                .values[0]),
-                               1,0
-                           ),
-                     threshold_herfhindal= 
-                           lambda x: np.where(
-                               x["decile_herfhindal"] > threshold_full,
-                               1,0
-                           )
-                           
-                       )
-                      )
-```
-
-```sos kernel="SoS"
-%put df_chinese_city_characteristics --to R
-df_chinese_city_characteristics = (df_final.merge(
-    pd.read_csv('../df_chinese_city_characteristics.csv'),
-    on = ['year','geocode4_corr']
-).assign(
-    threshold_tcz= 
-                           lambda x: np.where(
-                               x["gdp_cap"] > 28795,
-                               1,0
-                           ),
-    threshold_concentrated= 
-                           lambda x: np.where(
-                               x["gdp_cap"] > 45396,
-                               1,0
-                           ),
-    threshold_soe_output= 
-                           lambda x: np.where(
-                               x["gdp_cap"] > 30264,
-                               1,0
-                           ),
-    threshold_soe_capital= 
-                           lambda x: np.where(
-                               x["gdp_cap"] > 24867,
-                               1,0
-                           ),
-    threshold_soe_employment= 
-                           lambda x: np.where(
-                               x["gdp_cap"] > 35190,
-                               1,0
-                           ),
-    threshold_full= 
-                           lambda x: np.where(
-                               x["gdp_cap"] > 41247,
-                               1,0
-                           )
-)
-                                  )
-df_chinese_city_characteristics.shape
-```
-
-```sos kernel="R"
-df_final <- df_final %>% 
-    mutate_if(is.character, as.factor) %>%
-    mutate_at(vars(starts_with("FE")), as.factor) %>%
-    mutate(
-         Period = relevel(Period, ref='Before'),
-         TCZ_c = relevel(TCZ_c, ref='No_TCZ'),
-         polluted_thre = relevel(polluted_thre, ref='Below'),
-  )
-```
-
-```sos kernel="R"
-df_herfhindal_final <- df_herfhindal_final %>% 
-    mutate_if(is.character, as.factor) %>%
-    mutate_at(vars(starts_with("FE")), as.factor) %>%
-    mutate(
-         Period = relevel(Period, ref='Before'),
-         TCZ_c = relevel(TCZ_c, ref='No_TCZ'),
-         polluted_thre = relevel(polluted_thre, ref='Below'),
-  )
-```
-
-```sos kernel="R"
-df_chinese_city_characteristics <- df_chinese_city_characteristics %>% 
-    mutate_if(is.character, as.factor) %>%
-    mutate_at(vars(starts_with("FE")), as.factor) %>%
-    mutate(
-         Period = relevel(Period, ref='Before'),
-         TCZ_c = relevel(TCZ_c, ref='No_TCZ'),
-         polluted_thre = relevel(polluted_thre, ref='Below'),
-  )
-```
-
-<!-- #region kernel="R" -->
-## TCZ and concentration
-<!-- #endregion -->
-
-```sos kernel="R"
-head(df_herfhindal_final)
-```
-
-```sos kernel="R"
-#toremove <- dir(path=getwd(), pattern=".tex|.pdf|.txt")
-#file.remove(toremove)
-
-var_ <- 'threshold_herfhindal'
-df_to_filter <- df_final
-
-i = 3
-fe1 <- list(
-    c("Firm", "Yes", "Yes", "Yes", "Yes"),
-    c("City-industry", "No", "No", "Yes", "Yes", "Yes", "Yes"),
-    c("City-time", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"),
-    c("time-industry", "No", "No", "Yes", "Yes", "Yes", "Yes")
-             )
-
-for ( var in c(#"Coastal", "TCZ_c", 
-               var_)){
+           jupyter_preview = jupyter_preview,
+           resolution = 700)
     
-    if (var == "Coastal"){
-        filters <- TRUE  
-        title_name = "Reduction mandate and TFP: Coastal versus non-Coastal"
-    }else if (var == "TCZ_c"){
-        filters <- "TCZ"   
-        title_name = "Reduction mandate and TFP: TCZ versus non-TCZ"
-    }else if (var == var_) {
-        filters <- 1
-        df_to_filter <- df_herfhindal_final
-        title_name = "Reduction mandate and TFP: industrial concentration"
-    }
-    
-    t1 <- felm(formula= tfp_OP ~ 
-               target_c  * Period * polluted_thre |
-                  id + FE_t_c + FE_t_i + FE_c_i
-                  | 0 |
-                 industry, data= df_to_filter %>% filter(
-                     get(var) == filters & 
-                     OWNERSHIP == 'SOE'
-                 ),
-                 exactDOF=TRUE)
-
-    t2 <- felm(formula= tfp_OP ~ 
-               target_c  * Period * polluted_thre |
-                  id + FE_t_c + FE_t_i + FE_c_i
-                  | 0 |
-                 industry, data= df_to_filter %>% filter(
-                     get(var) != filters&
-                     OWNERSHIP == 'SOE'
-                 ),
-                 exactDOF=TRUE)
-
-    t3 <- felm(formula= tfp_OP ~ 
-               target_c  * Period * polluted_thre |
-                  id + FE_t_c + FE_t_i + FE_c_i
-                  | 0 |
-                 industry, data= df_to_filter %>% filter(
-                     get(var) == filters & 
-                     OWNERSHIP != 'SOE'
-                 ),
-                 exactDOF=TRUE)
-
-    t4 <- felm(formula= tfp_OP ~ 
-               target_c  * Period * polluted_thre |
-                  id + FE_t_c + FE_t_i + FE_c_i
-                  | 0 |
-                 industry, data= df_to_filter %>% filter(
-                     get(var) != filters & 
-                     OWNERSHIP != 'SOE'
-                 ),
-                 exactDOF=TRUE)
-
-    name = paste0("table_",i,".txt")
-    title = title_name
-    tables <- list(t1, t2, t3, t4)
-    table_1 <- go_latex(tables,
-                dep_var = "Dependent variable \\text { TFP }_{fikt}",
-                title=title,
-                addFE=fe1,
-                save=TRUE,
-                note = FALSE,
-                name=name)
-    i = i+1
-    print(title)
-}
-    
-    
-    
-    
-    
+if jupyter_preview == False:
+    source_to_move = ['table_1.tex'
+                      #, 'table_2.tex'
+                     ]
+    dest = ['Overleaf/06_DC_kuznet.tex', 
+            #'Overleaf/01_baseline_No_SOE.tex'
+           ]
+    for i, v in enumerate(source_to_move):
+        shutil.move(
+            v,
+            dest[i])
 ```
-
-```sos kernel="Python 3"
-tb = """\\footnotesize{
-Due to limited space, only the coefficients of interest are presented 
-\sym{*} Significance at the 10\%, \sym{**} Significance at the 5\%, \sym{***} Significance at the 1\% \\
-heteroscedasticity-robust standard errors in parentheses are clustered by city 
-}
-"""
-
-multicolumn = {
-    'SOE': 2,
-    'PRIVATE': 2,
-}
-
-new_row = [
-    ['& Coastal', 'NO Coastal',
-     'Coastal', 'NO Coastal'],
-    ['& TCZ', 'NO TCZ',
-     'TCZ', 'NO TCZ'],
-    ['& Concentrated', 'NO Concentrated',
-     'Concentrated', 'NO Concentrated']
-]
-```
-
-```sos kernel="Python 3"
-x = [a for a in os.listdir() if a.endswith(".txt")]
-for i, val in enumerate(x):
-    lb.beautify(table_number = i+1,
-            remove_control= False,
-            constraint = True,
-            city_industry = False, 
-            new_row = new_row[i],
-            multicolumn = multicolumn,
-            table_nte =tb,
-            jupyter_preview = True,
-            resolution = 150)
-```
-
-<!-- #region kernel="R" -->
-## Kuznet
-
-cf: https://github.com/thomaspernet/SBC_pollution_China/blob/master/Data_analysis/06_TFP/01_TFP_analysis.md#with-firms-fixed-effect
-
-Too long to reestimate
-- overleaf table: 
-
-Google Drive
-
-![Kuznet](https://drive.google.com/uc?export=view&id=108G-uRs074klH_bIG7EQ0_PfsAxHj45L)
-<!-- #endregion -->
 
 <!-- #region kernel="Python 3" -->
 # Create Report
