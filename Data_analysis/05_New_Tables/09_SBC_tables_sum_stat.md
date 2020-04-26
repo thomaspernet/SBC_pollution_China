@@ -382,6 +382,16 @@ df_share_soe.shape
 
 <!-- #region kernel="Python 3" -->
 # Table 1
+
+Ouput: 
+
+- Overleaf
+    - Temp_tables/Tables_paper/02_paper_version_2/11_table_stat
+- Google Drive
+    - [11_table_stat](https://drive.google.com/open?id=1Xejq3Jem9sD34yif7s_8Co-4bAP4wWe9)
+![](https://drive.google.com/uc?export=view&id=1Xejq3Jem9sD34yif7s_8Co-4bAP4wWe9)
+
+
 <!-- #endregion -->
 
 ```python kernel="Python 3"
@@ -757,7 +767,7 @@ pd.DataFrame(dic_, index= ['No TCZ','TCZ',
 ```
 
 ```python kernel="Python 3"
-import sys, os
+import sys, os, shutil
 sys.path.insert(0,'..')
 import functions.latex_beautify as lb
 
@@ -766,25 +776,41 @@ import functions.latex_beautify as lb
 ```
 
 ```python kernel="Python 3"
-
+jupyter_preview = False
 table_nte = """
 Sources: Author's own computation \\
-      The list of TCZ is provided by the State Council, 1998.
-      "Official Reply to the State Council Concerning Acid Rain Control Areas
-      and Sulfur Dioxide Pollution Control Areas".
-      The information about the SO2 level are collected using various edition
-      of the China Environment Statistics Yearbook.
-      We compute the reduction of SO2 emission using the same methodology
-      as Chen and al.(2018).
+The list of TCZ is provided by the State Council, 1998.
+"Official Reply to the State Council Concerning Acid Rain Control Areas
+and Sulfur Dioxide Pollution Control Areas".
+The information about the SO2 level are collected using various edition
+of the China Environment Statistics Yearbook.
+We compute the reduction of SO2 emission using the same methodology
+as Chen and al.(2018).
 """
 lb.beautify_table(table_nte = table_nte,
                   name = 'table_1',
-                  jupyter_preview  = True,
+                  jupyter_preview  = jupyter_preview,
                   resolution = 500)
+if jupyter_preview == False:
+    source_to_move = ['table_1.tex']
+    dest = ['Overleaf_statistic/11_table_stat.tex'
+           ]
+    for i, v in enumerate(source_to_move):
+        shutil.move(
+            v,
+            dest[i])
 ```
 
 <!-- #region kernel="Python 3" -->
 # Table 2
+
+Ouput: 
+
+- Overleaf
+    - Temp_tables/Tables_paper/02_paper_version_2/11_table_stat
+- Google Drive
+    - [11_table_stat](https://drive.google.com/open?id=1MdWuHFzX-Ow5M34T8GnGiKQvFpmXY9I7)
+![](https://drive.google.com/uc?export=view&id=1MdWuHFzX-Ow5M34T8GnGiKQvFpmXY9I7)
 <!-- #endregion -->
 
 ```python kernel="Python 3"
@@ -798,17 +824,20 @@ t0 = (df_final_SOE_table2[['share_output_agg_o', 'share_fa_net_agg_o',
 ```
 
 ```python kernel="Python 3"
-t1 = df_final_SOE_table2.groupby('Lower_location')[['share_output_agg_o', 'share_fa_net_agg_o',
+t1 = df_final_SOE_table2.groupby('Lower_location')[['share_output_agg_o',
+                                                    'share_fa_net_agg_o',
        'share_employement_agg_o']].mean()
 ```
 
 ```python kernel="Python 3"
-t2 = df_final_SOE_table2.groupby('Larger_location')[['share_output_agg_o', 'share_fa_net_agg_o',
+t2 = df_final_SOE_table2.groupby('Larger_location')[['share_output_agg_o',
+                                                     'share_fa_net_agg_o',
        'share_employement_agg_o']].mean()
 ```
 
 ```python kernel="Python 3"
-t3 = df_final_SOE_table2.groupby('TCZ_c')[['share_output_agg_o', 'share_fa_net_agg_o',
+t3 = df_final_SOE_table2.groupby('TCZ_c')[['share_output_agg_o',
+                                           'share_fa_net_agg_o',
        'share_employement_agg_o']].mean().rename(index={'No_TCZ': 'No TCZ'})
 ```
 
@@ -822,6 +851,7 @@ t4 = (df_final_SOE_table2
 ```
 
 ```python kernel="Python 3"
+jupyter_preview = False
 for i in range(1, 19):
     try:
         os.remove("table_{}.pdf".format(i))
@@ -849,8 +879,17 @@ Sources: Author's own computation \\
 """
 lb.beautify_table(table_nte = table_nte,
                   name = 'table_1',
-                  jupyter_preview  = True,
-                  resolution = 500)
+                  jupyter_preview  = jupyter_preview,
+                  resolution = 200)
+
+if jupyter_preview == False:
+    source_to_move = ['table_1.tex']
+    dest = ['Overleaf_statistic/12_table_stat.tex'
+           ]
+    for i, v in enumerate(source_to_move):
+        shutil.move(
+            v,
+            dest[i])
 ```
 
 <!-- #region kernel="Python 3" -->
