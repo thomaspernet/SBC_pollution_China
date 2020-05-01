@@ -721,6 +721,7 @@ def beautify_table(table_nte, name = 'table_1',  jupyter_preview  = True,
     with open('{}.tex'.format(name), 'r') as file:
         lines = file.read()
         lines = lines.replace('nan\%', ' ')
+        lines = lines.replace('\\textasciicircum', '^')
 
     with open('{}.tex'.format(name), 'w') as file:
             file.write(lines)

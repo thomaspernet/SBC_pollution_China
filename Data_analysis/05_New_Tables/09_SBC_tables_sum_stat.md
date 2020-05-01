@@ -130,6 +130,16 @@ sheetName = sheetname,
                )
 ```
 
+## Load chinese_city_characteristics from Google Spreadsheet
+
+Feel free to add description about the dataset or any usefull information.
+
+Profiling will be available soon for this dataset
+
+```python
+df_chinese_city_characteristics = pd.read_csv('../df_chinese_city_characteristics.csv')
+```
+
 <!-- #region kernel="Python 3" -->
 ## Paper dataset
 <!-- #endregion -->
@@ -377,10 +387,6 @@ df_share_soe.shape
 ```
 
 <!-- #region kernel="Python 3" -->
-
-<!-- #endregion -->
-
-<!-- #region kernel="Python 3" -->
 # Table 1
 
 Ouput: 
@@ -485,12 +491,15 @@ df_final_SOE_table2 = (df_final.merge(
                            'SOE dominated',"No SOE dominated"
                     )
                 )[['geocode4_corr',
+                   'soe_city',
                    'Lower_location',
                    'Larger_location',
                    'TCZ_c',
+                   'Coastal',
      'share_output_agg_o',
      'share_fa_net_agg_o',
-     'share_employement_agg_o']]
+     'share_employement_agg_o',
+                  'target_c']]
                        .drop_duplicates(subset = 'geocode4_corr')
                        .assign(geocode4_corr = lambda x: 
                         x['geocode4_corr'].astype('str'))
@@ -756,14 +765,18 @@ for i in range(1, 19):
         pass
 
 title = "SO2 reduction during the subsequent FYPs"
-pd.DataFrame(dic_, index= ['No TCZ','TCZ',
-                           'No Dominated SOE',
-                           ' Dominated SOE',
-                           'Full Sample']).to_latex('table_1.tex',
-                                                    caption = title,
-                                                    index=True,
-                                                    label = "table_1",
-                                                   float_format="{:,.2%}".format)
+(pd.DataFrame(dic_, index= ['No TCZ','TCZ',
+                           'No Dominated SOE^a',
+                           ' Dominated SOE^a',
+                           'Full Sample'])
+ .rename_axis('Cities')
+ .reset_index()
+ .to_latex('table_1.tex',
+           caption = title,
+           index=False,
+           label = "table_1",
+           float_format="{:,.2%}".format)
+)
 ```
 
 ```python kernel="Python 3"
@@ -778,14 +791,17 @@ import functions.latex_beautify as lb
 ```python kernel="Python 3"
 jupyter_preview = False
 table_nte = """
-Sources: Author's own computation \\
+Sources: Author's own computation  \n
 The list of TCZ is provided by the State Council, 1998.
 "Official Reply to the State Council Concerning Acid Rain Control Areas
 and Sulfur Dioxide Pollution Control Areas".
 The information about the SO2 level are collected using various edition
 of the China Environment Statistics Yearbook.
 We compute the reduction of SO2 emission using the same methodology
-as Chen and al.(2018).
+as Chen and al.(2018).  \n
+$a$ (No) Dominated SOEs cities refer to cities where the 
+(output, capital, employment) share of SOEs is (below) above a critical threshold,
+for instance the 6th decile
 """
 lb.beautify_table(table_nte = table_nte,
                   name = 'table_1',
@@ -850,6 +866,8 @@ t4 = (df_final_SOE_table2
 )
 ```
 
+Add target
+
 ```python kernel="Python 3"
 jupyter_preview = False
 for i in range(1, 19):
@@ -861,7 +879,13 @@ for i in range(1, 19):
         pass
 
 title = "Summary statistics by city characteristics"
-header = ["Output share SOE_c", "Capital share SOE_c","Employment share SOE_c"]
+header = ["Output share SOE_i", "Capital share SOE_i","Employment share SOE_i"
+          #, "Target_i"
+         ]
+#pd.concat([
+#   pd.concat([t0, t1, t2, t3, t4], axis = 0),
+#    pd.concat([t5, t6, t7, t8, t9], axis = 0)
+#], axis = 1)
 pd.concat([t0, t1, t2, t3, t4], axis = 0).to_latex(
     'table_1.tex',
     caption = title,
@@ -871,10 +895,11 @@ pd.concat([t0, t1, t2, t3, t4], axis = 0).to_latex(
     float_format="{:,.2%}".format)
 
 table_nte = """
-Sources: Author's own computation \\
-      The list of TCZ is provided by the State Council, 1998.
-      Output share SOE, Capital share SOE, Employment share SOE is computed 
-      using the average output, capital or employment share by city over 2002-2005
+Sources: Author's own computation \n
+The list of TCZ is provided by the State Council, 1998. \n
+Output $\text { Share SOE }_{i}$ refers to the ratio of output
+(respectively capital, employment) of SOEs over the total production
+(capital, employment) in city $i$
       
 """
 lb.beautify_table(table_nte = table_nte,
@@ -890,6 +915,466 @@ if jupyter_preview == False:
         shutil.move(
             v,
             dest[i])
+```
+
+Only for the text:
+
+SOE share by:
+
+- Hinterland
+- SPZ/no SPZ
+
+
+```python
+pd.concat([(df_final_SOE_table2
+ .merge(df_TCZ_list_china)
+ .groupby('SPZ')[['share_output_agg_o', 'share_fa_net_agg_o',
+       'share_employement_agg_o']]
+ .mean().rename(index={'0': 'No SPZ', '1': 'SPZ'})
+),
+           (df_final_SOE_table2
+ .assign(hinterland = lambda x: 
+         np.where(
+             x['Lower_location'].isin(['Coastal']),
+             "No", "Yes")
+        )
+ .groupby('hinterland')[['share_output_agg_o', 'share_fa_net_agg_o',
+       'share_employement_agg_o']]
+ .mean().rename(index={'No': 'No hinterland',
+                       'Yes': 'hinterland'})
+)
+          ], axis = 0).rename(columns = {
+    'share_output_agg_o':'Output share SOE_i',
+    'share_fa_net_agg_o':'Capital share SOE_i',
+    'share_employement_agg_o':'Employment share SOE_i'
+}) .style.format('{:,.2%}')
+
+```
+
+### Table 2 bis
+
+Ouput: 
+
+https://drive.google.com/open?id=1HlzY8F6gjfT03WecoIxBTAovvh4OFnBI
+
+- Overleaf
+    - Temp_tables/Tables_paper/02_paper_version_2/14_table_stat
+- Google Drive
+    - [14_table_stat](https://drive.google.com/open?id=1HlzY8F6gjfT03WecoIxBTAovvh4OFnBI)
+![](https://drive.google.com/uc?export=view&id=1HlzY8F6gjfT03WecoIxBTAovvh4OFnBI)
+
+```python
+t1 = (df_final_SOE_table2[['target_c']]
+      .mean()
+      .reset_index()
+      .set_index('index')
+      .T
+      .rename(index={0: 'Full sample'}))
+t2 = df_final_SOE_table2.groupby('Lower_location')[['target_c']].mean()
+t3 = df_final_SOE_table2.groupby('Larger_location')[['target_c']].mean()
+t4 = df_final_SOE_table2.groupby('TCZ_c')[['target_c']
+                                         ].mean().rename(index={'No_TCZ':
+                                                                'No TCZ'})
+t5 = (df_final_SOE_table2
+ .merge(df_herfhindal_final)
+ .groupby('concentrated_city')[['target_c']]
+ .mean()
+)
+t6 = df_final_SOE_table2.groupby('Coastal')[['target_c']
+                                         ].mean().rename(index={False:
+                                                                'No Coastal',
+                                                               True: 'Coastal'})
+```
+
+```python
+t7 = (df_final_SOE_table2.groupby(['soe_city'])[['target_c']]
+ .mean()
+      .T
+ .rename(index={'target_c': 'Full sample'})
+)
+t8 = (df_final_SOE_table2.groupby(['soe_city','Lower_location'])[['target_c']]
+ .mean()
+ .unstack(0)
+ .droplevel(0, axis =1)
+)
+
+t9 = (df_final_SOE_table2.groupby(['soe_city','Larger_location'])[['target_c']]
+ .mean()
+ .unstack(0)
+ .droplevel(0, axis =1)
+)
+
+t10 = (df_final_SOE_table2.groupby(['soe_city','TCZ_c'])[['target_c']]
+ .mean()
+ .unstack(0)
+ .droplevel(0, axis =1)
+      .rename(index={'No_TCZ':'No TCZ'})
+)
+t11 = (df_final_SOE_table2
+ .merge(df_herfhindal_final)
+ .groupby(['soe_city','concentrated_city'])[['target_c']]
+ .mean().unstack(0).droplevel(0, axis =1)
+)
+t12 = (df_final_SOE_table2
+       .groupby(['soe_city','Coastal'])[['target_c']]
+       .mean()
+       .rename(index={False:'No Coastal',
+                      True: 'Coastal'})
+       .unstack(0)
+       .droplevel(0, axis =1)
+      )
+```
+
+```python
+index = (pd.concat([t7, t8, t9, t10, t11, t12],axis = 0)
+ .reset_index()
+)['index'].to_list()
+```
+
+```python
+title = "Summary statistics of Target by city characteristics"
+header = ["All Cities","No SOE dominated", "SOE dominated"]
+
+(pd.concat([t1, t2, t3, t4, t5, t6],axis = 0)
+ .rename(columns={'target_c': 'All cities'})
+ .reset_index()
+).merge(
+    (pd.concat([t7, t8, t9, t10, t11, t12],axis = 0)
+ .reset_index())
+    ,on = ['index']).drop_duplicates(
+    subset = 
+    ['index']).set_index('index').reindex(index = 
+                                          index).to_latex(
+    'table_1.tex',
+    caption = title,
+    index=True,
+    label = "table_1",
+    header = header,
+    float_format="{:,.2%}".format)
+
+table_nte = """
+Sources: Author's own computation \n
+The list of TCZ is provided by the State Council, 1998. \n
+$a$ (No) Dominated SOEs cities refer to cities where the 
+(output, capital, employment) share of SOEs is (below) above a critical threshold,
+for instance the 6th decile
+      
+"""
+lb.beautify_table(table_nte = table_nte,
+                  name = 'table_1',
+                  jupyter_preview  = jupyter_preview,
+                  resolution = 200)
+
+if jupyter_preview == False:
+    source_to_move = ['table_1.tex']
+    dest = ['Overleaf_statistic/15_table_stat.tex'
+           ]
+    for i, v in enumerate(source_to_move):
+        shutil.move(
+            v,
+            dest[i])
+```
+
+# Table 3
+
+Ouput: 
+
+- Overleaf
+    - Temp_tables/Tables_paper/02_paper_version_2/13_table_stat
+- Google Drive
+    - [13_table_stat](https://drive.google.com/open?id=1ITXwbLX3XpgnZWGOgXPhnQj17680Cgey)
+![](https://drive.google.com/uc?export=view&id=1ITXwbLX3XpgnZWGOgXPhnQj17680Cgey)
+
+```python
+df_herfhindal_final.dtypes
+```
+
+```python
+df_table_3 = (
+    df_final
+    .assign(geocode4_corr = lambda x: x['geocode4_corr'].astype('str'))
+    .merge(
+        (df_chinese_city_characteristics
+ .assign(geocode4_corr = lambda x: x['geocode4_corr'].astype('str'))
+ .merge(df_TCZ_list_china, how = 'left')
+ .merge(df_final_SOE_table2[['geocode4_corr', 'soe_city']])
+ .merge(df_herfhindal_final)
+ .assign(
+     TCZ = lambda x: x['TCZ'].fillna(0),
+     SPZ = lambda x: x['SPZ'].fillna('0'),
+        )
+)
+    )
+             )
+```
+
+Panel A
+
+```python
+jupyter_preview = False
+title = "Summary statistics by city characteristics"
+#header = ["Output share SOE_i", "Capital share SOE_i","Employment share SOE_i", "Target_i"]
+
+(df_table_3
+ .assign(so2_intensity = lambda x: x['tso2_cit']/ x['population'])
+ .groupby('TCZ_c')[['tso2_cit','so2_intensity','gdp_cap',
+       'population']].mean().rename(index={'No_TCZ': 'No TCZ'}).T
+ .rename_axis('')
+ .reset_index()
+ .to_latex(
+    'table_1.tex',
+    caption = title,
+    index=False,
+    label = "table_3",
+    #header = header,
+    float_format="{:,.0f}".format)
+)
+
+table_nte = """
+Sources: Author's own computation \n
+The list of TCZ is provided by the State Council, 1998. \n
+Output $\text { Share SOE }_{i}$ refers to the ratio of output
+(respectively capital, employment) of SOEs over the total production
+(capital, employment) in city $i$
+      
+"""
+lb.beautify_table(table_nte = False,
+                  name = 'table_1',
+                  jupyter_preview  = jupyter_preview,
+                  resolution = 200)
+
+if jupyter_preview == False:
+    source_to_move = ['table_1.tex']
+    dest = ['Overleaf_statistic/13_table_stat.tex'
+           ]
+    for i, v in enumerate(source_to_move):
+        shutil.move(
+            v,
+            dest[i])
+```
+
+Only in text:
+
+GDP per capita in:
+
+- SOE/No SOE cities
+- Concentrated/ No concentrated
+- SPZ
+- Coastal 
+- TCZ
+
+  & No TCZ & Concentrated & No Concentrated & SOE dominated & SOE No dominated & SOE dominated & SOE No dominated & SOE dominated & SOE No dominated\\
+
+Count number of city above turning point RMB:
+
+- TCZ: 28795
+- No Concentrated: 45396
+- SOE No dominated Output: 30264
+- SOE No dominated Capital: 24867
+- SOE No dominated employment: 35190 
+
+```python
+pd.concat([
+    (df_table_3
+ .assign(so2_intensity = lambda x: x['tso2_cit']/ x['population'])
+ .groupby('TCZ_c')[['tso2_cit','so2_intensity','gdp_cap',
+       'population']].mean().rename(index={'No_TCZ': 'No TCZ'}).T
+ #.style.format('{:,.0f}')
+),
+    (df_table_3
+ .assign(so2_intensity = lambda x: x['tso2_cit']/ x['population'])
+ .groupby('SPZ')[['tso2_cit','so2_intensity','gdp_cap',
+       'population']].mean().rename(index={'0': 'No SPZ', '1': 'SPZ'}).T
+),
+    (df_table_3
+ .assign(so2_intensity = lambda x: x['tso2_cit']/ x['population'])
+ .groupby('soe_city')[['tso2_cit','so2_intensity','gdp_cap',
+       'population']].mean().T
+),
+    (df_table_3
+ .assign(so2_intensity = lambda x: x['tso2_cit']/ x['population'])
+ .groupby('Coastal')[['tso2_cit','so2_intensity','gdp_cap',
+       'population']].mean().rename(index={False: 'No Coastal', 
+                                          True: 'Coastal'}).T
+),
+    (df_table_3
+ .assign(so2_intensity = lambda x: x['tso2_cit']/ x['population'])
+ .groupby('concentrated_city')[['tso2_cit','so2_intensity','gdp_cap',
+       'population']].mean().T
+)
+], axis = 1).style.format('{:,.0f}')
+    
+```
+
+```python
+- TCZ: 28795
+- No Concentrated: 45396
+- SOE No dominated Output: 30264
+- SOE No dominated Capital: 24867
+- SOE No dominated employment: 35190 
+```
+
+```python
+(df_table_3[['geocode4_corr', 'soe_city']]
+ .drop_duplicates()['soe_city']
+ .value_counts())
+```
+
+```python
+dic_ = {
+     'TCZ': 28795,
+     'No Concentrated': 45396,
+     'SOE No dominated Output': 30264,
+     'SOE No dominated Capital': 24867,
+     'SOE No dominated employment': 35190
+}
+```
+
+```python
+for key, value in dic_.items():
+    results = (df_table_3
+ .assign(count = lambda x: 
+         np.where(
+             x['gdp_cap'] > value,
+             "Above", "Below")
+        )
+ .loc[lambda x: x['soe_city'].isin(['SOE dominated']) 
+     & x['year'].isin(['2007'])]
+ [['geocode4_corr', 'count']]
+ .drop_duplicates()
+ ['count'].value_counts()
+ .reset_index()
+ .assign( percentage = lambda x: np.round(x['count']/x['count'].sum(),2) * 100)
+ #.style.format('{:,.0%}', subset = ['percentage'])
+).T
+    print("\n", key, "\n",results )
+```
+
+```python
+#df_table_3['cityen'].drop_duplicates()
+```
+
+```python
+for key, value in dic_.items():
+    results = (df_table_3
+ .assign(count = lambda x: 
+         np.where(
+             x['gdp_cap'] > value,
+             "Above", "Below")
+        )
+ .loc[lambda x: #x['soe_city'].isin(['SOE dominated'])  & 
+      x['year'].isin(['2007'])]
+ [['geocode4_corr', 'count']]
+ .drop_duplicates()
+ ['count'].value_counts()
+ .reset_index()
+ .assign( percentage = lambda x: np.round(x['count']/x['count'].sum(),2) * 100).T
+ #.style.format('{:,.0%}', subset = ['percentage'])
+)
+    print(key, "\n",results )
+```
+
+SO2 emission by TCZ before and after the 11th FYP, full sample
+
+```python
+t1 = (df_final
+      .assign(
+          tso2_cit = lambda x: x['tso2_cit']/10000)
+      .groupby(['TCZ_c', 'Period', 'cityen'])
+      .agg(
+          sum_tso2_c=('tso2_cit', np.sum),
+      )
+      .groupby(level=[0, 1])
+      .agg(
+          avg_tso2=('sum_tso2_c', np.mean)
+      )
+      .sort_values(by=['TCZ_c', 'Period'], ascending=True)
+      .unstack(-1)
+      .assign(difference=lambda x: np.round(x.iloc[:, 0] - x.iloc[:, 1], 0),
+              variance=lambda x: 1-(x.iloc[:, 0] / x.iloc[:, 1])
+              )
+      .round(2)
+      .iloc[:, 2:]
+      .stack()
+      .unstack(0)
+      .rename(index={'':'Full sample'})
+      .rename_axis("Location")
+      )
+t1
+```
+
+SO2 emission by TCZ before and after the 11th FYP, by city location
+
+```python
+t2 = (df_final
+      .assign(tso2_cit = lambda x: x['tso2_cit']/10000)
+      .groupby(['TCZ_c', 'Period', 'Lower_location', 'cityen'])
+      .agg(
+          sum_tso2_c=('tso2_cit', np.sum),
+      )
+      .groupby(level=[0, 1, 2])
+      .agg(
+          avg_tso2=('sum_tso2_c', np.mean)
+      )
+      .sort_values(by=['TCZ_c', 'Period'], ascending=True)
+      .unstack(-2)
+      .assign(difference=lambda x:  np.round(x.iloc[:, 0] - x.iloc[:, 1], 0),
+              variance=lambda x: 1-(x.iloc[:, 0] / x.iloc[:, 1])
+              )
+      .sort_values(by='Lower_location')
+      .round(2)
+      .iloc[:, 2:]
+      .unstack(0)
+      .droplevel(level=1, axis=1)
+      .rename_axis("Location")
+      )
+t2
+```
+
+SO2 emission by TCZ before and after the 11th FYP, by coastal area
+
+```python
+t3 = (df_final
+      .assign(tso2_cit = lambda x: x['tso2_cit']/10000)
+      .groupby(['TCZ_c', 'Period', 'Coastal', 'cityen'])
+      .agg(
+          sum_tso2_c=('tso2_cit', np.sum),
+      )
+      .groupby(level=[0, 1, 2])
+      .agg(
+          avg_tso2=('sum_tso2_c', np.mean)
+      )
+      .sort_values(by=['TCZ_c', 'Period'], ascending=True)
+      .unstack(-2)
+      .assign(difference=lambda x: np.round(x.iloc[:, 0] - x.iloc[:, 1], 0),
+              variance=lambda x: 1-(x.iloc[:, 0] / x.iloc[:, 1]))
+      .sort_values(by='Coastal')
+      .round(2)
+      .iloc[:, 2:]
+      .unstack(0)
+      .droplevel(level=1, axis=1)
+      .rename_axis("Location")
+      .rename(index={True:'Coastal',
+                    False: 'Non Coastal'}
+             )
+      )
+t3
+```
+
+```python
+(pd.concat([t1, t2, t3])).iloc[:, :2]
+```
+
+```python
+t = (pd.concat([t1, t2, t3]).iloc[:, :2]
+ .to_latex(index=True,
+              float_format='%.2f'
+             )
+)
+t = t.replace('\_',' ')
+t = t.replace('.00','')
+t = t.replace('TCZ c','TCZ')
+print(t)
 ```
 
 <!-- #region kernel="Python 3" -->

@@ -490,16 +490,21 @@ df_herfhindal_final = (df_final.merge(df_herfhindal,
 ```
 
 ```sos kernel="SoS"
-#print('Descriptive statistics:\n {}'.format(
-#    df_herfhindal_final['Herfindahl_agg'].describe()))
-#print('Mean: {}'.format(df_herfhindal_final["Herfindahl_agg"].mean()))
-#print('Third decile: {}'.format(
-#    (df_herfhindal_final["Herfindahl_agg"]
-#     .drop_duplicates().quantile([.75]).values[0])))
-#print(pd.qcut(df_herfhindal_final['Herfindahl_agg'],
-#        10).drop_duplicates().sort_values().reset_index(drop = True))
+(df_herfhindal_final[['cityen','decile_herfhindal', 'Herfindahl_agg']]
+ .drop_duplicates().sort_values(by= 'Herfindahl_agg'))
+```
 
-#df_herfhindal_final['decile_herfhindal'].value_counts().sort_index()
+```sos kernel="SoS"
+print('Descriptive statistics:\n {}'.format(
+    df_herfhindal_final['Herfindahl_agg'].describe()))
+print('Mean: {}'.format(df_herfhindal_final["Herfindahl_agg"].mean()))
+print('Third quartile: {}'.format(
+    (df_herfhindal_final["Herfindahl_agg"]
+     .drop_duplicates().quantile([.75]).values[0])))
+print(pd.qcut(df_herfhindal_final['Herfindahl_agg'],
+        10).drop_duplicates().sort_values().reset_index(drop = True))
+
+df_herfhindal_final['decile_herfhindal'].value_counts().sort_index()
 ```
 
 ```sos kernel="R"
