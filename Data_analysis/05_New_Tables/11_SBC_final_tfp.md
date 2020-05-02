@@ -92,12 +92,14 @@ change_target <- function(table){
 ```sos kernel="SoS"
 from GoogleDrivePy.google_platform import connect_cloud_platform
 project = 'valid-pagoda-132423'
-gcp = connect_cloud_platform.connect_console(project = project, 
-                                             service_account = service['GoogleCloudP']) 
+
 gs = connector.open_connection(online_connection = False,
                               path_credential = '/Users/thomas/Google Drive/Projects/Client_Oauth/Google_auth')
 
 service = gs.connect_remote('GCP')
+
+gcp = connect_cloud_platform.connect_console(project = project, 
+                                             service_account = service['GoogleCloudP']) 
 ```
 
 <!-- #region kernel="SoS" -->

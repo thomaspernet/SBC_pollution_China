@@ -140,6 +140,33 @@ Profiling will be available soon for this dataset
 df_chinese_city_characteristics = pd.read_csv('../df_chinese_city_characteristics.csv')
 ```
 
+```python
+df_chinese_city_characteristics.head()
+```
+
+<!-- #region -->
+## Load provinces_location from Google Spreadsheet
+
+
+Feel free to add description about the dataset or any usefull information.
+
+Profiling will be available soon for this dataset
+<!-- #endregion -->
+
+```python
+
+### Please go here https://docs.google.com/spreadsheets/d/1pNMYAannF0g47Vrecu9tzrQ83XaaYmnXJeSuIFwr26g
+### To change the range
+
+sheetid = '1pNMYAannF0g47Vrecu9tzrQ83XaaYmnXJeSuIFwr26g'
+sheetname = 'provinces_location.csv'
+
+df_provinces_location = gdr.upload_data_from_spreadsheet(sheetID = sheetid,
+sheetName = sheetname,
+	 to_dataframe = True)
+df_provinces_location.head()
+```
+
 <!-- #region kernel="Python 3" -->
 ## Paper dataset
 <!-- #endregion -->
@@ -964,6 +991,10 @@ https://drive.google.com/open?id=1HlzY8F6gjfT03WecoIxBTAovvh4OFnBI
 ![](https://drive.google.com/uc?export=view&id=1HlzY8F6gjfT03WecoIxBTAovvh4OFnBI)
 
 ```python
+df_final_SOE_table2.loc[lambda x: x['geocode4_corr'].isin(['3101'])]
+```
+
+```python
 t1 = (df_final_SOE_table2[['target_c']]
       .mean()
       .reset_index()
@@ -1032,6 +1063,18 @@ index = (pd.concat([t7, t8, t9, t10, t11, t12],axis = 0)
 ```
 
 ```python
+# Unit 1.000 tonnes
+(pd.concat([t1, t2, t3, t4, t5, t6],axis = 0)
+ .rename(columns={'target_c': 'All cities'})
+ .reset_index()
+).merge(
+    (pd.concat([t7, t8, t9, t10, t11, t12] ,axis = 0)
+     .reset_index()
+    ) 
+).set_index('index')
+```
+
+```python
 title = "Summary statistics of Target by city characteristics"
 header = ["All Cities","No SOE dominated", "SOE dominated"]
 
@@ -1039,7 +1082,7 @@ header = ["All Cities","No SOE dominated", "SOE dominated"]
  .rename(columns={'target_c': 'All cities'})
  .reset_index()
 ).merge(
-    (pd.concat([t7, t8, t9, t10, t11, t12],axis = 0)
+    (pd.concat([t7, t8, t9, t10, t11, t12] ,axis = 0)
  .reset_index())
     ,on = ['index']).drop_duplicates(
     subset = 
@@ -1050,7 +1093,8 @@ header = ["All Cities","No SOE dominated", "SOE dominated"]
     index=True,
     label = "table_1",
     header = header,
-    float_format="{:,.2%}".format)
+    #float_format="{:,.2}".format
+)
 
 table_nte = """
 Sources: Author's own computation \n
@@ -1106,6 +1150,7 @@ df_table_3 = (
 )
     )
              )
+df_table_3.shape
 ```
 
 Panel A
@@ -1151,6 +1196,10 @@ if jupyter_preview == False:
         shutil.move(
             v,
             dest[i])
+```
+
+```python
+
 ```
 
 Only in text:
@@ -1206,13 +1255,11 @@ pd.concat([
     
 ```
 
-```python
 - TCZ: 28795
 - No Concentrated: 45396
 - SOE No dominated Output: 30264
 - SOE No dominated Capital: 24867
 - SOE No dominated employment: 35190 
-```
 
 ```python
 (df_table_3[['geocode4_corr', 'soe_city']]
@@ -1228,6 +1275,14 @@ dic_ = {
      'SOE No dominated Capital': 24867,
      'SOE No dominated employment': 35190
 }
+```
+
+```python
+81 + 146
+```
+
+```python
+35/146
 ```
 
 ```python
@@ -1255,6 +1310,40 @@ for key, value in dic_.items():
 ```
 
 ```python
+
+```
+
+```python
+141 + 87
+```
+
+```python
+95/ 147
+```
+
+```python
+(df_table_3
+ .loc[lambda x: x['year'].isin(['2007'])]
+ [['TCZ_c','geocode4_corr', 'soe_city', 'gdp_cap']]
+ .drop_duplicates()
+ .groupby(['TCZ_c','soe_city'])['gdp_cap']
+ .mean()
+ .unstack(-1)
+)
+```
+
+```python
+(df_table_3
+ .loc[lambda x: x['year'].isin(['2007'])]
+ [['TCZ_c','geocode4_corr', 'soe_city', 'gdp_cap']]
+ .drop_duplicates()
+ .groupby(['TCZ_c','soe_city'])['gdp_cap']
+ .count()
+ .unstack(-1)
+)
+```
+
+```python
 for key, value in dic_.items():
     results = (df_table_3
  .assign(count = lambda x: 
@@ -1262,7 +1351,7 @@ for key, value in dic_.items():
              x['gdp_cap'] > value,
              "Above", "Below")
         )
- .loc[lambda x: #x['soe_city'].isin(['SOE dominated'])  & 
+ .loc[lambda x: ~ x['soe_city'].isin(['SOE dominated'])  & 
       x['year'].isin(['2007'])]
  [['geocode4_corr', 'count']]
  .drop_duplicates()
@@ -1271,15 +1360,43 @@ for key, value in dic_.items():
  .assign( percentage = lambda x: np.round(x['count']/x['count'].sum(),2) * 100).T
  #.style.format('{:,.0%}', subset = ['percentage'])
 )
-    print(key, "\n",results )
+    print("\n",key, "\n",results )
 ```
 
 SO2 emission by TCZ before and after the 11th FYP, full sample
 
+By:
+
+- TCZ/No TCZ
+- SO3/ No SOE
+
+```python
+(df_final[['TCZ_c', 'Period', 'cityen', 'tso2_cit', 'year']]
+ .assign(
+          tso2_cit = lambda x: x['tso2_cit']/10000)
+ .groupby(['TCZ_c', 'Period', 'cityen'])
+      .agg(
+          sum_tso2_c=('tso2_cit', np.sum),
+      )
+      .groupby(level=[0, 1])
+      .agg(
+          avg_tso2=('sum_tso2_c', np.mean)
+      )
+      .sort_values(by=['TCZ_c', 'Period'], ascending=True)
+      .unstack(-1)
+      .assign(difference=lambda x: np.round(x.iloc[:, 0] - x.iloc[:, 1], 0),
+              variance=lambda x: 1-(x.iloc[:, 0] / x.iloc[:, 1])
+              )
+      .round(2)
+)
+```
+
+TCZ
+
 ```python
 t1 = (df_final
       .assign(
-          tso2_cit = lambda x: x['tso2_cit']/10000)
+          tso2_cit = lambda x: x['tso2_cit'])
       .groupby(['TCZ_c', 'Period', 'cityen'])
       .agg(
           sum_tso2_c=('tso2_cit', np.sum),
@@ -1294,7 +1411,7 @@ t1 = (df_final
               variance=lambda x: 1-(x.iloc[:, 0] / x.iloc[:, 1])
               )
       .round(2)
-      .iloc[:, 2:]
+      #.iloc[:, 2:]
       .stack()
       .unstack(0)
       .rename(index={'':'Full sample'})
@@ -1307,7 +1424,7 @@ SO2 emission by TCZ before and after the 11th FYP, by city location
 
 ```python
 t2 = (df_final
-      .assign(tso2_cit = lambda x: x['tso2_cit']/10000)
+      .assign(tso2_cit = lambda x: x['tso2_cit'])
       .groupby(['TCZ_c', 'Period', 'Lower_location', 'cityen'])
       .agg(
           sum_tso2_c=('tso2_cit', np.sum),
@@ -1335,7 +1452,7 @@ SO2 emission by TCZ before and after the 11th FYP, by coastal area
 
 ```python
 t3 = (df_final
-      .assign(tso2_cit = lambda x: x['tso2_cit']/10000)
+      .assign(tso2_cit = lambda x: x['tso2_cit'])
       .groupby(['TCZ_c', 'Period', 'Coastal', 'cityen'])
       .agg(
           sum_tso2_c=('tso2_cit', np.sum),
@@ -1361,12 +1478,101 @@ t3 = (df_final
 t3
 ```
 
+SOE
+
 ```python
-(pd.concat([t1, t2, t3])).iloc[:, :2]
+t4 = (df_final
+      .assign(geocode4_corr = lambda x: x['geocode4_corr'].astype('str'))
+      .merge(df_final_SOE_table2[['geocode4_corr', 'soe_city']])
+      .assign(
+          tso2_cit = lambda x: x['tso2_cit'])
+      .groupby(['soe_city', 'Period', 'cityen'])
+      .agg(
+          sum_tso2_c=('tso2_cit', np.sum),
+      )
+      .groupby(level=[0, 1])
+      .agg(
+          avg_tso2=('sum_tso2_c', np.mean)
+      )
+      .sort_values(by=['soe_city', 'Period'], ascending=True)
+      .unstack(-1)
+      .assign(difference=lambda x: np.round(x.iloc[:, 0] - x.iloc[:, 1], 0),
+              variance=lambda x: 1-(x.iloc[:, 0] / x.iloc[:, 1])
+              )
+      .round(2)
+      .iloc[:, 2:]
+      .stack()
+      .unstack(0)
+      .rename(index={'':'Full sample'})
+      .rename_axis("Location")
+      )
+t4
 ```
 
 ```python
-t = (pd.concat([t1, t2, t3]).iloc[:, :2]
+t5 = (df_final
+      .assign(geocode4_corr = lambda x: x['geocode4_corr'].astype('str'))
+      .merge(df_final_SOE_table2[['geocode4_corr', 'soe_city']])
+      .assign(tso2_cit = lambda x: x['tso2_cit'])
+      .groupby(['soe_city', 'Period', 'Lower_location', 'cityen'])
+      .agg(
+          sum_tso2_c=('tso2_cit', np.sum),
+      )
+      .groupby(level=[0, 1, 2])
+      .agg(
+          avg_tso2=('sum_tso2_c', np.mean)
+      )
+      .sort_values(by=['soe_city', 'Period'], ascending=True)
+      .unstack(-2)
+      .assign(difference=lambda x:  np.round(x.iloc[:, 0] - x.iloc[:, 1], 0),
+              variance=lambda x: 1-(x.iloc[:, 0] / x.iloc[:, 1])
+              )
+      .sort_values(by='Lower_location')
+      .round(2)
+      .iloc[:, 2:]
+      .unstack(0)
+      .droplevel(level=1, axis=1)
+      .rename_axis("Location")
+      )
+t5
+```
+
+```python
+t6 = (df_final
+      .assign(geocode4_corr = lambda x: x['geocode4_corr'].astype('str'))
+      .merge(df_final_SOE_table2[['geocode4_corr', 'soe_city']])
+      .assign(tso2_cit = lambda x: x['tso2_cit'])
+      .groupby(['soe_city', 'Period', 'Coastal', 'cityen'])
+      .agg(
+          sum_tso2_c=('tso2_cit', np.sum),
+      )
+      .groupby(level=[0, 1, 2])
+      .agg(
+          avg_tso2=('sum_tso2_c', np.mean)
+      )
+      .sort_values(by=['soe_city', 'Period'], ascending=True)
+      .unstack(-2)
+      .assign(difference=lambda x: np.round(x.iloc[:, 0] - x.iloc[:, 1], 0),
+              variance=lambda x: 1-(x.iloc[:, 0] / x.iloc[:, 1]))
+      .sort_values(by='Coastal')
+      .round(2)
+      .iloc[:, 2:]
+      .unstack(0)
+      .droplevel(level=1, axis=1)
+      .rename_axis("Location")
+      .rename(index={True:'Coastal',
+                    False: 'Non Coastal'}
+             )
+      )
+t6
+```
+
+```python
+t = ((pd.concat([
+    pd.concat([t1, t2, t3]),
+    pd.concat([t4, t5,t6])
+], axis = 1)
+)
  .to_latex(index=True,
               float_format='%.2f'
              )
@@ -1375,6 +1581,387 @@ t = t.replace('\_',' ')
 t = t.replace('.00','')
 t = t.replace('TCZ c','TCZ')
 print(t)
+```
+
+# Update:
+
+Yearly average difference
+
+
+Panel A
+
+```python
+df_table_3 = (
+    df_final
+    .assign(geocode4_corr = lambda x: x['geocode4_corr'].astype('str'))
+    .merge(
+        (df_chinese_city_characteristics
+ .assign(geocode4_corr = lambda x: x['geocode4_corr'].astype('str'))
+ .merge(df_TCZ_list_china, how = 'left')
+ .merge(df_final_SOE_table2[['geocode4_corr', 'soe_city']])
+ #.merge(df_herfhindal_final)
+ .assign(
+     TCZ = lambda x: x['TCZ'].fillna('0'),
+     SPZ = lambda x: x['SPZ'].fillna('0'),
+        )
+)
+    )
+    .assign(so2_intensity = lambda x: x['tso2_cit']/ x['population'])
+             )
+df_table_3.columns
+```
+
+```python
+(df_table_3[['year', 'Period', 'TCZ', 'geocode4_corr','Lower_location', 
+            'soe_city','gdp_cap', 'population']].drop_duplicates()
+ .replace({'TCZ': {'0': 'No TCZ', '1':'TCZ'}})
+ .loc[lambda x: x['year'].isin(['2004', '2005', '2006', '2007'])]
+ .groupby(['TCZ', 'Period'])[['gdp_cap']]
+ .mean()
+ .sort_index(level = ['TCZ','Period'], ascending = [True, False])
+ .stack()
+ .unstack([0, 1])
+ .assign(
+
+         difference_no_tcz=lambda x: x.iloc[:, 1] - x.iloc[:, 0],
+         difference_tcz=lambda x: x.iloc[:, 3] - x.iloc[:, 2],
+             )
+ .rename(index={'sum_so2': 'Full sample'})
+ .round(0)
+)
+```
+
+```python
+tcz = pd.concat([(df_table_3[['year', 'Period', 'TCZ', 'geocode4_corr','Lower_location', 
+            'soe_city','gdp_cap', 'population']].drop_duplicates()
+ .replace({'TCZ': {'0': 'No TCZ', '1':'TCZ'}})
+ .loc[lambda x: x['year'].isin(['2004', '2005', '2006', '2007'])]
+ .groupby(['TCZ', 'Period'])[['gdp_cap']]
+ .mean()
+ .sort_index(level = ['TCZ','Period'], ascending = [True, False])
+ .stack()
+ .unstack([0, 1])
+ #.assign(
+
+         #difference_no_tcz=lambda x: x.iloc[:, 1] - x.iloc[:, 0],
+         #difference_tcz=lambda x: x.iloc[:, 3] - x.iloc[:, 2],
+ #            )
+ .rename(index={'sum_so2': 'Full sample'})
+ .round(0)
+),
+                 (df_table_3[['year', 'Period', 'TCZ', 'geocode4_corr','Lower_location', 
+            'soe_city','gdp_cap', 'population']].drop_duplicates()
+ .replace({'TCZ': {'0': 'No TCZ', '1':'TCZ'}})
+ .loc[lambda x: x['year'].isin(['2004', '2005', '2006', '2007'])]
+ .groupby(['TCZ', 'Period'])[['population']]
+ .mean()
+ .sort_index(level = ['TCZ','Period'], ascending = [True, False])
+ .stack()
+ .unstack([0, 1])
+# .assign(
+#
+#         difference_no_tcz=lambda x: x.iloc[:, 1] - x.iloc[:, 0],
+#         difference_tcz=lambda x: x.iloc[:, 3] - x.iloc[:, 2],
+#             )
+ .rename(index={'sum_so2': 'Full sample'})
+ .round(0)
+)
+                 
+                ], axis = 0)
+tcz
+```
+
+```python
+soe = pd.concat([(df_table_3[['year', 'Period', 'TCZ', 'geocode4_corr','Lower_location', 
+            'soe_city','gdp_cap', 'population']].drop_duplicates()
+ #.replace({'TCZ': {'0': 'No TCZ', '1':'TCZ'}})
+ .loc[lambda x: x['year'].isin(['2004', '2005', '2006', '2007'])]
+ .groupby(['soe_city', 'Period'])[['gdp_cap']]
+ .mean()
+ .sort_index(level = ['soe_city','Period'], ascending = [True, False])
+ .stack()
+ .unstack([0, 1])
+ #.assign(
+         #difference_no_soe=lambda x: x.iloc[:, 1] - x.iloc[:, 0],
+         #difference_soe=lambda x: x.iloc[:, 3] - x.iloc[:, 2],
+         #    )
+ #.rename(index={'sum_so2': 'Full sample'})
+ .round(0)
+),
+                 (df_table_3[['year', 'Period', 'TCZ', 'geocode4_corr','Lower_location', 
+            'soe_city','gdp_cap', 'population']].drop_duplicates()
+ #.replace({'TCZ': {'0': 'No TCZ', '1':'TCZ'}})
+ .loc[lambda x: x['year'].isin(['2004', '2005', '2006', '2007'])]
+ .groupby(['soe_city', 'Period'])[['population']]
+ .mean()
+ .sort_index(level = ['soe_city','Period'], ascending = [True, False])
+ .stack()
+ .unstack([0, 1])
+ #.assign(
+
+         #difference_no_soe=lambda x: x.iloc[:, 1] - x.iloc[:, 0],
+         #difference_soe=lambda x: x.iloc[:, 3] - x.iloc[:, 2],
+         #    )
+ #.rename(index={'sum_so2': 'Full sample'})
+ .round(0)
+)
+                 
+                ], axis = 0)
+soe
+```
+
+```python
+pd.concat([tcz, soe], axis = 1)
+```
+
+```python
+import sys, os, shutil
+sys.path.insert(0,'..')
+import functions.latex_beautify as lb
+
+%load_ext autoreload
+%autoreload 2
+
+jupyter_preview = False
+title = "Summary statistics by city characteristics"
+
+pd.concat([tcz, soe], axis = 1).to_latex(
+    'table_1.tex',
+    caption = title,
+    index=True,
+    label = "table_3",
+    #header = header,
+    float_format="{:,.0f}".format)
+
+table_nte = """
+Sources: Author's own computation \n
+The list of TCZ is provided by the State Council, 1998. \n
+Output $\text { Share SOE }_{i}$ refers to the ratio of output
+(respectively capital, employment) of SOEs over the total production
+(capital, employment) in city $i$
+      
+"""
+lb.beautify_table(table_nte = False,
+                  name = 'table_1',
+                  jupyter_preview  = jupyter_preview,
+                  resolution = 200)
+
+if jupyter_preview == False:
+    source_to_move = ['table_1.tex']
+    dest = ['Overleaf_statistic/13_table_stat_panel_a.tex'
+           ]
+    for i, v in enumerate(source_to_move):
+        shutil.move(
+            v,
+            dest[i])
+```
+
+Panel B
+
+```python
+df_TCZ_list_china.head()
+```
+
+```python
+(df_pol
+ .loc[lambda x: x['year']
+      .isin(['2002', '2003', '2004', '2005',
+                                    '2006', '2007'])]
+ .merge(df_cityname_and_code.merge(df_TCZ_list_china)[
+     ['extra_coda','Province' , 'cityen', 'TCZ', 'SPZ']],
+        left_on = ['geocode4_corr'],
+        right_on = ['extra_coda'],
+        how = 'inner', indicator = True)
+)
+```
+
+```python
+df_provinces_location.head()
+```
+
+```python
+df_pol_tcz = (df_pol
+ .loc[lambda x: x['year']
+      .isin(['2002', '2003', '2004', '2005',
+                                    '2006', '2007'])]
+ #.merge(df_TCZ_list_china,on = ['geocode4_corr'], how = 'left')
+ .merge(df_cityname_and_code.merge(df_TCZ_list_china)[
+     ['extra_coda','Province' , 'cityen', 'TCZ', 'SPZ']],
+        left_on = ['geocode4_corr'],
+        right_on = ['extra_coda'],
+        how = 'inner', indicator = True)
+ .merge(df_final_SOE_table2[['geocode4_corr', 'soe_city']], how = 'left')
+ .merge(df_provinces_location)
+ .assign(
+     soe_city = lambda x: x['soe_city'].fillna('No SOE dominated'),
+     Period = lambda x: np.where(
+         x['year'].isin(['2002', '2003', '2004', '2005']), 
+         'Before', 'After'
+     )
+     )
+ 
+ )
+
+
+df_pol_tcz.groupby('year')['sum_so2'].sum()
+```
+
+```python
+(df_pol_tcz
+     .assign(sum_so2 = lambda x: x['sum_so2']/1000000000)
+ .loc[lambda x: x['year'].isin(['2007'])]
+ .groupby(['soe_city'])[['sum_so2']]
+ .mean()
+)
+```
+
+```python
+(1-np.exp(.430*0.118874)) *100
+```
+
+```python
+
+```
+
+```python
+1-np.exp(0.430*0.1239)
+```
+
+```python
+(df_pol_tcz
+     .assign(sum_so2 = lambda x: x['sum_so2']/1000000000)
+ .replace({'TCZ': {'0': 'No TCZ', '1':'TCZ'}})
+ .loc[lambda x: x['year'].isin(['2004', '2005', '2006', '2007'])]
+ .groupby(['TCZ', 'Period'])[['sum_so2']]
+ .sum()
+ .stack()
+ .unstack([0, 1])
+ .assign(
+         #variance_no_tcz=lambda x: 1-(x.iloc[:, 1] / x.iloc[:, 0]),
+         #variance_tcz=lambda x: 1-(x.iloc[:, 3] / x.iloc[:, 2])
+         difference_no_tcz=lambda x: x.iloc[:, 0] - x.iloc[:, 1],
+         difference_tcz=lambda x: x.iloc[:, 2] - x.iloc[:, 3],
+             )
+ .rename(index={'sum_so2': 'Full sample'})
+)
+```
+
+```python
+tcz = pd.concat([
+    ####TCZ
+    (df_pol_tcz
+     .assign(sum_so2 = lambda x: x['sum_so2']/1000000000)
+ .replace({'TCZ': {'0': 'No TCZ', '1':'TCZ'}})
+ .loc[lambda x: x['year'].isin(['2004', '2005', '2006', '2007'])]
+ .groupby(['TCZ', 'Period'])[['sum_so2']]
+ .sum()
+ .stack()
+ .unstack([0, 1])
+ .assign(
+         #variance_no_tcz=lambda x: 1-(x.iloc[:, 1] / x.iloc[:, 0]),
+         #variance_tcz=lambda x: 1-(x.iloc[:, 3] / x.iloc[:, 2])
+         difference_no_tcz=lambda x: x.iloc[:, 0] - x.iloc[:, 1],
+         difference_tcz=lambda x: x.iloc[:, 2] - x.iloc[:, 3],
+             )
+ .rename(index={'sum_so2': 'Full sample'})
+),
+    (df_pol_tcz
+     .assign(sum_so2 = lambda x: x['sum_so2']/1000000000)
+ .replace({'TCZ': {'0': 'No TCZ', '1':'TCZ'}})
+ .loc[lambda x: x['year'].isin(['2004', '2005', '2006', '2007'])]
+ .groupby(['TCZ', 'Period', 'Lower_location'])[['sum_so2']]
+ .sum()
+ .stack()
+ .unstack([0, 1])
+ .assign(
+         difference_no_tcz=lambda x: x.iloc[:, 0] - x.iloc[:, 1],
+         difference_tcz=lambda x: x.iloc[:, 2] - x.iloc[:, 3],
+             )
+ .reset_index(level=1, drop=True)
+)], axis= 0)
+tcz
+```
+
+```python
+(df_pol_tcz.assign(sum_so2 = lambda x: x['sum_so2']/ 10000)).groupby('year')['sum_so2'].sum()
+```
+
+```python
+soe = pd.concat([
+    (df_pol_tcz
+     .assign(sum_so2 = lambda x: x['sum_so2']/1000000000)
+ #.replace({'soe_city': {'0': 'No TCZ', '1':'TCZ'}})
+ .loc[lambda x: x['year'].isin(['2004', '2005', '2006', '2007'])]
+ .groupby(['soe_city', 'Period'])[['sum_so2']]
+ .sum()
+ .stack()
+ .unstack([0, 1])
+ .assign(
+         difference_no_tcz=lambda x: x.iloc[:, 0] - x.iloc[:, 1],
+         difference_tcz=lambda x: x.iloc[:, 2] - x.iloc[:, 3],
+             )
+ .rename(index={'sum_so2': 'Full sample'})
+),
+    (df_pol_tcz
+     .assign(sum_so2 = lambda x: x['sum_so2']/1000000000)
+ #.replace({'TCZ': {'0': 'No TCZ', '1':'TCZ'}})
+ .loc[lambda x: x['year'].isin(['2004', '2005', '2006', '2007'])]
+ .groupby(['soe_city', 'Period', 'Lower_location'])[['sum_so2']]
+ .sum()
+ .stack()
+ .unstack([0, 1])
+ .assign(
+         difference_no_tcz=lambda x: x.iloc[:, 0] - x.iloc[:, 1],
+         difference_tcz=lambda x: x.iloc[:, 2] - x.iloc[:, 3],
+             )
+ .reset_index(level=1, drop=True)
+)], axis = 0)
+```
+
+```python
+pd.concat([tcz, soe], axis = 1)
+```
+
+```python
+import sys, os, shutil
+sys.path.insert(0,'..')
+import functions.latex_beautify as lb
+
+%load_ext autoreload
+%autoreload 2
+
+jupyter_preview = False
+title = "Summary statistics by city characteristics"
+
+pd.concat([tcz, soe], axis = 1).to_latex(
+    'table_1.tex',
+    caption = title,
+    index=True,
+    label = "table_3",
+    #header = header,
+    float_format="{:,.3f}".format)
+
+table_nte = """
+Sources: Author's own computation \n
+The list of TCZ is provided by the State Council, 1998. \n
+Output $\text { Share SOE }_{i}$ refers to the ratio of output
+(respectively capital, employment) of SOEs over the total production
+(capital, employment) in city $i$
+      
+"""
+lb.beautify_table(table_nte = False,
+                  name = 'table_1',
+                  jupyter_preview  = jupyter_preview,
+                  resolution = 200)
+
+if jupyter_preview == False:
+    source_to_move = ['table_1.tex']
+    dest = ['Overleaf_statistic/13_table_stat_panel_b.tex'
+           ]
+    for i, v in enumerate(source_to_move):
+        shutil.move(
+            v,
+            dest[i])
 ```
 
 <!-- #region kernel="Python 3" -->
@@ -1408,4 +1995,12 @@ for i in range(1, 19):
         os.remove("table_{}.txt".format(i))
     except:
         pass
+```
+
+```python
+np.exp(0.413 * .118874) #- 
+```
+
+```python
+np.exp(0.413 * .118874)
 ```
