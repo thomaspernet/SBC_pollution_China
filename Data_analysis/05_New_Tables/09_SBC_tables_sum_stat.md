@@ -6,7 +6,7 @@ jupyter:
       extension: .md
       format_name: markdown
       format_version: '1.2'
-      jupytext_version: 1.4.0+dev
+      jupytext_version: 1.4.2
   kernelspec:
     display_name: Python 3
     language: python
@@ -174,7 +174,7 @@ df_provinces_location.head()
 ```python kernel="Python 3"
 query = (
           "SELECT * "
-            "FROM China.SBC_pollution_China "
+            "FROM China.SBC_pollution_China_not_constraint "
 
         )
 
@@ -326,6 +326,17 @@ df_herfhindal_final = (df_final.merge(df_herfhindal,
                       )
 ```
 
+```python
+(df_final.merge(df_herfhindal,
+                                     on=[aggregation_param],
+                                     how='left',
+                                     indicator=True
+                                     )
+ .drop_duplicates(
+    subset = 'geocode4_corr')
+).agg({'Herfindahl_agg': ['min', 'max']})
+```
+
 <!-- #region kernel="Python 3" -->
 ## SOE vs Private
 
@@ -411,6 +422,29 @@ df_share_soe = (gcp.upload_data_from_bigquery(query = df_share_soe,
                     .loc[lambda x: x[aggregation_param].isin(list_agg)]
                    )
 df_share_soe.shape 
+```
+
+## Brief count
+
+```python
+df_final.
+```
+
+```python
+df_final.head()
+```
+
+```python
+pd.set_option('display.max_columns', None)
+(df_final
+ .assign(geocode4_corr = lambda x: x['geocode4_corr'].astype('str'))
+ .merge(df_TCZ_list_china.drop(columns = ['TCZ', 'City', 'Province']),
+        how = 'left')
+ .assign(
+ #    TCZ = lambda x: x['TCZ'].fillna(0),
+     SPZ = lambda x: x['SPZ'].fillna('0'),
+        )
+).groupby('TCZ_c')['geocode4_corr'].nunique()
 ```
 
 <!-- #region kernel="Python 3" -->
@@ -782,6 +816,10 @@ dic_['2006-2010'].append(np.round(t3.loc[2010], 2))
 dic_['Target'].append(-.1)
 ```
 
+```python
+#!pip install --upgrade pandas
+```
+
 ```python kernel="Python 3"
 for i in range(1, 19):
     try:
@@ -896,7 +934,7 @@ t4 = (df_final_SOE_table2
 Add target
 
 ```python kernel="Python 3"
-jupyter_preview = False
+jupyter_preview = True
 for i in range(1, 19):
     try:
         os.remove("table_{}.pdf".format(i))
@@ -978,7 +1016,7 @@ pd.concat([(df_final_SOE_table2
 
 ```
 
-### Table 2 bis
+### Table 4
 
 Ouput: 
 
@@ -1075,6 +1113,7 @@ index = (pd.concat([t7, t8, t9, t10, t11, t12],axis = 0)
 ```
 
 ```python
+jupyter_preview = True
 title = "Summary statistics of Target by city characteristics"
 header = ["All Cities","No SOE dominated", "SOE dominated"]
 
@@ -1130,7 +1169,7 @@ Ouput:
 ![](https://drive.google.com/uc?export=view&id=1ITXwbLX3XpgnZWGOgXPhnQj17680Cgey)
 
 ```python
-df_herfhindal_final.dtypes
+df_TCZ_list_china.drop(columns = ['TCZ']).head()
 ```
 
 ```python
@@ -1140,11 +1179,12 @@ df_table_3 = (
     .merge(
         (df_chinese_city_characteristics
  .assign(geocode4_corr = lambda x: x['geocode4_corr'].astype('str'))
- .merge(df_TCZ_list_china, how = 'left')
  .merge(df_final_SOE_table2[['geocode4_corr', 'soe_city']])
  .merge(df_herfhindal_final)
+ .merge(df_TCZ_list_china.drop(columns = ['TCZ', 'City', 'Province']),
+        how = 'left')
  .assign(
-     TCZ = lambda x: x['TCZ'].fillna(0),
+ #    TCZ = lambda x: x['TCZ'].fillna(0),
      SPZ = lambda x: x['SPZ'].fillna('0'),
         )
 )
@@ -1153,10 +1193,23 @@ df_table_3 = (
 df_table_3.shape
 ```
 
+```python
+#df_final.shape
+```
+
+```python
+pd.set_option('display.max_columns', None)
+df_table_3.head()
+```
+
+```python
+df_table_3['geocode4_corr'].nunique()
+```
+
 Panel A
 
 ```python
-jupyter_preview = False
+jupyter_preview = True
 title = "Summary statistics by city characteristics"
 #header = ["Output share SOE_i", "Capital share SOE_i","Employment share SOE_i", "Target_i"]
 
@@ -1262,6 +1315,10 @@ pd.concat([
 - SOE No dominated employment: 35190 
 
 ```python
+df_final['geocode4_corr'].nunique()
+```
+
+```python
 (df_table_3[['geocode4_corr', 'soe_city']]
  .drop_duplicates()['soe_city']
  .value_counts())
@@ -1269,11 +1326,11 @@ pd.concat([
 
 ```python
 dic_ = {
-     'TCZ': 28795,
-     'No Concentrated': 45396,
-     'SOE No dominated Output': 30264,
-     'SOE No dominated Capital': 24867,
-     'SOE No dominated employment': 35190
+     'TCZ_c': 18661,
+     'No Concentrated': 31244,
+     'SOE No dominated Output': 17864,
+     'SOE No dominated Capital': 18809,
+     'SOE No dominated employment': 22467
 }
 ```
 
@@ -1282,8 +1339,10 @@ dic_ = {
 ```
 
 ```python
-35/146
+df_table_3['TCZ_c'].unique()
 ```
+
+Line SOE above in table 9
 
 ```python
 for key, value in dic_.items():
@@ -1301,16 +1360,12 @@ for key, value in dic_.items():
  .reset_index()
  .assign( percentage = lambda x: np.round(x['count']/x['count'].sum(),2) * 100)
  #.style.format('{:,.0%}', subset = ['percentage'])
-).T
+).sort_values(by= 'index').T
     print("\n", key, "\n",results )
 ```
 
 ```python
 #df_table_3['cityen'].drop_duplicates()
-```
-
-```python
-
 ```
 
 ```python
@@ -1351,13 +1406,16 @@ for key, value in dic_.items():
              x['gdp_cap'] > value,
              "Above", "Below")
         )
- .loc[lambda x: ~ x['soe_city'].isin(['SOE dominated'])  & 
-      x['year'].isin(['2007'])]
+ .loc[lambda x: ~x['soe_city'].isin(['SOE dominated']) 
+     & x['year'].isin(['2007']) ]
  [['geocode4_corr', 'count']]
  .drop_duplicates()
  ['count'].value_counts()
  .reset_index()
- .assign( percentage = lambda x: np.round(x['count']/x['count'].sum(),2) * 100).T
+ .assign(
+     percentage = lambda x: 
+     np.round(x['count']/x['count'].sum(),2) * 100).sort_values(
+     by= 'index').T
  #.style.format('{:,.0%}', subset = ['percentage'])
 )
     print("\n",key, "\n",results )
@@ -1597,28 +1655,29 @@ df_table_3 = (
     .merge(
         (df_chinese_city_characteristics
  .assign(geocode4_corr = lambda x: x['geocode4_corr'].astype('str'))
- .merge(df_TCZ_list_china, how = 'left')
+ .merge(df_TCZ_list_china.drop(columns = ['TCZ', 'City', 'Province']),
+        how = 'left')
  .merge(df_final_SOE_table2[['geocode4_corr', 'soe_city']])
  #.merge(df_herfhindal_final)
  .assign(
-     TCZ = lambda x: x['TCZ'].fillna('0'),
+     #TCZ = lambda x: x['TCZ'].fillna('0'),
      SPZ = lambda x: x['SPZ'].fillna('0'),
         )
 )
     )
     .assign(so2_intensity = lambda x: x['tso2_cit']/ x['population'])
              )
-df_table_3.columns
+df_table_3.shape
 ```
 
 ```python
-(df_table_3[['year', 'Period', 'TCZ', 'geocode4_corr','Lower_location', 
+(df_table_3[['year', 'Period', 'TCZ_c', 'geocode4_corr','Lower_location', 
             'soe_city','gdp_cap', 'population']].drop_duplicates()
- .replace({'TCZ': {'0': 'No TCZ', '1':'TCZ'}})
+ .replace({'TCZ_c': {'No_TCZ': 'No TCZ'}})
  .loc[lambda x: x['year'].isin(['2004', '2005', '2006', '2007'])]
- .groupby(['TCZ', 'Period'])[['gdp_cap']]
+ .groupby(['TCZ_c', 'Period'])[['gdp_cap']]
  .mean()
- .sort_index(level = ['TCZ','Period'], ascending = [True, False])
+ .sort_index(level = ['TCZ_c','Period'], ascending = [True, False])
  .stack()
  .unstack([0, 1])
  .assign(
@@ -1632,13 +1691,13 @@ df_table_3.columns
 ```
 
 ```python
-tcz = pd.concat([(df_table_3[['year', 'Period', 'TCZ', 'geocode4_corr','Lower_location', 
+tcz = pd.concat([(df_table_3[['year', 'Period', 'TCZ_c', 'geocode4_corr','Lower_location', 
             'soe_city','gdp_cap', 'population']].drop_duplicates()
- .replace({'TCZ': {'0': 'No TCZ', '1':'TCZ'}})
+ .replace({'TCZ_c': {'No_TCZ': 'No TCZ'}})
  .loc[lambda x: x['year'].isin(['2004', '2005', '2006', '2007'])]
- .groupby(['TCZ', 'Period'])[['gdp_cap']]
+ .groupby(['TCZ_c', 'Period'])[['gdp_cap']]
  .mean()
- .sort_index(level = ['TCZ','Period'], ascending = [True, False])
+ .sort_index(level = ['TCZ_c','Period'], ascending = [True, False])
  .stack()
  .unstack([0, 1])
  #.assign(
@@ -1649,13 +1708,13 @@ tcz = pd.concat([(df_table_3[['year', 'Period', 'TCZ', 'geocode4_corr','Lower_lo
  .rename(index={'sum_so2': 'Full sample'})
  .round(0)
 ),
-                 (df_table_3[['year', 'Period', 'TCZ', 'geocode4_corr','Lower_location', 
+                 (df_table_3[['year', 'Period', 'TCZ_c', 'geocode4_corr','Lower_location', 
             'soe_city','gdp_cap', 'population']].drop_duplicates()
- .replace({'TCZ': {'0': 'No TCZ', '1':'TCZ'}})
+ .replace({'TCZ_c': {'No_TCZ': 'No TCZ'}})
  .loc[lambda x: x['year'].isin(['2004', '2005', '2006', '2007'])]
- .groupby(['TCZ', 'Period'])[['population']]
+ .groupby(['TCZ_c', 'Period'])[['population']]
  .mean()
- .sort_index(level = ['TCZ','Period'], ascending = [True, False])
+ .sort_index(level = ['TCZ_c','Period'], ascending = [True, False])
  .stack()
  .unstack([0, 1])
 # .assign(
@@ -1672,7 +1731,7 @@ tcz
 ```
 
 ```python
-soe = pd.concat([(df_table_3[['year', 'Period', 'TCZ', 'geocode4_corr','Lower_location', 
+soe = pd.concat([(df_table_3[['year', 'Period', 'TCZ_c', 'geocode4_corr','Lower_location', 
             'soe_city','gdp_cap', 'population']].drop_duplicates()
  #.replace({'TCZ': {'0': 'No TCZ', '1':'TCZ'}})
  .loc[lambda x: x['year'].isin(['2004', '2005', '2006', '2007'])]
@@ -1688,7 +1747,7 @@ soe = pd.concat([(df_table_3[['year', 'Period', 'TCZ', 'geocode4_corr','Lower_lo
  #.rename(index={'sum_so2': 'Full sample'})
  .round(0)
 ),
-                 (df_table_3[['year', 'Period', 'TCZ', 'geocode4_corr','Lower_location', 
+                 (df_table_3[['year', 'Period', 'TCZ_c', 'geocode4_corr','Lower_location', 
             'soe_city','gdp_cap', 'population']].drop_duplicates()
  #.replace({'TCZ': {'0': 'No TCZ', '1':'TCZ'}})
  .loc[lambda x: x['year'].isin(['2004', '2005', '2006', '2007'])]
@@ -1722,7 +1781,7 @@ import functions.latex_beautify as lb
 %load_ext autoreload
 %autoreload 2
 
-jupyter_preview = False
+jupyter_preview = True
 title = "Summary statistics by city characteristics"
 
 pd.concat([tcz, soe], axis = 1).to_latex(
@@ -1759,10 +1818,6 @@ if jupyter_preview == False:
 Panel B
 
 ```python
-df_TCZ_list_china.head()
-```
-
-```python
 (df_pol
  .loc[lambda x: x['year']
       .isin(['2002', '2003', '2004', '2005',
@@ -1780,6 +1835,22 @@ df_provinces_location.head()
 ```
 
 ```python
+(df_pol
+ .loc[lambda x: x['year']
+      .isin(['2002', '2003', '2004', '2005',
+                                    '2006', '2007'])]
+ #.merge(df_TCZ_list_china,on = ['geocode4_corr'], how = 'left')
+ .merge(df_cityname_and_code.merge(df_TCZ_list_china)[
+     ['extra_coda','Province' , 'cityen', 'TCZ', 'SPZ']],
+        left_on = ['geocode4_corr'],
+        right_on = ['extra_coda'],
+        how = 'inner', indicator = True)
+ .rename(columns = {'Province': 'Province_en'})
+ #.merge(df_provinces_location)
+)
+```
+
+```python
 df_pol_tcz = (df_pol
  .loc[lambda x: x['year']
       .isin(['2002', '2003', '2004', '2005',
@@ -1791,6 +1862,7 @@ df_pol_tcz = (df_pol
         right_on = ['extra_coda'],
         how = 'inner', indicator = True)
  .merge(df_final_SOE_table2[['geocode4_corr', 'soe_city']], how = 'left')
+ .rename(columns = {'Province': 'Province_en'})
  .merge(df_provinces_location)
  .assign(
      soe_city = lambda x: x['soe_city'].fillna('No SOE dominated'),
@@ -1813,18 +1885,6 @@ df_pol_tcz.groupby('year')['sum_so2'].sum()
  .groupby(['soe_city'])[['sum_so2']]
  .mean()
 )
-```
-
-```python
-(1-np.exp(.430*0.118874)) *100
-```
-
-```python
-
-```
-
-```python
-1-np.exp(0.430*0.1239)
 ```
 
 ```python
@@ -1930,7 +1990,7 @@ import functions.latex_beautify as lb
 %load_ext autoreload
 %autoreload 2
 
-jupyter_preview = False
+jupyter_preview = True
 title = "Summary statistics by city characteristics"
 
 pd.concat([tcz, soe], axis = 1).to_latex(
@@ -1995,12 +2055,4 @@ for i in range(1, 19):
         os.remove("table_{}.txt".format(i))
     except:
         pass
-```
-
-```python
-np.exp(0.413 * .118874) #- 
-```
-
-```python
-np.exp(0.413 * .118874)
 ```

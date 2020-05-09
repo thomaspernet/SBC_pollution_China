@@ -6,7 +6,7 @@ jupyter:
       extension: .md
       format_name: markdown
       format_version: '1.2'
-      jupytext_version: 1.4.0+dev
+      jupytext_version: 1.4.2
   kernelspec:
     display_name: SoS
     language: sos
@@ -275,37 +275,43 @@ df_chinese_city_characteristics = (df_final.merge(
 ).assign(
     threshold_tcz= 
                            lambda x: np.where(
-                               x["gdp_cap"] > 28795,
+                               x["gdp_cap"] > 18661,
                                1,0
                            ),
     threshold_concentrated= 
                            lambda x: np.where(
-                               x["gdp_cap"] > 45396,
+                               x["gdp_cap"] > 31244,
                                1,0
                            ),
     threshold_soe_output= 
                            lambda x: np.where(
-                               x["gdp_cap"] > 30264,
+                               x["gdp_cap"] > 17864,
                                1,0
                            ),
     threshold_soe_capital= 
                            lambda x: np.where(
-                               x["gdp_cap"] > 24867,
+                               x["gdp_cap"] > 18809,
                                1,0
                            ),
     threshold_soe_employment= 
                            lambda x: np.where(
-                               x["gdp_cap"] > 35190,
+                               x["gdp_cap"] > 22467,
                                1,0
                            ),
-    threshold_full= 
-                           lambda x: np.where(
-                               x["gdp_cap"] > 41247,
-                               1,0
-                           )
+    #threshold_full= 
+    #                       lambda x: np.where(
+    #                           x["gdp_cap"] > 41247,
+    #                           1,0
+    #                       )
 )
                                   )
 df_chinese_city_characteristics.shape
+```
+
+```sos kernel="SoS"
+(df_chinese_city_characteristics
+ .groupby(['OWNERSHIP','threshold_concentrated'
+          ])['threshold_concentrated'].count())
 ```
 
 ```sos kernel="R"
@@ -353,11 +359,12 @@ $$
 3. TCZ vs No TCZ
 4. Coastal vs No Coastal
 3. Kuznet threshold
-    - TCZ: 28795
-    - Concentrated: 45396
-    - SOE output: 30264
-    - SOE Capital: 24867
-    - SPE employment: 35190
+    - TCZ: 18661
+    - Concentrated: 31244
+    - SOE output: 17864
+    - SOE Capital: 18809
+    - SPE employment: 22467
+    
 <!-- #endregion -->
 
 <!-- #region kernel="R" -->
@@ -529,6 +536,25 @@ Google Drive
 <!-- #endregion -->
 
 ```sos kernel="R"
+df_to_filter %>% group_by(OWNERSHIP, threshold_concentrated) %>%
+tally()
+```
+
+```sos kernel="R"
+
+summary(felm(formula= tfp_OP ~ 
+               target_c  * Period * polluted_thre |
+                  id + FE_t_c + FE_t_i + FE_c_i
+                  | 0 |
+                 industry, data= df_to_filter %>% filter(
+                     threshold_concentrated == 1 & 
+                     OWNERSHIP == 'SOE'
+                 ),
+                 exactDOF=TRUE)
+       )
+```
+
+```sos kernel="R"
 toremove <- dir(path=getwd(), pattern=".tex|.pdf|.txt")
 file.remove(toremove)
 
@@ -545,13 +571,13 @@ fe1 <- list(
     c("time-industry", "No", "No", "Yes", "Yes", "Yes", "Yes")
              )
 
-for ( var in c("Coastal", "TCZ_c", var_,
+for ( var in c(#"TCZ_c", 
+               #var_,
                "threshold_tcz",
-               "threshold_concentrated",
+               "threshold_concentrated", # ok
                "threshold_soe_output",
                "threshold_soe_capital",
-               "threshold_soe_employment",
-              "threshold_full")){
+               "threshold_soe_employment")){
     
     if (var == "Coastal"){
         filters <- TRUE  
@@ -576,23 +602,23 @@ for ( var in c("Coastal", "TCZ_c", var_,
         title_name <- str_extract(var, regex("[^_]+$"))
     }
     
-    t1 <- felm(formula= tfp_OP ~ 
-           target_c  * Period * polluted_thre * OWNERSHIP|
-              id + FE_c_i_o + FE_t_o  + FE_t_c    
-              | 0 |
-             industry, data= df_to_filter %>% filter(get(var) == filters
+    #t1 <- felm(formula= tfp_OP ~ 
+    #       target_c  * Period * polluted_thre * OWNERSHIP|
+    #          id + FE_c_i_o + FE_t_o  + FE_t_c    
+    #          | 0 |
+    #         industry, data= df_to_filter %>% filter(get(var) == filters
                                                     #&occurence != 1
-                                                    ),
-             exactDOF=TRUE)
+    #                                                ),
+    #        exactDOF=TRUE)
            
-    t2 <- felm(formula= tfp_OP ~ 
-               target_c  * Period * polluted_thre * OWNERSHIP|
-                  id + FE_c_i_o + FE_t_o  + FE_t_c    
-                  | 0 |
-                 industry, data= df_to_filter %>% filter(get(var) != filters
-                                                        #&occurence != 1
-                                                        ),
-                 exactDOF=TRUE)
+    #t2 <- felm(formula= tfp_OP ~ 
+    #           target_c  * Period * polluted_thre * OWNERSHIP|
+    #              id + FE_c_i_o + FE_t_o  + FE_t_c    
+    #              | 0 |
+    #             industry, data= df_to_filter %>% filter(get(var) != filters
+    #                                                    #&occurence != 1
+    #                                                    ),
+    #             exactDOF=TRUE)
 
     t3 <- felm(formula= tfp_OP ~ 
                target_c  * Period * polluted_thre |
@@ -640,7 +666,7 @@ for ( var in c("Coastal", "TCZ_c", var_,
 
     name = paste0("table_",i,".txt")
     title = paste0("TFP subsample - ", title_name)
-    tables <- list(t1, t2, t3, t4, t5, t6)
+    tables <- list(t3, t4, t5, t6)
     table_1 <- go_latex(tables,
                 dep_var = "Dependent variable \\text { TFP }_{fi k t}",
                 title=title,

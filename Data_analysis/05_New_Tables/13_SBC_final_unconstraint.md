@@ -302,7 +302,7 @@ We proceed as follow:
 <!-- #endregion -->
 
 ```sos kernel="SoS"
-OWNERSHIP = 'Foreign'
+
 query_share_ = """ 
 WITH sum_agg_o AS (
   SELECT 
@@ -364,29 +364,6 @@ FROM
         )
         )
 """
-if aggregation_param == 'industry':
-    if OWNERSHIP == 'Foreign':
-        counterpart = 'DOMESTIC'
-    else:
-        counterpart = 'PRIVATE'
-    query_share_foreign= query_share_.format(aggregation_param,
-                                             'cic',
-                                             OWNERSHIP,
-                                            counterpart)
-else:
-    if OWNERSHIP == 'Foreign':
-        counterpart = 'DOMESTIC'
-    else:
-        counterpart = 'PRIVATE'
-    query_share_foreign = query_share_.format(aggregation_param,
-                                              aggregation_param,
-                                              OWNERSHIP,
-                                             counterpart)
-df_share_foreign = (gcp.upload_data_from_bigquery(query = query_share_foreign,
-                                         location = 'US')
-                    .loc[lambda x: x[aggregation_param].isin(list_agg)]
-                   )
-#df_share_foreign.shape 
 ```
 
 <!-- #region kernel="SoS" -->
@@ -619,52 +596,6 @@ df_final_SOE <- df_final_SOE%>%
          polluted_mi = relevel(polluted_mi, ref='Below'),
          polluted_thre = relevel(polluted_thre, ref='Below'),
   )
-```
-
-```sos kernel="SoS"
-%put df_final_FOREIGN --to R
-df_final_FOREIGN = (df_final.merge(
-    df_share_foreign,
-    on = [aggregation_param],
-    how = 'left',
-    indicator = True
-)
-                .assign(
-                       output = lambda x:
-                           pd.qcut(x['share_output_agg_o'],10, labels=False),
-                       capital = lambda x:
-                           pd.qcut(x['share_fa_net_agg_o'],10, labels=False),
-                       employment = lambda x:
-                           pd.qcut(x['share_employement_agg_o'],10, labels=False),
-                    mean_output = lambda x:np.where(
-                    x['share_output_agg_o'] > 
-                        x['share_output_agg_o'].drop_duplicates().mean(),
-                           1,0
-                       ),
-                    mean_capital = lambda x:np.where(
-                    x['share_fa_net_agg_o'] > 
-                        x['share_fa_net_agg_o'].drop_duplicates().mean(),
-                           1,0
-                       ),
-                    mean_employment = lambda x:np.where(
-                    x['share_employement_agg_o'] > 
-                        x['share_employement_agg_o'].drop_duplicates().mean(),
-                           1,0
-                       )
-                    )
-)
-for i in ['output', 'capital', 'employment']:
-    if i == 'output':
-        v = 'share_output_agg_o'
-    elif i =='capital':
-        v = 'share_fa_net_agg_o'
-    else:
-        v = 'share_employement_agg_o'
-    #print('Median: {}'.format(df_final_FOREIGN[v].median()))
-    #print(pd.qcut(df_final_FOREIGN[v],
-    #    10).drop_duplicates().sort_values().reset_index(drop = True))
-
-    #print(df_final_FOREIGN[i].value_counts().sort_index())
 ```
 
 <!-- #region kernel="SoS" -->
@@ -1063,14 +994,14 @@ fe1 <- list(c("City fixed effects", "Yes", "No", "Yes", "No", "Yes", "No",
 
 
 #### TCZ
-t1 <- felm(formula=log(tso2_cit) ~ 
-           target_c * Period * polluted_thre 
-           + output_fcit + capital_fcit + labour_fcit
-                  |
-             cityen +  year + industry  | 0 |
-             industry, data= df_to_filter %>% filter(TCZ_c == 'TCZ'),
-             exactDOF=TRUE)
-t1 <-change_target(t1)
+#t1 <- felm(formula=log(tso2_cit) ~ 
+#           target_c * Period * polluted_thre 
+#           + output_fcit + capital_fcit + labour_fcit
+#                  |
+#             cityen +  year + industry  | 0 |
+#             industry, data= df_to_filter %>% filter(TCZ_c == 'TCZ'),
+#             exactDOF=TRUE)
+#t1 <-change_target(t1)
 
 t2 <- felm(formula=log(tso2_cit) ~ 
            target_c * Period * polluted_thre 
@@ -1082,14 +1013,14 @@ t2 <- felm(formula=log(tso2_cit) ~
 t2 <-change_target(t2)
 
 #### No TCZ
-t3 <- felm(formula=log(tso2_cit) ~ 
-           target_c * Period * polluted_thre 
-           + output_fcit + capital_fcit + labour_fcit
-                  |
-             cityen +  year + industry  | 0 |
-             industry, data= df_to_filter %>% filter(TCZ_c != 'TCZ'),
-             exactDOF=TRUE)
-t3 <-change_target(t3)
+#t3 <- felm(formula=log(tso2_cit) ~ 
+#           target_c * Period * polluted_thre 
+#           + output_fcit + capital_fcit + labour_fcit
+#                  |
+#             cityen +  year + industry  | 0 |
+#             industry, data= df_to_filter %>% filter(TCZ_c != 'TCZ'),
+#             exactDOF=TRUE)
+#t3 <-change_target(t3)
 
 t4 <- felm(formula=log(tso2_cit) ~ 
            target_c * Period * polluted_thre 
@@ -1100,14 +1031,14 @@ t4 <- felm(formula=log(tso2_cit) ~
              exactDOF=TRUE)
 t4 <-change_target(t4)
 #### Coastal
-t5 <- felm(formula=log(tso2_cit) ~ 
-           target_c * Period * polluted_thre 
-           + output_fcit + capital_fcit + labour_fcit
-                  |
-             cityen +  year + industry  | 0 |
-             industry, data= df_to_filter %>% filter(Coastal == TRUE),
-             exactDOF=TRUE)
-t5 <-change_target(t5)
+#t5 <- felm(formula=log(tso2_cit) ~ 
+#           target_c * Period * polluted_thre 
+#           + output_fcit + capital_fcit + labour_fcit
+#                  |
+#             cityen +  year + industry  | 0 |
+#             industry, data= df_to_filter %>% filter(Coastal == TRUE),
+#             exactDOF=TRUE)
+#t5 <-change_target(t5)
 
 t6 <- felm(formula=log(tso2_cit) ~ 
            target_c * Period * polluted_thre 
@@ -1119,14 +1050,14 @@ t6 <- felm(formula=log(tso2_cit) ~
 t6 <-change_target(t6)
 
 #### No Coastal
-t7 <- felm(formula=log(tso2_cit) ~ 
-           target_c * Period * polluted_thre 
-           + output_fcit + capital_fcit + labour_fcit
-                  |
-             cityen +  year + industry  | 0 |
-             industry, data= df_to_filter %>% filter(Coastal == FALSE),
-             exactDOF=TRUE)
-t7 <-change_target(t7)
+#t7 <- felm(formula=log(tso2_cit) ~ 
+#           target_c * Period * polluted_thre 
+#           + output_fcit + capital_fcit + labour_fcit
+#                  |
+#             cityen +  year + industry  | 0 |
+#             industry, data= df_to_filter %>% filter(Coastal == FALSE),
+#             exactDOF=TRUE)
+#t7 <-change_target(t7)
 
 t8 <- felm(formula=log(tso2_cit) ~ 
            target_c * Period * polluted_thre 
@@ -1139,14 +1070,14 @@ t8 <-change_target(t8)
 
 ### SPZ
 df_to_filter <- df_TCZ_list_china
-t9 <- felm(formula=log(tso2_cit) ~ 
-           target_c * Period * polluted_thre 
-           + output_fcit + capital_fcit + labour_fcit
-                  |
-             cityen +  year + industry  | 0 |
-             industry, data= df_to_filter %>% filter(SPZ == 1),
-             exactDOF=TRUE)
-t9 <-change_target(t9)
+#t9 <- felm(formula=log(tso2_cit) ~ 
+#           target_c * Period * polluted_thre 
+#           + output_fcit + capital_fcit + labour_fcit
+#                  |
+#             cityen +  year + industry  | 0 |
+#             industry, data= df_to_filter %>% filter(SPZ == 1),
+#             exactDOF=TRUE)
+#t9 <-change_target(t9)
 
 t10 <- felm(formula=log(tso2_cit) ~ 
            target_c * Period * polluted_thre 
@@ -1158,14 +1089,14 @@ t10 <- felm(formula=log(tso2_cit) ~
 t10 <-change_target(t10)
 
 #### No SPZ
-t11 <- felm(formula=log(tso2_cit) ~ 
-           target_c * Period * polluted_thre 
-           + output_fcit + capital_fcit + labour_fcit
-                  |
-             cityen +  year + industry  | 0 |
-             industry, data= df_to_filter %>% filter(SPZ == 0),
-             exactDOF=TRUE)
-t11 <-change_target(t11)
+#t11 <- felm(formula=log(tso2_cit) ~ 
+#           target_c * Period * polluted_thre 
+#           + output_fcit + capital_fcit + labour_fcit
+#                  |
+#             cityen +  year + industry  | 0 |
+#             industry, data= df_to_filter %>% filter(SPZ == 0),
+#             exactDOF=TRUE)
+#t11 <-change_target(t11)
 
 t12 <- felm(formula=log(tso2_cit) ~ 
            target_c * Period * polluted_thre 
@@ -1180,7 +1111,7 @@ t12 <-change_target(t12)
 name = paste0("table_",1,".txt")
     title = paste0("Diffusion Chanel TCZ, Coastal & SPZ ")
     
-tables <- list(t1, t2, t3, t4,t5, t6, t7,t8, t9, t10, t11, t12)
+tables <- list(t2,t4,t6,t8, t10, t12)
 table_1 <- go_latex(tables,
                 dep_var = "Dependent variable \\text { SO2 emission }_{i k t}",
                 title=title,
@@ -1193,12 +1124,12 @@ table_1 <- go_latex(tables,
 ```sos kernel="Python 3"
 jupyter_preview = True
 multicolumn ={
-    'TCZ': 2,
-    'No TCZ': 2,
-    'Coastal': 2,
-    'No Coastal': 2,
-    'SPZ': 2,
-    'No SPZ': 2,
+    'TCZ': 1,
+    'No TCZ': 1,
+    'Coastal': 1,
+    'No Coastal': 1,
+    'SPZ': 1,
+    'No SPZ': 1,
 }
 
 new_r = ['& TCZ', 'TCZ', 'No TCZ', 'No TCZ']
@@ -1253,15 +1184,15 @@ toremove <- dir(path=getwd(), pattern=".tex|.pdf|.txt")
 file.remove(toremove)
 
 ### concentration
-t1 <- felm(formula=log(tso2_cit) ~ 
-           target_c  * Period * polluted_thre 
-               + output_fcit + capital_fcit + labour_fcit
-                  |
-             cityen +  year + industry  | 0 |
-             industry, data= df_to_filter %>% filter(decile_herfhindal > 
-                                                     threshold_full),
-             exactDOF=TRUE)
-t1 <-change_target(t1)
+#t1 <- felm(formula=log(tso2_cit) ~ 
+#           target_c  * Period * polluted_thre 
+#               + output_fcit + capital_fcit + labour_fcit
+#                  |
+#             cityen +  year + industry  | 0 |
+#             industry, data= df_to_filter %>% filter(decile_herfhindal > 
+#                                                     threshold_full),
+#             exactDOF=TRUE)
+#t1 <-change_target(t1)
 
 t2 <- felm(formula=log(tso2_cit) ~ 
            target_c  * Period * polluted_thre 
@@ -1274,15 +1205,15 @@ t2 <- felm(formula=log(tso2_cit) ~
 t2 <-change_target(t2)
 
 ### Non concentrated
-t3 <- felm(formula=log(tso2_cit) ~ 
-           target_c  * Period * polluted_thre 
-               + output_fcit + capital_fcit + labour_fcit
-                  |
-             cityen +  year + industry  | 0 |
-             industry, data= df_to_filter %>% filter(decile_herfhindal <= 
-                                                     threshold_full),
-             exactDOF=TRUE)
-t3 <-change_target(t3)
+#t3 <- felm(formula=log(tso2_cit) ~ 
+#           target_c  * Period * polluted_thre 
+#               + output_fcit + capital_fcit + labour_fcit
+#                  |
+#             cityen +  year + industry  | 0 |
+#             industry, data= df_to_filter %>% filter(decile_herfhindal <= 
+#                                                     threshold_full),
+#             exactDOF=TRUE)
+#t3 <-change_target(t3)
 
 t4 <- felm(formula=log(tso2_cit) ~ 
            target_c  * Period * polluted_thre 
@@ -1300,7 +1231,7 @@ name = paste0("table_",1,".txt")
 title = paste0("Diffusion Chanel Concentrated VS non concentrated"
                   )
     
-tables <- list(t1, t2, t3, t4)
+tables <- list( t2, t4)
 table_1 <- go_latex(tables,
                 dep_var = "Dependent variable \\text { SO2 emission }_{i k t}",
                 title=title,
@@ -1313,11 +1244,11 @@ table_1 <- go_latex(tables,
 ```sos kernel="Python 3"
 jupyter_preview = True
 multicolumn ={
-    'Concentrated': 2,
-    'No Concentrated': 2,
+    'Concentrated': 1,
+    'No Concentrated': 1,
 }
 
-new_r = ['& TCZ', 'TCZ', 'No TCZ', 'No TCZ']
+new_r = ['& TCZ', 'No TCZ']
 
 tb = """\\footnotesize{
 Due to limited space, only the coefficients of interest are presented 
