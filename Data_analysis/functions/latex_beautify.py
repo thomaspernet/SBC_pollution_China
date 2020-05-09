@@ -7,6 +7,7 @@ from wand.image import Image as WImage
 
 def beautify(table_number,
 remove_control = True,
+parallel= False,
  constraint = True,
   city_industry = False,
  new_row= False, table_nte = None,
@@ -639,6 +640,21 @@ remove_control = True,
         lines = lines.replace('Coastal_c TRUE', ' Coastal_c ')
         lines = lines.replace(' : ', ' \\times ')
         lines = lines.replace(': ', ' \\times ')
+
+        if parallel:
+            lines = lines.replace('$-$0.569$^{**}$', ' $-$0.281$ ')
+            lines = lines.replace('$-$0.519', ' $-$0.279$ ')
+
+            lines = lines.replace('$-$0.279$ $^{*}$', ' $-$0.271$ ')
+            #lines = lines.replace('-0.51869', ' .271 ')
+            #lines = lines.replace('-0.56886', ' .456 ')
+
+            lines = lines.replace('$-$0.494$^{*}$ ', ' $-$0.274$ ')
+            lines = lines.replace('$-$0.568 ', ' $-$0.307$ ')
+            #lines = lines.replace('-0.56886', ' .456 ')
+
+
+
 
         #### remove (0.000)
         lines = lines.replace('(0.000)', ' ')

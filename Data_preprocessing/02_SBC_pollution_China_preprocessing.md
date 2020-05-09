@@ -10,9 +10,9 @@ jupyter:
   kernel_info:
     name: sos
   kernelspec:
-    display_name: SoS
-    language: sos
-    name: sos
+    display_name: Python 3
+    language: python
+    name: python3
 ---
 
 <!-- #region Collapsed="false" kernel="SoS" toc-hr-collapsed=false kernel="SoS" -->
@@ -29,7 +29,7 @@ The proposal is available [here](https://drive.google.com/open?id=1tmSFvdUMXcL3v
 ### Equation to estimate
 
 $$
-\begin{aligned} \text { SO2 emission }_{i k t}=& \alpha T C Z_{i} \times \text { Polluted sectors }_{k} \times \text { post } \\ &+\beta T C Z_{i} \times \text { Polluted sectors }_{k} \times \text { post } \times \text { Share SOE }_{k} \\ & +\theta {X}_{i k t}+\nu_{c i}+\lambda_{t i} +\phi_{t c} \end{aligned}
+\begin{aligned} \text { SO2 emission }_{i k t}=& \alpha T C Z_{i} \times \text { Polluted sectors }_{k} \times \text { post } \\ & +\theta {X}_{i k t}+\nu_{c i}+\lambda_{t i} +\phi_{t c} \end{aligned}
 $$
 
 city-industry; time-industry and time-city
@@ -45,14 +45,13 @@ The global steps to construct the dataset are the following:
 - Set parameters:
     - Choice of aggregation
     - Keep used variables in SO2 dataset
-    - Exclude cities not operation 7 years in a row
     
 ## Data source 
 
 The data source to construct the dataset are the following:
 <!-- #endregion -->
 
-<!-- #region Collapsed="false" kernel="SoS" -->
+<!-- #region kernel="SoS" -->
 
 ### Big Query Dataset 
  
@@ -65,10 +64,9 @@ The data source to construct the dataset are the following:
  
  - [TCZ_list_china](https://docs.google.com/spreadsheets/d/15bMeS2cMfGfYJkjuY6wOMzcAUWZNRGpO03hZ8rpgv0Q) 
  - [cityname_and_code](https://docs.google.com/spreadsheets/d/1fIziz-Xt99-Rj6NLm52-i6jScOLXgAY20KJi8k3DruA) 
- - [provinces_location](https://docs.google.com/spreadsheets/d/1pNMYAannF0g47Vrecu9tzrQ83XaaYmnXJeSuIFwr26g)
 <!-- #endregion -->
 
-<!-- #region Collapsed="false" kernel="SoS" -->
+<!-- #region kernel="SoS" -->
 ## Destination
 
 The new dataset is available from XXX
@@ -78,7 +76,7 @@ The new dataset is available from XXX
 - BG: SBC_pollution_china
 <!-- #endregion -->
 
-```sos Collapsed="false" kernel="Python3"
+```python kernel="Python3"
 from Fast_connectCloud import connector
 from GoogleDrivePy.google_drive import connect_drive
 from GoogleDrivePy.google_platform import connect_cloud_platform
@@ -88,7 +86,7 @@ import numpy as np
 import Pollution.SBC_pollution as sbc
 ```
 
-```sos Collapsed="false" kernel="Python3"
+```python kernel="Python3"
 gs = connector.open_connection(online_connection = False, 
 	path_credential = '/Users/thomas/Google Drive/Projects/Client_Oauth/Google_auth/')
 
@@ -102,7 +100,7 @@ gcp = connect_cloud_platform.connect_console(project = project,
 											 service_account = service_gcp['GoogleCloudP'])
 ```
 
-<!-- #region Collapsed="false" kernel="python3" -->
+<!-- #region kernel="python3" -->
 ## Load asif_firm_china from Google Big Query
 
 Data studio for this dataset available [here](https://drive.google.com/open?id=1ppXfCw73EGVmUQdcM5MI_S9RbtjunhQ_)
@@ -119,11 +117,10 @@ Feel free to add description about the dataset or any usefull information.
 
 - Rescale output; employment and capital
 - Remove firms with zeroes values
-- Aggregate by CIC 2 digits
-- Keep year 2002-2008
+- Keep year 2002-2007
 <!-- #endregion -->
 
-```sos Collapsed="false" kernel="Python3"
+```python kernel="Python3"
 query = (
     """SELECT case 
     WHEN ownership = 'SOE' THEN 'SOE' ELSE 'PRIVATE' END AS SOE, 
@@ -152,14 +149,14 @@ df_asif_firm_china = gcp.upload_data_from_bigquery(query=query, location="US")
 df_asif_firm_china.head()
 ```
 
-<!-- #region Collapsed="false" kernel="python3" -->
+<!-- #region kernel="python3" -->
 ## Load df_China_city_pollution_03_2007 from Google Big Query
 
 Feel free to add description about the dataset or any usefull information.
 
 <!-- #endregion -->
 
-```sos Collapsed="false" kernel="Python3"
+```python kernel="Python3"
 query = (
     """SELECT 
     CAST(year AS STRING) as year,
@@ -177,11 +174,7 @@ df_China_city_pollution_03_2007 = gcp.upload_data_from_bigquery(
 df_China_city_pollution_03_2007.head()
 ```
 
-```sos kernel="Python3"
-df_China_city_pollution_03_2007.groupby('year')['tso2'].sum()
-```
-
-<!-- #region Collapsed="false" kernel="python3" -->
+<!-- #region kernel="python3" -->
 ## Load TCZ_list_china from Google Spreadsheet
 
 Feel free to add description about the dataset or any usefull information.
@@ -191,7 +184,7 @@ We use the sheet `paper` because it's the geocode we originaly used. After the d
 Profiling will be available soon for this dataset
 <!-- #endregion -->
 
-```sos Collapsed="false" kernel="Python3"
+```python kernel="Python3"
 ### Please go here https://docs.google.com/spreadsheets/d/15bMeS2cMfGfYJkjuY6wOMzcAUWZNRGpO03hZ8rpgv0Q
 ### To change the range
 
@@ -208,7 +201,7 @@ sheetName = sheetname,
 df_TCZ_list_china.head()
 ```
 
-<!-- #region Collapsed="false" kernel="python3" -->
+<!-- #region kernel="python3" -->
 ## Load China_cities_target_so2 from Google Spreadsheet
 
 Feel free to add description about the dataset or any usefull information.
@@ -216,7 +209,7 @@ Feel free to add description about the dataset or any usefull information.
 Profiling will be available soon for this dataset
 <!-- #endregion -->
 
-```sos Collapsed="false" kernel="Python3"
+```python kernel="Python3" jupyter={"outputs_hidden": true}
 ### Please go here https://docs.google.com/spreadsheets/d/1z3A_I8_StdyNL5O38s2l9hx6W3VR49CGVmaosypjFMA
 ### To change the range
 
@@ -258,104 +251,23 @@ Note: **You need to rename the last dataframe `df_final`**
 <!-- #endregion -->
 
 <!-- #region Collapsed="false" kernel="python3" toc-hr-collapsed=true kernel="SoS" -->
-## Parameters
-
-For each change we will modify the original dataset `df_asif_firm_china`
-
-Parameteres contains 3 parts:
-
-1. Choice of aggregation
-
-We are left with two options to aggregate the data:
-
-- Indu 2 digits or CIC
-- `to_group`: Aggregate the data during the first part of the chain: from firm to industry
-- `to_group_reshape`:  Group the data to create a squared dataframe. The dataset has all industries for each city. If the city does not produce anything, we fill by one. 
-
-2. Format data
-
-Change the format of the city variable in the TCZ data and keep the variables needed in the pollution data
-
-3. Exclude city not operating during the 7 years of our analysis: Fill list excluded:
-
-- 'Bayannaoer', 'Dingxi', 'Jiuquan', 'Lijiang', 'Lincang', 'Longnan',
-- 'Luliang', 'Pingliang', 'Qingyang', 'Simao', 'Wulanchabu', 'Wuwei',
-- 'Zhangye', 'Zhongwei'
-
-
-The program allows the users to pass two parameters. The first parameter `bounce. The exclude firms that enter and leave the market mutliple time through the year. The second parameter, `symmetric` gives the possibility to keep only industries available during both period (10/11th FYP). 
-
-
 ## Steps 
 
 The program works as follow:
 
-- Step 1: If `bounce` is true, then the program exclude firms bouncing back on and on in the dataset
-- Step 2: Keep a set of year and create the period dummy variable. The dummy takes the value of `After` all year after 2005. 
-- Step 3: Remove all cities not available every years
-- Step 4: Prepare the SOE industries. More precisely, the program computes the numbers of SOE firms for each year during 2002-2005 by industry (either HS2 or CIC), and get the average output;capital and labour at the same level. Then, the share by industry is computed.
-- Step 5: Define the polluted sectors in three difference ways. First, the program computes the average SO2 emission by industries for the year 2002. Then, polluted sectors are defined whether the average is above the national average, the third decile or 68070.
-- Step 6: Remove the city-industry with null value for SO2 emission
-- Step 7: Aggregate the control variable at the city-industry-year level
-- Step 8: Merge TCZ, Share SOE, pollution, pollution by industry
-- Step 9 (optional): If the user choose to get a symmetric dataset, then the program excludes industries which are not available in both period
-- Step 10: Remove outliers : when SO2 emissions are below 500 and above 2276992 (about .5 and .95 of the distribution)
-- Step 11: Create 3 bunches of fixed effect:  city-industry; time-industry and time-city
+- Step 1: Compute share SOE by industry
+- Step 2: Compute polluted sectors
+- Step 3: Merge dataframe 
+    - For TCZ, `left_join` -> Cities not matched become no tcz
 <!-- #endregion -->
 
-```sos Collapsed="false" kernel="python3"
-# industry_agg = ['indu_2']
-industry_agg = ["indu_2"]
-
-years = ["2002", "2003", "2004", "2005", "2006", "2007"]
-
-
-order_columns = [
-    "year",
-    "Period",
-    "Province_en",
-    "Lower_location",
-    "Larger_location",
-    "Coastal",
-    "cityen",
-    "geocode4_corr",
-    "TCZ_c",
-    "target_c",
-    "effort_c",
-    "industry",
-    "ind2",
-    "Short",
-    "output_fcit",
-    "capital_fcit",
-    "labour_fcit",
-    "out_share_SOE",
-    "cap_share_SOE",
-    "lab_share_SOE",
-    #"count_SOE",
-    "tso2_cit",
-    "tso2_i",
-    "input_i",
-    "output_i",
-    "va_i",
-    "tCOD_cit",
-    "twaste_water_cit",
-    "polluted_di",
-    "polluted_mi",
-    "polluted_thre",
-    "pollution_intensity_i",
-    "FE_c_i",
-    "FE_t_i",
-    "FE_t_c",
-]
-```
-
-<!-- #region Collapsed="false" kernel="python3" -->
+<!-- #region kernel="python3" -->
 ### 1. Prepapre  `df_asif_firm_china`
 
 There is some preprocessing to perform on the original dataframe:
 <!-- #endregion -->
 
-```sos Collapsed="false" kernel="Python3"
+```python kernel="Python3"
 dic_ = {'var': [],
        'count':[],
        'values': []}
@@ -372,7 +284,7 @@ for v in df_asif_firm_china.select_dtypes(include='object').columns:
 )
 ```
 
-```sos kernel="Python3"
+```python kernel="Python3"
 share_SOE = (df_asif_firm_china
                      .groupby(['year',
                                'industry',
@@ -404,15 +316,7 @@ share_SOE = (df_asif_firm_china
 share_SOE.head()
 ```
 
-```sos kernel="Python3"
-(df_China_city_pollution_03_2007
-                     .loc[lambda x: ~x['tso2'].isin([0])]
-                     .loc[lambda x: x['year'].isin(['2002'])]
-                     .rename(columns={'indus_code': 'industry'})
- )
-```
-
-```sos kernel="Python3"
+```python kernel="Python3"
 # Polluted sectors
 pollution_ind = (df_China_city_pollution_03_2007
                      .loc[lambda x: ~x['tso2'].isin([0])]
@@ -438,8 +342,6 @@ pollution_ind = (df_China_city_pollution_03_2007
                              "Above",
                              "Below",
                          ),
-                         #pollution_intensity_i=lambda x: x['tso2'] / \
-                         #x['toutput']
                      )
                      .drop(columns = ['toutput'])
                      .rename(columns={
@@ -449,11 +351,11 @@ pollution_ind = (df_China_city_pollution_03_2007
 pollution_ind.head()
 ```
 
-```sos kernel="Python3"
+```python kernel="Python3"
 df_China_city_pollution_03_2007.loc[lambda x: x['tso2']<=0].shape
 ```
 
-```sos kernel="Python3"
+```python kernel="Python3"
 df_temp = (df_asif_firm_china
  .merge(df_China_city_pollution_03_2007)
  .merge(pollution_ind)
@@ -485,19 +387,15 @@ df_final["FE_t_c"] = pd.factorize(df_final["year"] +
                                   df_final["cityen"])[0]
 ```
 
-```sos kernel="Python3"
+```python kernel="Python3"
 df_final.groupby('year')['tso2'].sum()
 ```
 
-<!-- #region Collapsed="false" kernel="python3" -->
-### Run metafunction
-<!-- #endregion -->
-
-```sos Collapsed="false" kernel="Python3"
+```python kernel="Python3" jupyter={"outputs_hidden": true}
 df_final.describe()
 ```
 
-```sos Collapsed="false" kernel="python3"
+```python kernel="python3" jupyter={"outputs_hidden": true}
 df_final.to_csv(
 	'SBC_pollution_China.gz',
 	sep=',',
@@ -508,7 +406,7 @@ df_final.to_csv(
 	encoding='utf-8')
 ```
 
-<!-- #region Collapsed="false" kernel="python3" -->
+<!-- #region kernel="python3" -->
 # Profiling
 
 In order to get a quick summary statistic of the data, we generate an HTML file with the profiling of the dataset we've just created. 
@@ -518,7 +416,7 @@ The profiling will be available at this URL after you commit a push to GitHub.
 **You need to rename the final dataframe `df_final` in the previous section to generate the profiling.**
 <!-- #endregion -->
 
-```sos Collapsed="false" kernel="python3"
+```python kernel="python3" jupyter={"outputs_hidden": true}
 #### make sure the final dataframe is stored as df_final
 ### Overide the default value: 
 #https://github.com/pandas-profiling/pandas-profiling/blob/master/pandas_profiling/config_default.yaml
@@ -529,13 +427,13 @@ name_html = "Dataset_profiling/SBC_pollution_China.html"
 profile.to_file(output_file=name_html)
 ```
 
-<!-- #region Collapsed="false" kernel="python3" -->
+<!-- #region kernel="python3" -->
 # Upload to cloud
 
 The dataset is ready to be shared with your colleagues. 
 <!-- #endregion -->
 
-<!-- #region Collapsed="false" kernel="python3" -->
+<!-- #region kernel="python3" -->
 ### Move to GCS and BigQuery
 
 We move the dataset to the following:
@@ -554,11 +452,11 @@ We first need to save *SBC_pollution_China* with `.gz` extension locally then we
 to GCS
 <!-- #endregion -->
 
-<!-- #region Collapsed="false" kernel="python3" -->
+<!-- #region kernel="python3" -->
 ## Delete previous dataset
 <!-- #endregion -->
 
-```sos Collapsed="false" kernel="Python3"
+```python kernel="Python3" jupyter={"outputs_hidden": true}
 bucket_name = 'chinese_data'
 destination_blob_name = 'paper_project/SBC_pollution_China_not_constraint.gz'
 
@@ -567,7 +465,7 @@ destination_blob_name = 'paper_project/SBC_pollution_China_not_constraint.gz'
 #gcp.delete_table(dataset_name = 'China', name_table = 'SBC_pollution_China')
 ```
 
-```sos Collapsed="false" kernel="Python3"
+```python kernel="Python3" jupyter={"outputs_hidden": true}
 ### First save locally
 df_final.to_csv(
 	'SBC_pollution_China_not_constraint.gz',
@@ -585,7 +483,7 @@ source_file_name = 'SBC_pollution_China_not_constraint.gz'
 gcp.upload_blob(bucket_name, destination_blob_name, source_file_name)
 ```
 
-```sos Collapsed="false" kernel="Python3"
+```python kernel="Python3" jupyter={"outputs_hidden": true}
 ### Move to bigquery
 bucket_gcs ='chinese_data/paper_project/SBC_pollution_China_not_constraint.gz'
 gcp.move_to_bq_autodetect(dataset_name= 'China',

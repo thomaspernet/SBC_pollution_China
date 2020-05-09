@@ -6,7 +6,7 @@ jupyter:
       extension: .md
       format_name: markdown
       format_version: '1.2'
-      jupytext_version: 1.4.0+dev
+      jupytext_version: 1.4.2
   kernelspec:
     display_name: Python 3
     language: python
@@ -510,9 +510,11 @@ df_final["FE_c_i"] = pd.factorize(df_final["cityen"] +
 df_final["FE_t_i"] = pd.factorize(df_final["year"] +
                                       df_final['industry'])[0]
 
-df_final["FE_t_c"] = pd.factorize(df_final["year"] + df_final["cityen"])[0]
+df_final["FE_t_c"] = pd.factorize(df_final["year"] + 
+                                  df_final["cityen"])[0]
 
-df_final["FE_c_i_o"] = pd.factorize(df_final["cityen"] + df_final["industry"] +
+df_final["FE_c_i_o"] = pd.factorize(df_final["cityen"] + 
+                                    df_final["industry"] +
                                         df_final["OWNERSHIP"])[0]
 df_final["FE_t_o"] = pd.factorize(
         df_final["year"] + df_final["OWNERSHIP"])[0]
@@ -520,10 +522,6 @@ df_final["FE_t_o"] = pd.factorize(
 
 ```python
 df_final.head()
-```
-
-```python
-
 ```
 
 # Profiling
