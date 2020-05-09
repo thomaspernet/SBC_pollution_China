@@ -19,6 +19,7 @@ token_coda.json
 *.tex
 */dask-worker-space
 Data_preprocessing/program_tfp/*.RDS
+Data_preprocessing/Archive
 
 ### test -> install jupytex easier for versioning
 #*.ipynb
