@@ -447,6 +447,88 @@ pd.set_option('display.max_columns', None)
 ).groupby('TCZ_c')['geocode4_corr'].nunique()
 ```
 
+# List TCZ/SPZ
+
+```python
+270/50
+```
+
+```python
+title = 'TCZ and SPZ cities in China'
+
+dic_ = {
+    '1':[0, 50, 100], 
+    '2':[100, 150, 200], 
+    '3':[200, 250, 300], 
+}
+
+full_city = pd.DataFrame()
+
+for key, value in dic_.items():
+    
+    cities= pd.concat([
+    (df_final
+     .assign(geocode4_corr=lambda x: x['geocode4_corr'].astype('str'))
+     .merge(df_TCZ_list_china.drop(columns=['TCZ', 'City', 'Province']),
+            how='left')
+     .assign(
+         SPZ=lambda x: x['SPZ'].fillna('0'),
+     )[['cityen', 'geocode4_corr', 'TCZ_c', 'SPZ']]
+     .drop_duplicates()
+     .replace(
+         {'TCZ_c': {"No_TCZ": 1, "TCZ": 0},
+               'SPZ': {"#N/A": 0},
+              }
+     )
+     .rename(columns={
+         'cityen': 'City',
+         'geocode4_corr': 'Code',
+         'TCZ_c': 'TCZ',
+     })
+     .iloc[value[0]:value[1], :]
+     .reset_index()
+     ),
+    (df_final
+     .assign(geocode4_corr=lambda x: x['geocode4_corr'].astype('str'))
+     .merge(df_TCZ_list_china.drop(columns=['TCZ', 'City', 'Province']),
+            how='left')
+     .assign(
+         SPZ=lambda x: x['SPZ'].fillna('0'),
+     )[['cityen', 'geocode4_corr', 'TCZ_c', 'SPZ']]
+     .drop_duplicates()
+     .replace({'TCZ_c': {"No_TCZ": 1, "TCZ": 0},
+               'SPZ': {"#N/A": 0},
+              }
+             )
+     .rename(columns={
+         'cityen': 'City',
+         'geocode4_corr': 'Code',
+         'TCZ_c': 'TCZ',
+     })
+     .iloc[value[1]:value[2], :]
+     .reset_index()
+     )
+], axis=1).fillna(0).drop(columns = 'index').assign(ID= key)
+    
+    full_city = full_city.append(cities, ignore_index = True)
+```
+
+```python
+title = 'TCZ and SPZ cities in China (continued)'
+
+(full_city
+ .loc[lambda x: x['ID'].isin(['3'])]
+ .drop(columns = 'ID')
+ .to_latex(
+    'table_city_3.tex',
+    caption = title,
+    index=False,
+    label = "table_3",
+  #header = header,
+    float_format="{:,.0f}".format)
+)
+```
+
 <!-- #region kernel="Python 3" -->
 # Table 1
 
@@ -1278,28 +1360,49 @@ Count number of city above turning point RMB:
 ```python
 pd.concat([
     (df_table_3
+ .loc[lambda x: x['year'].isin(['2007'])]
+ [['geocode4_corr','TCZ_c', 'tso2_cit','gdp_cap',
+       'population']]
+ .drop_duplicates(subset = 'geocode4_corr')    
  .assign(so2_intensity = lambda x: x['tso2_cit']/ x['population'])
  .groupby('TCZ_c')[['tso2_cit','so2_intensity','gdp_cap',
        'population']].mean().rename(index={'No_TCZ': 'No TCZ'}).T
  #.style.format('{:,.0f}')
 ),
     (df_table_3
+     .replace({'SPZ': {'#N/A': '0'}})  
+.loc[lambda x: x['year'].isin(['2007'])]
+ [['geocode4_corr','SPZ', 'tso2_cit','gdp_cap',
+       'population']]
+ .drop_duplicates(subset = 'geocode4_corr')  
  .assign(so2_intensity = lambda x: x['tso2_cit']/ x['population'])
  .groupby('SPZ')[['tso2_cit','so2_intensity','gdp_cap',
        'population']].mean().rename(index={'0': 'No SPZ', '1': 'SPZ'}).T
 ),
     (df_table_3
+.loc[lambda x: x['year'].isin(['2007'])]
+ [['geocode4_corr','soe_city', 'tso2_cit','gdp_cap',
+       'population']]
+ .drop_duplicates(subset = 'geocode4_corr')
  .assign(so2_intensity = lambda x: x['tso2_cit']/ x['population'])
  .groupby('soe_city')[['tso2_cit','so2_intensity','gdp_cap',
        'population']].mean().T
 ),
     (df_table_3
+.loc[lambda x: x['year'].isin(['2007'])]
+ [['geocode4_corr','Coastal', 'tso2_cit','gdp_cap',
+       'population']]
+ .drop_duplicates(subset = 'geocode4_corr')
  .assign(so2_intensity = lambda x: x['tso2_cit']/ x['population'])
  .groupby('Coastal')[['tso2_cit','so2_intensity','gdp_cap',
        'population']].mean().rename(index={False: 'No Coastal', 
                                           True: 'Coastal'}).T
 ),
     (df_table_3
+.loc[lambda x: x['year'].isin(['2007'])]
+ [['geocode4_corr','concentrated_city', 'tso2_cit','gdp_cap',
+       'population']]
+ .drop_duplicates(subset = 'geocode4_corr')
  .assign(so2_intensity = lambda x: x['tso2_cit']/ x['population'])
  .groupby('concentrated_city')[['tso2_cit','so2_intensity','gdp_cap',
        'population']].mean().T
@@ -1308,41 +1411,172 @@ pd.concat([
     
 ```
 
-- TCZ: 28795
-- No Concentrated: 45396
-- SOE No dominated Output: 30264
-- SOE No dominated Capital: 24867
-- SOE No dominated employment: 35190 
+```python
+(df_table_3
+ .loc[lambda x: x['year'].isin(['2007'])]
+ [['geocode4_corr','soe_city', 'gdp_cap']]
+ .drop_duplicates(subset = 'geocode4_corr')
+ .groupby('soe_city')[['gdp_cap']]
+ .describe()
+ #.T
+.style.format('{:,.0f}')
+)
+```
+
+```python
+(df_table_3
+ .loc[lambda x: x['year'].isin(['2007'])]
+ 
+)
+```
+
+```python
+plt.figure(figsize=(16, 6))
+test = (df_table_3
+ .loc[lambda x:
+      (x['year'].isin(['2007']))
+      ]
+ [['geocode4_corr', 'soe_city', 'gdp_cap']]
+ .drop_duplicates(subset='geocode4_corr')
+ .sort_values(['soe_city', 'gdp_cap'])
+ .assign(
+     pct = lambda x:
+         x['gdp_cap']/x.groupby('soe_city')['gdp_cap'].transform('sum'),
+          cum_sum = lambda x:
+          x.groupby('soe_city')['pct'].transform('cumsum'),
+ )
+ )
+
+sns.lineplot(x="gdp_cap",
+             y="cum_sum",
+             hue="soe_city",
+             data=test)
+```
+
+```python
+import matplotlib.pyplot as plt
+plt.figure(figsize=(16, 6))
+sns.violinplot(x="soe_city",
+               y="gdp_cap",
+               data=
+              df_table_3
+ .loc[lambda x: 
+      (x['year'].isin(['2007']) 
+     # & (x['soe_city'].isin(['SOE dominated']) 
+        )
+     ]
+ [['geocode4_corr','soe_city', 'gdp_cap']]
+ .drop_duplicates(subset = 'geocode4_corr'),
+               inner="quartile"
+              )
+```
+
+```python
+import seaborn as sns
+sns.distplot(
+    df_table_3
+ .loc[lambda x: 
+      (x['year'].isin(['2007']) )
+      & (x['soe_city'].isin(['SOE dominated']) )
+     ]
+ [['geocode4_corr','soe_city', 'gdp_cap']]
+ .drop_duplicates(subset = 'geocode4_corr')['gdp_cap'],
+    rug=True, hist=False
+)
+
+sns.distplot(
+    df_table_3
+ .loc[lambda x: 
+      (x['year'].isin(['2007']) )
+      & (~x['soe_city'].isin(['SOE dominated']) )
+     ]
+ [['geocode4_corr','soe_city', 'gdp_cap']]
+ .drop_duplicates(subset = 'geocode4_corr')['gdp_cap'],
+    rug=True, hist=False
+)
+
+
+```
+
+```python
+df_table_3.loc[lambda x: 
+              (x['year'].isin(['2007']))
+             & (x['gdp_cap'] == x['gdp_cap'].max())
+              ].drop_duplicates(subset = 'geocode4_corr')
+```
+
+- TCZ: 18661
+- No Concentrated: 31244
+- SOE No dominated Output: 17864
+- SOE No dominated Capital: 18809
+- SOE No dominated employment: 22467 
 
 ```python
 df_final['geocode4_corr'].nunique()
 ```
 
 ```python
-(df_table_3[['geocode4_corr', 'soe_city']]
+(df_table_3
+ .loc[lambda x: x['year'].isin(['2007'])]
+ [['geocode4_corr', 'soe_city']]
  .drop_duplicates()['soe_city']
  .value_counts())
 ```
 
 ```python
 dic_ = {
-     'TCZ_c': 18661,
-     'No Concentrated': 31244,
      'SOE No dominated Output': 17864,
+    'TCZ_c': 18661,
      'SOE No dominated Capital': 18809,
-     'SOE No dominated employment': 22467
+     'SOE No dominated employment': 22467,
+    'No Concentrated': 31244,
 }
 ```
 
-```python
-81 + 146
-```
-
-```python
-df_table_3['TCZ_c'].unique()
-```
-
 Line SOE above in table 9
+
+```python
+(df_table_3
+ .assign(count = lambda x: 
+         np.where(
+             x['gdp_cap'] > value,
+             "Above", "Below")
+        )
+ .loc[lambda x: x['soe_city'].isin(['SOE dominated']) 
+     & x['year'].isin(['2007'])]
+ [['geocode4_corr', 'count']]
+ .drop_duplicates()['count'].value_counts()
+ .reset_index()
+ .assign( percentage = lambda x: 
+         np.round(x['count']/x['count'].sum(),2) * 100)
+ .set_index("index")
+ .T
+ .assign(total = lambda x: x.sum(axis = 1))
+)
+
+```
+
+```python
+(df_table_3
+ .assign(count = lambda x: 
+         np.where(
+             x['gdp_cap'] > value,
+             "Above", "Below")
+        )
+ .loc[lambda x:~ x['soe_city'].isin(['SOE dominated']) 
+     & x['year'].isin(['2007'])]
+ [['geocode4_corr', 'count']]
+ .drop_duplicates()['count']
+ .value_counts()
+ .reset_index()
+ .sort_values(by = 'index')
+ .assign( percentage = lambda x: 
+         np.round(x['count']/x['count'].sum(),2) * 100)
+ .set_index("index")
+ .T
+ .assign(total = lambda x: x.sum(axis = 1))
+)
+```
 
 ```python
 for key, value in dic_.items():
@@ -1355,25 +1589,98 @@ for key, value in dic_.items():
  .loc[lambda x: x['soe_city'].isin(['SOE dominated']) 
      & x['year'].isin(['2007'])]
  [['geocode4_corr', 'count']]
- .drop_duplicates()
- ['count'].value_counts()
+ .drop_duplicates()['count']
+ .value_counts()
  .reset_index()
- .assign( percentage = lambda x: np.round(x['count']/x['count'].sum(),2) * 100)
- #.style.format('{:,.0%}', subset = ['percentage'])
-).sort_values(by= 'index').T
-    print("\n", key, "\n",results )
+ .sort_values(by = 'index')
+ .assign( percentage = lambda x: 
+         np.round(x['count']/x['count'].sum(),2) * 100)
+ .set_index("index")
+ .T
+ .assign(total = lambda x: x.sum(axis = 1))
+              )
+    print("\n", key, "\n",  value, "\n",results )
 ```
 
 ```python
-#df_table_3['cityen'].drop_duplicates()
+#&\multicolumn{2}{c}{City}
+#&\multicolumn{2}{c}{Concentration}
+#&\multicolumn{2}{c}{Output}
+#&\multicolumn{2}{c}{Capital}
+#&\multicolumn{2}{c}{Employment}\\
+#SOEs cities above (below) & 
+#(78\%, 22\%)& - & - & 
+#(37\%, 63\%)& - & 
+#(78\%, 22\%)  & - & 
+#(77\%, 23\%)& - & 
+#(63\%, 37\%)
 ```
 
 ```python
-141 + 87
+
 ```
 
 ```python
-95/ 147
+for key, value in dic_.items():
+    results = (df_table_3
+ .assign(count = lambda x: 
+         np.where(
+             x['gdp_cap'] > value,
+             "Above", "Below")
+        )
+ .loc[lambda x: ~x['soe_city'].isin(['SOE dominated']) 
+     & x['year'].isin(['2007'])]
+ [['geocode4_corr', 'count']]
+ .drop_duplicates()['count']
+ .value_counts()
+ .reset_index()
+ .sort_values(by = 'index')
+ .assign( percentage = lambda x: 
+         np.round(x['count']/x['count'].sum(),2) * 100)
+ .set_index("index")
+ .T
+ .assign(total = lambda x: x.sum(axis = 1))
+              )
+    print("\n", key, "\n",  value, "\n",results )
+```
+
+```python
+#&\multicolumn{2}{c}{City}
+#&\multicolumn{2}{c}{Concentration}
+#&\multicolumn{2}{c}{Output}
+#&\multicolumn{2}{c}{Capital}
+#&\multicolumn{2}{c}{Employment}\\
+#No SOEs cities above (below) & 
+#(55\%, 45\%) & - & - & 
+#(28\%, 72\%) & - & 
+#(55\%,45\%) & - &  
+#(55\%, 45\%) & - & 
+#(42\%, 58\%)
+```
+
+```python
+df_table_3.head()
+```
+
+```python
+(df_table_3
+ [['TCZ_c','geocode4_corr', 'SPZ', 'soe_city']]
+ .drop_duplicates(subset =)
+ .groupby(['TCZ_c','soe_city'])['gdp_cap']
+ .count()
+ .unstack(-1)
+)
+```
+
+```python
+(df_table_3
+ .loc[lambda x: x['year'].isin(['2007'])]
+ [['TCZ_c','geocode4_corr', 'soe_city', 'gdp_cap']]
+ .drop_duplicates()
+ .groupby(['TCZ_c','soe_city'])['gdp_cap']
+ .mean()
+ .unstack(-1)
+)
 ```
 
 ```python
